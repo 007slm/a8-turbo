@@ -14,3 +14,4 @@ hs_err_pid*.log
 /spring-shell.log
 tools/redis-smart-cache-cli/spring-shell.log
 /docker/mysql/data/
+data/SA_TASK.7z

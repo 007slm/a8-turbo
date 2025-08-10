@@ -1,0 +1,141 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "NATS Dashboard",
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "10s",
+    "rows": [
+      {
+        "title": "NATS Metrics",
+        "height": "250px",
+        "panels": [
+          {
+            "title": "Connections",
+            "type": "graph",
+            "id": 1,
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "nats_varz_connections",
+                "legendFormat": "Connections"
+              }
+            ],
+            "xaxis": {
+              "mode": "time"
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              }
+            ]
+          },
+          {
+            "title": "Subscriptions",
+            "type": "graph",
+            "id": 2,
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "nats_varz_subscriptions",
+                "legendFormat": "Subscriptions"
+              }
+            ],
+            "xaxis": {
+              "mode": "time"
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              }
+            ]
+          },
+          {
+            "title": "Inbound Messages",
+            "type": "graph",
+            "id": 3,
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(nats_varz_in_msgs[5m])",
+                "legendFormat": "Inbound Messages"
+              }
+            ],
+            "xaxis": {
+              "mode": "time"
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              }
+            ]
+          },
+          {
+            "title": "Outbound Messages",
+            "type": "graph",
+            "id": 4,
+            "datasource": "Prometheus",
+            "targets": [
+              {
+                "expr": "rate(nats_varz_out_msgs[5m])",
+                "legendFormat": "Outbound Messages"
+              }
+            ],
+            "xaxis": {
+              "mode": "time"
+            },
+            "yaxes": [
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              },
+              {
+                "format": "short",
+                "label": null,
+                "logBase": 1,
+                "min": 0
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "links": []
+  }
+}

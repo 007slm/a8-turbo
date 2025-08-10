@@ -37,6 +37,8 @@ services:
       - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
       - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
       - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+    networks:
+      - a8
 
   nats-init:
     image: natsio/nats-box:latest
@@ -59,6 +61,8 @@ services:
       - ./docker/nats/dashboard/config.json:/srv/config.json
     depends_on:
       - nats
+    networks:
+      - a8
 
 #  debezium:
 #    image: quay.io/debezium/server:latest
@@ -120,3 +124,7 @@ services:
       - jobmanager
       - taskmanager
     restart: on-failure
+
+networks:
+  a8:
+    external: true

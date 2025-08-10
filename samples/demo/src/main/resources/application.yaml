@@ -1,0 +1,26 @@
+spring:
+  cloud:
+    stream:
+      function:
+        bindings:
+          onDataChange-in-0: input
+          onCdcMessageChange-in-0: cdcMessageInput
+      bindings:
+        cdcMessageInput:
+          destination: mysql-cdc-changes.*
+          binder: nats
+        input:
+          destination: mysql.*.*
+          binder: nats
+        output:
+          destination: mysql.slm.test
+          binder: nats
+
+
+nats:
+  spring:
+    server: nats://localhost:4222
+
+logging:
+  level:
+    org.springframework.cloud.stream: DEBUG

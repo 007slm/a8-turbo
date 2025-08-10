@@ -1,0 +1,51 @@
+################################################################################
+# Description: Sync MySQL all tables to StarRocks via NATS
+# Optimized for maximum real-time performance with per-table monitoring in NATS
+################################################################################
+source:
+  type: mysql
+  hostname: mysql
+  port: 3306
+  username: smartcache
+  password: smartcache
+  tables: smartcache.\.*
+  server-id: 5400-5404
+  server-time-zone: UTC
+
+transform:
+  - type: nats
+    name: NATS JetStream Transform
+    url: nats://nats:4222
+    # 使用表名作为主题的一部分，便于监控每个表的消费情况
+    source-table: smartcache.\.*
+    subject: mysql-cdc-changes.{tableName}
+    stream: cdc-stream
+    create-stream: true
+    # 流控配置，确保在压力过大时能够在NATS中安全堆积
+    ack-policy: explicit
+    max-pending: 100000  # 增加缓冲区大小
+    # 添加消息头信息，便于监控识别
+    headers:
+      table-name: "{tableName}"
+      operation-type: "{operationType}"
+      timestamp: "{timestamp}"
+    deliver-policy: all
+    ack-wait: 30s
+
+sink:
+  type: starrocks
+  name: StarRocks Sink
+  jdbc-url: jdbc:mysql://starrocks:9030
+  load-url: starrocks:8080
+  username: root
+  password: ""
+  table.create.properties.replication_num: 1
+  # 最大实时性配置，几乎无延迟
+  sink.buffer-flush.interval-ms: 0
+
+
+pipeline:
+  name: Sync MySQL to StarRocks via NATS
+  parallelism: 1
+  # 最大实时性配置
+  checkpoint.interval: 1000

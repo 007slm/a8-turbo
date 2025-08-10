@@ -1,0 +1,24 @@
+source:
+  type: nats
+  name: NATS JetStream Consumer
+  url: nats://nats:4222
+  subject: mysql-cdc-changes.*
+  stream: cdc-stream
+  consumer-name: flink-cdc-consumer
+  deliver-policy: all
+
+sink:
+  type: starrocks
+  name: StarRocks Sink
+  hostname: starrocks
+  port: 9030
+  username: root
+  password: ""
+  table.create.properties.replication_num: 1
+  sink.buffer-flush.max-rows: 1
+  sink.buffer-flush.interval: 0s
+
+pipeline:
+  name: NATS to StarRocks Consumer Pipeline
+  parallelism: 1
+  checkpoint.interval: 1000

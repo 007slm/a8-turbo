@@ -1,0 +1,22 @@
+spring:
+  cloud:
+    stream:
+      function:
+        bindings:
+          onDataChange-in-0: input
+      bindings:
+        input:
+          destination: mysql.*.*
+          binder: nats
+        output:
+          destination: mysql.slm.test
+          binder: nats
+
+
+nats:
+  spring:
+    server: nats://localhost:4222
+
+logging:
+  level:
+    org.springframework.cloud.stream: DEBUG

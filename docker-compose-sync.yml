@@ -1,0 +1,122 @@
+version: "2.2"
+
+services:
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    container_name: mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+      - ./docker/mysql/conf.d/my.cnf:/etc/mysql/my.conf/my.cnf
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_USER=smartcache
+      - MYSQL_PASSWORD=smartcache
+      - MYSQL_DATABASE=smartcache
+  # cd /opt/flink-cdc  ./bin/flink-cdc.sh --jar /opt/flink-cdc/lib/mysql-connector-java.jar --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
+
+  nats:
+    image: nats:latest
+    hostname: nats
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"   # Monitoring endpoint
+    command:
+      - "-js"
+      - "-sd"
+      - "/jetstream/data"
+      - "--debug"
+      - "--http_port=8222"
+    volumes:
+      - ./docker/nats/data/jetstream:/jetstream/data
+      - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
+      - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
+      - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+
+  nats-init:
+    image: natsio/nats-box:latest
+    container_name: nats-init
+    command: ["/bin/sh", "/usr/local/bin/init-nats.sh"]
+    volumes:
+      - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+      - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
+      - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
+    depends_on:
+      - nats
+    restart: on-failure
+
+  nats-dashboard:
+    image: mdawar/nats-dashboard:latest
+    ports:
+      - "8000:80"
+    volumes:
+      # Optional config file.
+      - ./docker/nats/dashboard/config.json:/srv/config.json
+    depends_on:
+      - nats
+
+#  debezium:
+#    image: quay.io/debezium/server:latest
+#    ports:
+#      - "8083:8083"  # 暴露 Debezium UI 端口
+#    volumes:
+#      - ./docker/debezium/config:/debezium/config
+#    depends_on:
+#      - mysql
+#      - nats
+
+  starrocks:
+    image: starrocks/allin1-ubuntu
+    container_name: starrocks
+    ports:
+      - "9030:9030"
+      - "8030:8030"
+      - "8040:8040"
+      - "8080:8080"
+    tty: true
+    privileged: true
+
+  jobmanager:
+    image: flink:1.20.1-scala_2.12
+    hostname: jobmanager
+    ports:
+      - '8081'
+    command: jobmanager
+    volumes:
+      - ./docker/flink/cdc:/opt/flink-cdc
+      - ./docker/flink/jobs:/opt/flink_jobs
+
+    environment:
+      FLINK_PROPERTIES: |-
+        jobmanager.rpc.address: jobmanager
+        execution.checkpointing.interval: 3000
+        
+  taskmanager:
+    image: flink:1.20.1-scala_2.12
+    hostname: taskmanager
+    command: taskmanager
+    environment:
+      FLINK_PROPERTIES: |-
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 4
+        execution.checkpointing.interval: 3000
+
+  flink-cdc-init:
+    image: flink:1.20.1-scala_2.12
+    container_name: flink-cdc-init
+    environment:
+      - FLINK_HOME=/opt/flink
+    command: ["/bin/bash", "-c", "sleep 30; /opt/flink-init/flink-cdc-init.sh"]
+    volumes:
+      - ./docker/flink/init:/opt/flink-init
+      - ./docker/flink/cdc:/opt/flink-cdc
+      - ./docker/flink/jobs:/opt/flink_jobs
+    depends_on:
+      - jobmanager
+      - taskmanager
+    restart: on-failure

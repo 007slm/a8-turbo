@@ -18,3 +18,4 @@ data/SA_TASK.7z
 /app/
 /docker/mysql/data/
 /docker/grafana/data/plugins/
+docker/grafana/data/grafana.db

@@ -4,7 +4,7 @@ global:
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
-    monitor: 'nats-server'
+    monitor: 'a8-turbo'
 
 # A scrape configuration containing exactly one endpoint to scrape:
 scrape_configs:
@@ -16,7 +16,7 @@ scrape_configs:
   # Docker Compose监控
   - job_name: 'docker-compose'
     static_configs:
-      - targets: ['localhost:9323']
+      - targets: ['host.docker.internal:9323']
 
   # MySQL监控
   - job_name: 'mysql'
@@ -27,3 +27,25 @@ scrape_configs:
   - job_name: 'redis'
     static_configs:
       - targets: ['redis-exporter:9121']
+
+  # starrocks监控
+  - job_name: 'starrocks' # A cluster being monitored corresponds to a job. You can customize the StarRocks cluster name here.
+    metrics_path: '/metrics'    # Specify the Restful API for retrieving monitoring metrics.
+    static_configs:
+      # The following configuration specifies an FE group, which includes 3 FE nodes.
+      # Here, you need to fill in the IP and HTTP ports corresponding to each FE.
+      # If you modified the HTTP ports during cluster deployment, make sure to adjust them accordingly.
+      - targets: [ 'starrocks:8030']
+        labels:
+          group: fe
+      # The following configuration specifies a BE group, which includes 3 BE nodes.
+      # Here, you need to fill in the IP and HTTP ports corresponding to each BE.
+      # If you modified the HTTP ports during cluster deployment, make sure to adjust them accordingly.
+      - targets: [ 'starrocks:8040' ]
+        labels:
+          group: be
+      
+  # Prometheus自我监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

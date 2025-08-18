@@ -13,22 +13,29 @@ services:
     networks:
       - a8
 
-
   grafana:
-    image: smartcache/grafana
-    build: ./docker/grafana
+    image: grafana/grafana:latest
     hostname: grafana
     container_name: grafana
     ports:
       - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=fluxDB
+      - GF_SECURITY_ADMIN_USER=fluxDB
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+      #- GF_INSTALL_PLUGINS=grafana-piechart-panel,marcusolsson-json-datasource,marcusolsson-dynamictext-panel
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/a8-turbo-dashboard.json
     networks:
       - a8
     depends_on:
       - prometheus
     volumes:
-      - ./docker/nats/dashboard/nats-dashboard.json:/var/lib/grafana/dashboards/nats-dashboard.json
-      - ./docker/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+      - ./docker/grafana/config/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./docker/grafana/config/datasources:/etc/grafana/provisioning/datasources
+      - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards
+      - ./docker/grafana/data:/var/lib/grafana
 
 networks:
   a8:

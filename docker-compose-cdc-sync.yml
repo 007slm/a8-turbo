@@ -66,19 +66,19 @@ services:
     depends_on:
       - nats
 
-  nats-init:
-    image: natsio/nats-box:latest
-    container_name: nats-init
-    command: ["/bin/sh", "/usr/local/bin/init-nats.sh"]
-    volumes:
-      - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
-      - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
-      - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
-    depends_on:
-      - nats
-    networks:
-      - a8
-    restart: on-failure
+#  nats-init:
+#    image: natsio/nats-box:latest
+#    container_name: nats-init
+#    command: ["/bin/sh", "/usr/local/bin/init-nats.sh"]
+#    volumes:
+#      - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+#      - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
+#      - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
+#    depends_on:
+#      - nats
+#    networks:
+#      - a8
+#    restart: on-failure
 
   nats-dashboard:
     image: mdawar/nats-dashboard:latest

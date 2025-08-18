@@ -6,7 +6,7 @@ COPY grafana.db /var/lib/grafana/grafana.db
 
 # 创建 dashboards 目录并复制 NATS dashboard
 RUN mkdir -p /var/lib/grafana/dashboards
-COPY dashboard/nats-dashboard.json /var/lib/grafana/dashboards/nats-dashboard.json
+COPY nats-dashboard.json /var/lib/grafana/dashboards/nats-dashboard.json
 COPY dashboards.yml /etc/grafana/provisioning/dashboards/dashboards.yml
 
 USER root

@@ -1,4 +1,6 @@
-version: "2.20"
+include:
+  - ./docker-compose-cdc-sync.yml
+  - ./docker-compose-smart-cache.yml
 
 services:
   prometheus:
@@ -11,8 +13,11 @@ services:
     networks:
       - a8
 
+
   grafana:
+    image: smartcache/grafana
     build: ./docker/grafana
+    hostname: grafana
     container_name: grafana
     ports:
       - "3000:3000"
@@ -27,4 +32,4 @@ services:
 
 networks:
   a8:
-    driver: bridge
+    external: false

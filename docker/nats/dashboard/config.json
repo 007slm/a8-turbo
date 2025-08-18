@@ -1,7 +1,7 @@
 {
   "server": {
-    "name": "消息服务",
-    "url": "http://nats:8222"
+    "name": "消息服务监控",
+    "url": "http://localhost:8222"
   },
-  "hideServerInput": false
+  "hideServerInput": true
 }

@@ -16,3 +16,4 @@ tools/redis-smart-cache-cli/spring-shell.log
 /docker/mysql/data/
 data/SA_TASK.7z
 /app/
+/docker/mysql/data/

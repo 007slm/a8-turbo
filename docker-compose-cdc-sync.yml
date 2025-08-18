@@ -1,10 +1,10 @@
-version: "2.2"
-
 services:
   mysql:
     image: mysql:8.0
     hostname: mysql
     container_name: mysql
+    networks:
+      - a8
     ports:
       - 3306:3306
     volumes:
@@ -18,6 +18,21 @@ services:
       - MYSQL_PASSWORD=smartcache
       - MYSQL_DATABASE=smartcache
   # cd /opt/flink-cdc  ./bin/flink-cdc.sh --jar /opt/flink-cdc/lib/mysql-connector-java.jar --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
+
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    command:
+      - "--mysqld.username=smartcache:smartcache"
+      - "--mysqld.address=mysql:3306"
+    environment:
+      - DATA_SOURCE_NAME=smartcache:smartcache@tcp(mysql:3306)/smartcache
+    ports:
+      - "9104:9104"
+    networks:
+      - a8
+    depends_on:
+      - mysql
 
   nats:
     image: nats:latest
@@ -40,6 +55,17 @@ services:
     networks:
       - a8
 
+  nats-exporter:
+    image: natsio/prometheus-nats-exporter:latest
+    container_name: nats-exporter
+    command: "-varz http://nats:8222"
+    ports:
+      - "7777:7777"
+    networks:
+      - a8
+    depends_on:
+      - nats
+
   nats-init:
     image: natsio/nats-box:latest
     container_name: nats-init
@@ -50,6 +76,8 @@ services:
       - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
     depends_on:
       - nats
+    networks:
+      - a8
     restart: on-failure
 
   nats-dashboard:
@@ -57,7 +85,6 @@ services:
     ports:
       - "8000:80"
     volumes:
-      # Optional config file.
       - ./docker/nats/dashboard/config.json:/srv/config.json
     depends_on:
       - nats
@@ -84,6 +111,33 @@ services:
       - "8080:8080"
     tty: true
     privileged: true
+    networks:
+      - a8
+
+  redis:
+    image: redis-server-with-cache-cli
+    build:
+      context: ./docker/redis
+      dockerfile: ./Dockerfile
+    hostname: redis
+    container_name: redis-server-with-cache-cli
+    ports:
+      - 6379:6379
+    networks:
+      - a8
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - a8
+    depends_on:
+      - redis
+
 
   jobmanager:
     image: flink:1.20.1-scala_2.12
@@ -91,6 +145,8 @@ services:
     ports:
       - '8081'
     command: jobmanager
+    networks:
+      - a8
     volumes:
       - ./docker/flink/cdc:/opt/flink-cdc
       - ./docker/flink/jobs:/opt/flink_jobs
@@ -104,6 +160,8 @@ services:
     image: flink:1.20.1-scala_2.12
     hostname: taskmanager
     command: taskmanager
+    networks:
+      - a8
     environment:
       FLINK_PROPERTIES: |-
         jobmanager.rpc.address: jobmanager
@@ -116,6 +174,8 @@ services:
     environment:
       - FLINK_HOME=/opt/flink
     command: ["/bin/bash", "-c", "sleep 30; /opt/flink-init/flink-cdc-init.sh"]
+    networks:
+      - a8
     volumes:
       - ./docker/flink/init:/opt/flink-init
       - ./docker/flink/cdc:/opt/flink-cdc
@@ -124,7 +184,3 @@ services:
       - jobmanager
       - taskmanager
     restart: on-failure
-
-networks:
-  a8:
-    external: true

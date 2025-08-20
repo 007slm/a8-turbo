@@ -1,7 +1,7 @@
 package com.redis.smartcache.cli.util;
 
 import com.redis.smartcache.cli.structures.RuleType;
-import com.redis.smartcache.core.Config;
+import com.redis.smartcache.core.config.Config;
 import com.redis.smartcache.core.RuleConfig;
 import io.airlift.units.Duration;
 

@@ -265,6 +265,63 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 1
+      },
+      "id": 17,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "9.5.2",
+      "targets": [
+        {
+          "expr": "1 - up{job=\"flink\"}",
+          "interval": "",
+          "legendFormat": "流处理引擎 Down",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "流处理引擎状态",
+      "type": "gauge"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -317,8 +374,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 12,
-        "x": 12,
+        "w": 9,
+        "x": 15,
         "y": 1
       },
       "id": 16,
@@ -509,6 +566,33 @@
           "showMiniMap": false
         },
         "content": "## 📡 异步消息服务\n\n消息队列监控\n\n连接数、消息吞吐量、订阅状态等",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.5.2",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 14
+      },
+      "id": 10,
+      "links": [
+        {
+          "title": "查看详细监控",
+          "url": "/d/flink-overview?orgId=1"
+        }
+      ],
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "## ⚙️ 流处理引擎\n\n流处理计算框架监控\n\n作业状态、任务管理器、内存使用等",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",

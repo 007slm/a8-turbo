@@ -1,0 +1,19 @@
+services:
+
+
+
+  demo:
+    image: fieldengineering/demo-redis-smart-cache:latest
+    hostname: smartcache
+    container_name: smartcache
+    restart: on-failure
+    networks:
+      - a8
+    depends_on:
+      - mysql
+      - redis
+    ports:
+      - 8070:8080
+    environment:
+      - SPRING_REDIS_HOST=redis
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql/smartcache

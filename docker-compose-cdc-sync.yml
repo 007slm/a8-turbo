@@ -82,6 +82,8 @@ services:
 
   nats-dashboard:
     image: mdawar/nats-dashboard:latest
+    container_name: nats-dashboard
+    hostname: nats-dashboard
     ports:
       - "8000:80"
     volumes:
@@ -142,31 +144,45 @@ services:
   jobmanager:
     image: flink:1.20.1-scala_2.12
     hostname: jobmanager
+    container_name: jobmanager
     ports:
-      - '8081'
+      - '8081:8081'
+      - '9249:9249'
     command: jobmanager
     networks:
       - a8
     volumes:
       - ./docker/flink/cdc:/opt/flink-cdc
       - ./docker/flink/jobs:/opt/flink_jobs
+      - ./docker/flink/lib:/opt/flink/lib/ext
 
     environment:
       FLINK_PROPERTIES: |-
         jobmanager.rpc.address: jobmanager
         execution.checkpointing.interval: 3000
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
         
   taskmanager:
     image: flink:1.20.1-scala_2.12
     hostname: taskmanager
+    container_name: taskmanager
     command: taskmanager
+    ports:
+      - '9250:9250'
     networks:
       - a8
+    volumes:
+      - ./docker/flink/lib:/opt/flink/lib/ext
     environment:
       FLINK_PROPERTIES: |-
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 4
         execution.checkpointing.interval: 3000
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9250
 
   flink-cdc-init:
     image: flink:1.20.1-scala_2.12

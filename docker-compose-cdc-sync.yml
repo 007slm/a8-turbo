@@ -12,8 +12,8 @@ services:
       - ./docker/mysql/conf.d/my.cnf:/etc/mysql/my.conf/my.cnf
       - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
     environment:
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_ROOT_PASSWORD=a8
+#      - MYSQL_ALLOW_EMPTY_PASSWORD=true
       - MYSQL_USER=smartcache
       - MYSQL_PASSWORD=smartcache
       - MYSQL_DATABASE=smartcache

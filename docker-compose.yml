@@ -1,6 +1,7 @@
 include:
   - ./docker-compose-cdc-sync.yml
   - ./docker-compose-smart-cache.yml
+  - ./docker-compose-ojp.yml
 
 services:
   prometheus:

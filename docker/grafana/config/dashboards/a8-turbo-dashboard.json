@@ -44,11 +44,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 1
               }
             ]
@@ -78,15 +78,15 @@
       "pluginVersion": "9.5.2",
       "targets": [
         {
-          "expr": "1 - mysql_up",
+          "expr": "mysql_up",
           "interval": "",
-          "legendFormat": "数据库 Down",
+          "legendFormat": "数据库状态",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "数据库状态",
+      "title": "数据库是否正常运行",
       "type": "gauge"
     },
     {
@@ -101,11 +101,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 1
               }
             ]
@@ -135,15 +135,15 @@
       "pluginVersion": "9.5.2",
       "targets": [
         {
-          "expr": "1 - redis_up",
+          "expr": "redis_up",
           "interval": "",
-          "legendFormat": "缓存服务 Down",
+          "legendFormat": "缓存服务状态",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "缓存服务状态",
+      "title": "缓存服务是否正常运行",
       "type": "gauge"
     },
     {
@@ -158,11 +158,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 1
               }
             ]
@@ -192,15 +192,15 @@
       "pluginVersion": "9.5.2",
       "targets": [
         {
-          "expr": "count by (group) (up{job=\"starrocks\"} == 0)",
+          "expr": "max(up{job=\"starrocks\"})",
           "interval": "",
-          "legendFormat": "数据加速服务 Down",
+          "legendFormat": "数据加速服务状态",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "数据加速服务状态",
+      "title": "数据加速服务是否正常运行",
       "type": "gauge"
     },
     {
@@ -215,11 +215,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 1
               }
             ]
@@ -249,15 +249,15 @@
       "pluginVersion": "9.5.2",
       "targets": [
         {
-          "expr": "1 - up{job=\"nats-exporter\"}",
+          "expr": "up{job=\"nats-exporter\"}",
           "interval": "",
-          "legendFormat": "异步消息服务 Down",
+          "legendFormat": "异步消息服务状态",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "异步消息服务状态",
+      "title": "消息队列是否正常运行",
       "type": "gauge"
     },
     {
@@ -272,11 +272,11 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 1
               }
             ]
@@ -306,15 +306,15 @@
       "pluginVersion": "9.5.2",
       "targets": [
         {
-          "expr": "1 - up{job=\"flink\"}",
+          "expr": "up{job=\"flink\"}",
           "interval": "",
-          "legendFormat": "流处理引擎 Down",
+          "legendFormat": "流处理引擎状态",
           "refId": "A"
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "流处理引擎状态",
+      "title": "流处理引擎是否正常运行",
       "type": "gauge"
     },
     {
@@ -419,7 +419,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "📊 系统查询/命令速率",
+      "title": "📊 各组件每秒处理请求数",
       "type": "timeseries"
     },
 
@@ -457,7 +457,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## 📈 监控系统\n\n系统核心监控组件\n\n基础指标、性能监控、告警规则等",
+        "content": "## 📈 监控系统\n\nPrometheus监控组件\n\n监控系统本身运行状态\n指标收集、存储和查询服务",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",
@@ -484,7 +484,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## 🗄️ 数据库\n\n关系型数据库监控\n\n连接数、查询性能、缓存命中率等",
+        "content": "## 🗄️ 数据库\n\nMySQL数据库\n\n处理业务数据存储\n连接数、查询性能等指标",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",
@@ -511,7 +511,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## 🧠 缓存服务\n\n内存数据库监控\n\n内存使用、命令统计、连接数等",
+        "content": "## 🧠 缓存服务\n\nRedis内存数据库\n\n加速数据库查询响应\n缓存命中率、内存使用等指标",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",
@@ -538,7 +538,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## ⭐ 数据加速服务\n\n分布式数据库监控\n\n查询性能、节点状态、数据加载等",
+        "content": "## ⭐ 数据加速服务\n\nStarRocks分析型数据库\n\n处理复杂数据分析查询\n查询性能、节点状态等指标",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",
@@ -565,7 +565,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## 📡 异步消息服务\n\n消息队列监控\n\n连接数、消息吞吐量、订阅状态等",
+        "content": "## 📡 异步消息服务\n\nNATS消息队列\n\n处理异步消息通信\n连接数、消息吞吐量等指标",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",
@@ -592,7 +592,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "## ⚙️ 流处理引擎\n\n流处理计算框架监控\n\n作业状态、任务管理器、内存使用等",
+        "content": "## ⚙️ 流处理引擎\n\nFlink计算框架\n\n处理实时数据流计算\n作业状态、任务管理器等指标",
         "mode": "markdown"
       },
       "pluginVersion": "9.5.2",

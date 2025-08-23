@@ -9,7 +9,7 @@
         <groupId>com.redis</groupId>
         <artifactId>redis-smart-cache</artifactId>
         <version>0.2.2-SNAPSHOT</version>
-        <relativePath>../../../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>redis-smart-cache-jdbc</artifactId>
@@ -21,6 +21,12 @@
         <dependency>
             <groupId>com.redis</groupId>
             <artifactId>redis-smart-cache-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.redis</groupId>
+                    <artifactId>testcontainers-redis</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
         <dependency>
@@ -45,12 +51,6 @@
         </dependency>
         
         <!-- 测试依赖 -->
-        <dependency>
-            <groupId>com.redis</groupId>
-            <artifactId>redis-smart-cache-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
@@ -86,18 +86,18 @@
             <scope>test</scope>
         </dependency>
         
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>12.3.1.jre11</version>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.ibm.db2</groupId>
-            <artifactId>jcc</artifactId>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.microsoft.sqlserver</groupId>-->
+<!--            <artifactId>mssql-jdbc</artifactId>-->
+<!--            <version>12.3.1.jre11</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
+<!--        -->
+<!--        <dependency>-->
+<!--            <groupId>com.ibm.db2</groupId>-->
+<!--            <artifactId>jcc</artifactId>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
         
         <dependency>
             <groupId>org.testcontainers</groupId>
@@ -159,11 +159,6 @@
             <scope>test</scope>
         </dependency>
         
-        <dependency>
-            <groupId>com.redis</groupId>
-            <artifactId>testcontainers-redis</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

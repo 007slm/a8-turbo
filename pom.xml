@@ -41,9 +41,9 @@
     <modules>
         <module>core/redis-smart-cache-core</module>
         <module>core/redis-smart-cache-jdbc</module>
-        <module>core/redis-smart-cache-test</module>
         <module>samples/redis-smart-cache-demo</module>
         <module>tools/redis-smart-cache-cli</module>
+        <module>tools/redis-smart-cache-client</module>
     </modules>
 
     <properties>
@@ -175,6 +175,15 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers-bom</artifactId>
                 <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            
+            <!-- Spring Boot 3.x 依赖管理 -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>3.2.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

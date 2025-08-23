@@ -44,57 +44,5 @@
 
 ## 常用操作命令
 
-### 启动服务
-
-```bash
-# 启动所有服务
-docker-compose up
-
-# 后台启动所有服务
-docker-compose up -d
-
-# 启动特定服务
-docker-compose up grafana prometheus
-```
-
-### 停止服务
-
-```bash
-# 停止所有服务
-docker-compose down
-
-# 停止并删除所有相关卷
-docker-compose down -v
-```
-
-### 查看服务状态
-
-```bash
-# 查看运行中的服务
-docker-compose ps
-
-# 查看服务日志
-docker-compose logs <service_name>
-```
-
-## 注意事项
-
-1. 首次启动可能需要较长时间下载镜像
-2. 确保端口未被其他应用占用
-3. 如遇到网络问题，可尝试创建Docker网络：
-   ```bash
-   docker network create a8
-   ```
-4. Grafana仪表板可能需要几分钟时间才能显示数据
-5. 如果Grafana仪表板无数据，请确认使用的是9.5.2及以上版本
-
-## 技术栈
-
-- **后端**: Java 17
-- **数据库**: MySQL, Redis
-- **缓存技术**: Redis Smart Cache (自定义JDBC驱动)
-- **消息队列**: NATS
-- **监控**: Prometheus, Grafana, JMX, Redis TimeSeries
-- **构建工具**: Gradle 8.x
-- **流处理**: Apache Flink
-- **OLAP数据库**: StarRocks
+mklink /j e:\a8-turbo\ojp-server e:\ojp\ojp-server
+mklink /j e:\a8-turbo\ojp-grpc-commons e:\ojp\ojp-grpc-commons

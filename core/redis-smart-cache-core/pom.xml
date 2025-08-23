@@ -9,7 +9,7 @@
         <groupId>com.redis</groupId>
         <artifactId>redis-smart-cache</artifactId>
         <version>0.2.2-SNAPSHOT</version>
-        <relativePath>../../../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>redis-smart-cache-core</artifactId>

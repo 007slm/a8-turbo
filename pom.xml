@@ -43,7 +43,6 @@
         <module>core/redis-smart-cache-jdbc</module>
         <module>samples/redis-smart-cache-demo</module>
         <module>tools/redis-smart-cache-cli</module>
-        <module>tools/redis-smart-cache-client</module>
     </modules>
 
     <properties>

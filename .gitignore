@@ -198,6 +198,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Redis Smart Cache UI Node modules
-/tools/redis-smart-cache-ui/node_modules/

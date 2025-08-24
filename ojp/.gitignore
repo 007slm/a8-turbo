@@ -1,0 +1,9 @@
+# ignore all files in any directory named target
+*/target/
+
+# ignore all files in any directory named .idea
+*/.idea/
+.idea/
+
+# ignore Maven Shade Plugin generated files
+dependency-reduced-pom.xml

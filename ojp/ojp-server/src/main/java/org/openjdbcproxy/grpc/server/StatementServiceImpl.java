@@ -90,10 +90,21 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.openjdbcproxy.constants.CommonConstants.MAX_LOB_DATA_BLOCK_SIZE;
 import static org.openjdbcproxy.grpc.SerializationHandler.deserialize;
 import static org.openjdbcproxy.grpc.SerializationHandler.serialize;
+import org.openjdbcproxy.grpc.server.smartcache.SmartCacheManager;
+import org.openjdbcproxy.grpc.server.smartcache.interceptor.CacheDecision;
+import org.openjdbcproxy.grpc.server.smartcache.interceptor.QueryInterceptContext;
+import org.openjdbcproxy.grpc.server.smartcache.serialization.ResultSetSerializer;
+import org.openjdbcproxy.grpc.server.chain.SqlProcessorChain;
+import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.processors.SmartCacheProcessor;
+import org.openjdbcproxy.grpc.server.chain.processors.TransactionProcessor;
+import org.openjdbcproxy.grpc.server.chain.config.SqlProcessorChainFactory;
+import org.openjdbcproxy.grpc.server.chain.config.ProcessorRegistrationContext;
 import static org.openjdbcproxy.grpc.server.Constants.EMPTY_LIST;
 import static org.openjdbcproxy.grpc.server.Constants.EMPTY_MAP;
 import static org.openjdbcproxy.grpc.server.Constants.EMPTY_STRING;
@@ -101,18 +112,24 @@ import static org.openjdbcproxy.grpc.server.Constants.SHA_256;
 import static org.openjdbcproxy.grpc.server.GrpcExceptionHandler.sendSQLExceptionMetadata;
 
 @Slf4j
-@RequiredArgsConstructor
 public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceImplBase {
 
     private final Map<String, HikariDataSource> datasourceMap = new ConcurrentHashMap<>();
     private final SessionManager sessionManager;
     private final CircuitBreaker circuitBreaker;
     
-    // Per-datasource slow query segregation managers
-    private final Map<String, SlowQuerySegregationManager> slowQuerySegregationManagers = new ConcurrentHashMap<>();
-    
     // Server configuration for creating segregation managers
     private final ServerConfiguration serverConfiguration;
+    
+    // Smart cache manager for intelligent query caching
+    private final SmartCacheManager smartCacheManager;
+    private final ResultSetSerializer resultSetSerializer;
+    
+    // SQL processing chain for universal SQL interception
+    private final SqlProcessorChain sqlProcessorChain;
+    
+    // SPI-based processor chain factory
+    private final SqlProcessorChainFactory chainFactory;
     
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
     private final Map<String, DbName> dbNameMap = new ConcurrentHashMap<>();
@@ -122,6 +139,30 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     static {
         DriverUtils.registerDrivers();
     }
+    
+    // Constructor with smart cache support
+    public StatementServiceImpl(SessionManager sessionManager, CircuitBreaker circuitBreaker, 
+                               ServerConfiguration serverConfiguration, SmartCacheManager smartCacheManager) {
+        this.sessionManager = sessionManager;
+        this.circuitBreaker = circuitBreaker;
+        this.serverConfiguration = serverConfiguration;
+        this.smartCacheManager = smartCacheManager;
+        this.resultSetSerializer = new ResultSetSerializer(true); // Enable compression
+        
+        // Initialize SPI-based processor chain factory
+        this.chainFactory = new SqlProcessorChainFactory();
+        
+        // Initialize SQL processing chain using SPI discovery
+        this.sqlProcessorChain = createProcessorChain();
+        log.info("SQL processing chain initialized using SPI: {}", this.sqlProcessorChain.getStatistics());
+    }
+    
+    // Backward compatibility constructor
+    public StatementServiceImpl(SessionManager sessionManager, CircuitBreaker circuitBreaker, 
+                               ServerConfiguration serverConfiguration) {
+        this(sessionManager, circuitBreaker, serverConfiguration, null);
+    }
+
 
     @Override
     public void connect(ConnectionDetails connectionDetails, StreamObserver<SessionInfo> responseObserver) {
@@ -140,9 +181,6 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             ds = new HikariDataSource(config);
             this.datasourceMap.put(connHash, ds);
-            
-            // Create a slow query segregation manager for this datasource
-            createSlowQuerySegregationManagerForDatasource(connHash, config.getMaximumPoolSize());
         }
 
         this.sessionManager.registerClientUUID(connHash, connectionDetails.getClientUUID());
@@ -159,94 +197,32 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     }
     
     /**
-     * Creates a slow query segregation manager for a specific datasource.
-     * Each datasource gets its own manager with pool size based on actual HikariCP configuration.
+     * Deserialize parameters with proper type information
      */
-    private void createSlowQuerySegregationManagerForDatasource(String connHash, int actualPoolSize) {
-        if (serverConfiguration.isSlowQuerySegregationEnabled()) {
-            SlowQuerySegregationManager manager = new SlowQuerySegregationManager(
-                actualPoolSize,
-                serverConfiguration.getSlowQuerySlotPercentage(),
-                serverConfiguration.getSlowQueryIdleTimeout(),
-                serverConfiguration.getSlowQuerySlowSlotTimeout(),
-                serverConfiguration.getSlowQueryFastSlotTimeout(),
-                true
-            );
-            slowQuerySegregationManagers.put(connHash, manager);
-            log.info("Created SlowQuerySegregationManager for datasource {} with pool size {}", 
-                    connHash, actualPoolSize);
-        } else {
-            // Create disabled manager for consistency
-            SlowQuerySegregationManager manager = new SlowQuerySegregationManager(
-                1, 0, 0, 0, 0, false
-            );
-            slowQuerySegregationManagers.put(connHash, manager);
-            log.info("Created disabled SlowQuerySegregationManager for datasource {}", connHash);
+    @SuppressWarnings("unchecked")
+    private List<org.openjdbcproxy.grpc.dto.Parameter> deserializeParameters(byte[] data) {
+        try {
+            // Deserialize as raw list first
+            List<?> rawList = deserialize(data, List.class);
+
+            // Verify that all elements are of type Parameter
+            for (Object item : rawList) {
+                if (!(item instanceof org.openjdbcproxy.grpc.dto.Parameter)) {
+                    throw new ClassCastException("Deserialized object is not of expected type Parameter");
+                }
+            }
+
+            return (List<org.openjdbcproxy.grpc.dto.Parameter>) (List<?>) rawList;
+        } catch (Exception e) {
+            log.warn("Failed to deserialize parameters, returning empty list", e);
+            return new ArrayList<>();
         }
     }
     
-    /**
-     * Gets the slow query segregation manager for a specific connection hash.
-     * If no manager exists, creates a disabled one as a fallback.
-     */
-    private SlowQuerySegregationManager getSlowQuerySegregationManagerForConnection(String connHash) {
-        SlowQuerySegregationManager manager = slowQuerySegregationManagers.get(connHash);
-        if (manager == null) {
-            log.warn("No SlowQuerySegregationManager found for connection hash {}, creating disabled fallback", connHash);
-            // Create a disabled manager as fallback
-            manager = new SlowQuerySegregationManager(1, 0, 0, 0, 0, false);
-            slowQuerySegregationManagers.put(connHash, manager);
-        }
-        return manager;
-    }
-
     @SneakyThrows
     @Override
     public void executeUpdate(StatementRequest request, StreamObserver<OpResult> responseObserver) {
-        log.info("Executing update {}", request.getSql());
-        String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
-        try {
-            circuitBreaker.preCheck(stmtHash);
-            
-            // Get the appropriate slow query segregation manager for this datasource
-            String connHash = request.getSession().getConnHash();
-            SlowQuerySegregationManager manager = getSlowQuerySegregationManagerForConnection(connHash);
-            
-            // Execute with slow query segregation
-            OpResult result = manager.executeWithSegregation(stmtHash, () -> {
-                return executeUpdateInternal(request);
-            });
-            
-            responseObserver.onNext(result);
-            responseObserver.onCompleted();
-            circuitBreaker.onSuccess(stmtHash);
-            
-        } catch (SQLDataException e) {
-            circuitBreaker.onFailure(stmtHash, e);
-            log.error("SQL data failure during update execution: " + e.getMessage(), e);
-            sendSQLExceptionMetadata(e, responseObserver, SqlErrorType.SQL_DATA_EXCEPTION);
-        } catch (SQLException e) {
-            circuitBreaker.onFailure(stmtHash, e);
-            log.error("Failure during update execution: " + e.getMessage(), e);
-            sendSQLExceptionMetadata(e, responseObserver);
-        } catch (Exception e) {
-            log.error("Unexpected failure during update execution: " + e.getMessage(), e);
-            if (e.getCause() instanceof SQLException) {
-                circuitBreaker.onFailure(stmtHash, (SQLException) e.getCause());
-                sendSQLExceptionMetadata((SQLException) e.getCause(), responseObserver);
-            } else {
-                SQLException sqlException = new SQLException("Unexpected error: " + e.getMessage(), e);
-                circuitBreaker.onFailure(stmtHash, sqlException);
-                sendSQLExceptionMetadata(sqlException, responseObserver);
-            }
-        }
-    }
-    
-    /**
-     * Internal method for executing updates without segregation logic.
-     */
-    private OpResult executeUpdateInternal(StatementRequest request) throws SQLException {
+        log.info("Executing update for {}", request.getSql());
         int updated = 0;
         SessionInfo returnSessionInfo = request.getSession();
         ConnectionSessionDTO dto = ConnectionSessionDTO.builder().build();
@@ -259,10 +235,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             dto = sessionConnection(request.getSession(), StatementRequestValidator.isAddBatchOperation(request) || StatementRequestValidator.hasAutoGeneratedKeysFlag(request));
             returnSessionInfo = dto.getSession();
 
-            List<Parameter> params = deserialize(request.getParameters().toByteArray(), List.class);
-            PreparedStatement ps = dto.getSession() != null && StringUtils.isNotBlank(dto.getSession().getSessionUUID())
-                    && StringUtils.isNoneBlank(request.getStatementUUID()) ?
-                    sessionManager.getPreparedStatement(dto.getSession(), request.getStatementUUID()) : null;
+            List<org.openjdbcproxy.grpc.dto.Parameter> params = deserializeParameters(request.getParameters().toByteArray());
+            PreparedStatement ps = CollectionUtils.isNotEmpty(params) ?
+                    StatementFactory.createPreparedStatement(
+                            sessionManager, dto, request.getSql(), 
+                            (List<org.openjdbcproxy.grpc.dto.Parameter>) (List<?>) params, request) :
+                    sessionManager.getPreparedStatement(dto.getSession(), request.getStatementUUID());
             if (CollectionUtils.isNotEmpty(params) || ps != null) {
                 if (StringUtils.isNotEmpty(request.getStatementUUID())) {
                     Collection<Object> lobs = sessionManager.getLobs(dto.getSession());
@@ -272,7 +250,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         Integer parameterIndex = (Integer) metadata.get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_INDEX);
                         ps.setBinaryStream(parameterIndex, lobIS);
                     }
-                    if (DbName.POSTGRES.equals(dto.getDbName())) {//Postgres requires check if the lob streams are fully consumed.
+                    if (DbName.POSTGRES.equals(dto.getDbName())) {
                         sessionManager.waitLobStreamsConsumption(dto.getSession());
                     }
                     if (ps != null) {
@@ -302,18 +280,18 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             }
 
             if (StatementRequestValidator.isAddBatchOperation(request)) {
-                return opResultBuilder
+                responseObserver.onNext(opResultBuilder
                         .setType(ResultType.UUID_STRING)
                         .setSession(returnSessionInfo)
-                        .setValue(ByteString.copyFrom(serialize(psUUID))).build();
+                        .setValue(ByteString.copyFrom(serialize(psUUID))).build());
             } else {
-                return opResultBuilder
+                responseObserver.onNext(opResultBuilder
                         .setType(ResultType.INTEGER)
                         .setSession(returnSessionInfo)
-                        .setValue(ByteString.copyFrom(serialize(updated))).build();
+                        .setValue(ByteString.copyFrom(serialize(updated))).build());
             }
+            responseObserver.onCompleted();
         } finally {
-            //If there is no session, close statement and connection
             if (dto.getSession() == null || StringUtils.isEmpty(dto.getSession().getSessionUUID())) {
                 if (stmt != null) {
                     try {
@@ -334,56 +312,153 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     @Override
     public void executeQuery(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing query for {}", request.getSql());
-        String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
         
         try {
-            circuitBreaker.preCheck(stmtHash);
+            // 直接执行内部方法，由责任链处理所有逻辑（包括熔断器）
+            executeQueryInternal(request, responseObserver);
             
-            // Get the appropriate slow query segregation manager for this datasource
-            String connHash = request.getSession().getConnHash();
-            SlowQuerySegregationManager manager = getSlowQuerySegregationManagerForConnection(connHash);
-            
-            // Execute with slow query segregation
-            manager.executeWithSegregation(stmtHash, () -> {
-                executeQueryInternal(request, responseObserver);
-                return null; // Void return for query execution
-            });
-            
-            circuitBreaker.onSuccess(stmtHash);
-        } catch (SQLException e) {
-            circuitBreaker.onFailure(stmtHash, e);
-            log.error("Failure during query execution: " + e.getMessage(), e);
-            sendSQLExceptionMetadata(e, responseObserver);
         } catch (Exception e) {
-            log.error("Unexpected failure during query execution: " + e.getMessage(), e);
-            if (e.getCause() instanceof SQLException) {
-                circuitBreaker.onFailure(stmtHash, (SQLException) e.getCause());
+            log.error("Failure during query execution: " + e.getMessage(), e);
+            if (e instanceof SQLException) {
+                sendSQLExceptionMetadata((SQLException) e, responseObserver);
+            } else if (e.getCause() instanceof SQLException) {
                 sendSQLExceptionMetadata((SQLException) e.getCause(), responseObserver);
             } else {
                 SQLException sqlException = new SQLException("Unexpected error: " + e.getMessage(), e);
-                circuitBreaker.onFailure(stmtHash, sqlException);
                 sendSQLExceptionMetadata(sqlException, responseObserver);
             }
         }
     }
     
     /**
-     * Internal method for executing queries without segregation logic.
+     * Internal method for executing queries.
+     * Clean implementation that only handles gRPC service layer concerns.
+     * All business logic is delegated to the SQL processing chain.
      */
     private void executeQueryInternal(StatementRequest request, StreamObserver<OpResult> responseObserver) throws SQLException {
-        ConnectionSessionDTO dto = this.sessionConnection(request.getSession(), true);
-
-        List<Parameter> params = deserialize(request.getParameters().toByteArray(), List.class);
-        if (CollectionUtils.isNotEmpty(params)) {
-            PreparedStatement ps = StatementFactory.createPreparedStatement(sessionManager, dto, request.getSql(), params, request);
-            String resultSetUUID = this.sessionManager.registerResultSet(dto.getSession(), ps.executeQuery());
-            this.handleResultSet(dto.getSession(), resultSetUUID, responseObserver);
-        } else {
-            Statement stmt = StatementFactory.createStatement(sessionManager, dto.getConnection(), request);
-            String resultSetUUID = this.sessionManager.registerResultSet(dto.getSession(),
-                    stmt.executeQuery(request.getSql()));
-            this.handleResultSet(dto.getSession(), resultSetUUID, responseObserver);
+        // Create SQL processing context
+        SqlProcessContext context = SqlProcessContext.create(request);
+        
+        // Set connection session information
+        ConnectionSessionDTO connectionSession = sessionConnection(request.getSession(), true);
+        context.setConnectionSession(connectionSession);
+        
+        // Extract and set parameters with correct type
+        List<org.openjdbcproxy.grpc.dto.Parameter> params = deserializeParameters(request.getParameters().toByteArray());
+        context.setAttribute("parameters", params);
+        
+        // Also prepare parameters for PreparedStatement creation if needed
+        List<org.openjdbcproxy.grpc.dto.Parameter> preparedParams = 
+            (List<org.openjdbcproxy.grpc.dto.Parameter>) (List<?>) params;
+        context.setAttribute("preparedParameters", preparedParams);
+        
+        try {
+            // Process through the responsibility chain
+            boolean handled = sqlProcessorChain.process(context);
+            
+            if (context.isCompleted() && context.getResult() != null) {
+                // Chain completed the processing, send result
+                responseObserver.onNext(context.getResult());
+                responseObserver.onCompleted();
+            } else if (!handled) {
+                // No processor handled the request - this shouldn't happen
+                throw new SQLException("No processor in the chain handled the SQL request: " + request.getSql());
+            }
+            
+        } catch (Exception e) {
+            // 记录异常到上下文，供熔断器处理器使用
+            if (e instanceof SQLException) {
+                context.setError((SQLException) e);
+            } else {
+                context.setError(new SQLException("SQL processing failed: " + e.getMessage(), e));
+            }
+            
+            // 执行后处理（包括熔断器回调）
+            sqlProcessorChain.postProcess(context);
+            
+            log.error("SQL processing chain failed for query: {}", request.getSql(), e);
+            if (context.getError() instanceof SQLException) {
+                throw (SQLException) context.getError();
+            } else {
+                throw new SQLException("SQL processing failed: " + context.getError().getMessage(), context.getError());
+            }
+        } finally {
+            // 正常情况下执行后处理
+            if (context.getError() == null) {
+                postProcessQuery(context);
+            }
         }
+    }
+    
+    /**
+     * Post-process query execution for additional operations like caching and slow query cleanup
+     */
+    private void postProcessQuery(SqlProcessContext context) {
+        // 使用责任链的后处理功能
+        sqlProcessorChain.postProcess(context);
+    }
+    
+    /**
+     * Get transaction processor from the chain
+     */
+    private TransactionProcessor getTransactionProcessor() {
+        return (TransactionProcessor) sqlProcessorChain.findProcessor("TransactionProcessor");
+    }
+    
+    /**
+     * Create processor chain using pure SPI reflection-based discovery
+     * NO explicit dependencies should be passed - all handled by SPI providers
+     */
+    private SqlProcessorChain createProcessorChain() {
+        log.debug("Creating SQL processor chain using pure SPI reflection discovery...");
+        
+        // 构建纯SPI上下文 - 只包含服务器配置和会话信息
+        ProcessorRegistrationContext spiContext = ProcessorRegistrationContext.builder()
+                .serverConfiguration(serverConfiguration)
+                .sessionManager(sessionManager)
+                .dataSourceMap(convertToGenericDataSourceMap())
+                .build();
+        
+        // SPI提供者自己负责获取需要的依赖（如smartCacheManager、circuitBreaker）
+        spiContext.setAttribute("statementServiceInstance", this);  // 提供实例引用供SPI提供者获取依赖
+        
+        // 完全通过SPI发现和反射注册处理器
+        return chainFactory.createProcessorChain(spiContext);
+    }
+    
+    /**
+     * Convert HikariDataSource map to generic data source map for SPI context
+     */
+    private Map<String, Object> convertToGenericDataSourceMap() {
+        return datasourceMap.entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                entry -> (Object) entry.getValue()
+            ));
+    }
+    
+    /**
+     * Calculate total slots from all configured datasources
+     */
+    private int calculateTotalSlots() {
+        if (datasourceMap.isEmpty()) {
+            return 10; // Default when no datasources configured yet
+        }
+        
+        // Sum up maximum pool sizes from all datasources
+        int totalSlots = datasourceMap.values().stream()
+                .mapToInt(ds -> {
+                    try {
+                        return ds.getMaximumPoolSize();
+                    } catch (Exception e) {
+                        log.warn("Failed to get pool size from datasource: {}", e.getMessage());
+                        return 10; // Default fallback
+                    }
+                })
+                .sum();
+        
+        // Ensure minimum slots
+        return Math.max(totalSlots, 5);
     }
 
     @Override
@@ -499,7 +574,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                                 if (metadataBytes == null && metadataBytes.length < 1) {
                                     throw new SQLException("Metadata empty for binary stream type.");
                                 }
-                                Map<Integer, Object> metadata = deserialize(metadataBytes, Map.class);
+                                Map<Integer, Object> metadata = (Map<Integer, Object>) deserialize(metadataBytes, Map.class);
                                 String sql = (String) metadata.get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_SQL);
                                 PreparedStatement ps;
                                 String preparedStatementUUID = (String) metadata.get(CommonConstants.PREPARED_STATEMENT_UUID_BINARY_STREAM);
@@ -801,6 +876,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void startTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Starting transaction");
         try {
+            // 获取事务处理器
+            TransactionProcessor transactionProcessor = getTransactionProcessor();
+            
             SessionInfo activeSessionInfo = sessionInfo;
 
             //Start a session if none started yet.
@@ -811,6 +889,11 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             Connection sessionConnection = sessionManager.getConnection(activeSessionInfo);
             //Start a transaction
             sessionConnection.setAutoCommit(Boolean.FALSE);
+            
+            // 通知事务处理器事务开始
+            if (transactionProcessor != null) {
+                transactionProcessor.handleTransactionStart(activeSessionInfo.getSessionUUID());
+            }
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
                     .setTransactionStatus(TransactionStatus.TRX_ACTIVE)
@@ -833,8 +916,16 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void commitTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Commiting transaction");
         try {
+            // 获取事务处理器
+            TransactionProcessor transactionProcessor = getTransactionProcessor();
+            
             Connection conn = sessionManager.getConnection(sessionInfo);
             conn.commit();
+            
+            // 通知事务处理器事务提交
+            if (transactionProcessor != null) {
+                transactionProcessor.handleTransactionCommit(sessionInfo.getSessionUUID());
+            }
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
                     .setTransactionStatus(TransactionStatus.TRX_COMMITED)
@@ -857,8 +948,16 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void rollbackTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Rollback transaction");
         try {
+            // 获取事务处理器
+            TransactionProcessor transactionProcessor = getTransactionProcessor();
+            
             Connection conn = sessionManager.getConnection(sessionInfo);
             conn.rollback();
+            
+            // 通知事务处理器事务回滚
+            if (transactionProcessor != null) {
+                transactionProcessor.handleTransactionRollback(sessionInfo.getSessionUUID());
+            }
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
                     .setTransactionStatus(TransactionStatus.TRX_ROLLBACK)
@@ -921,7 +1020,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                     } else {
                         Map<String, Object> mapProperties = EMPTY_MAP;
                         if (!request.getProperties().isEmpty()) {
-                            mapProperties = deserialize(request.getProperties().toByteArray(), Map.class);
+                            mapProperties = (Map<String, Object>) deserialize(request.getProperties().toByteArray(), Map.class);
                         }
                         ps = csDto.getConnection().prepareStatement((String) mapProperties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY));
                         String uuid = sessionManager.registerPreparedStatement(csDto.getSession(), ps);
@@ -951,7 +1050,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             }
 
             List<Object> paramsReceived = (request.getTarget().getParams().size() > 0) ?
-                    deserialize(request.getTarget().getParams().toByteArray(), List.class) : EMPTY_LIST;
+                    (List<Object>) deserialize(request.getTarget().getParams().toByteArray(), List.class) : EMPTY_LIST;
             Class<?> clazz = resource.getClass();
             if ((paramsReceived != null && paramsReceived.size() > 0) &&
                     ((CallType.CALL_RELEASE.equals(request.getTarget().getCallType()) &&
@@ -995,8 +1094,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 //Second level calls, for cases like getMetadata().isAutoIncrement(int column)
                 Class<?> clazzNext = resultFirstLevel.getClass();
                 List<Object> paramsReceived2 = (request.getTarget().getNextCall().getParams().size() > 0) ?
-                        deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class) :
-                        EMPTY_LIST;
+                    (List<Object>) deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class) :
+                    EMPTY_LIST;
                 Method methodNext = MethodReflectionUtils.findMethodByName(JavaSqlInterfacesConverter.interfaceClass(clazzNext),
                         MethodNameGenerator.methodName(request.getTarget().getNextCall()),
                         paramsReceived2);
@@ -1051,7 +1150,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             ResultSetMetaData resultSetMetaData = (ResultSetMetaData) this.sessionManager.getAttr(request.getSession(),
                     RESULT_SET_METADATA_ATTR_PREFIX + request.getResourceUUID());
             List<Object> paramsReceived = (request.getTarget().getNextCall().getParams().size() > 0) ?
-                    deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class) :
+                    (List<Object>) deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class) :
                     EMPTY_LIST;
             Method methodNext = MethodReflectionUtils.findMethodByName(ResultSetMetaData.class,
                     MethodNameGenerator.methodName(request.getTarget().getNextCall()),

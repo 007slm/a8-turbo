@@ -25,18 +25,18 @@ import java.util.List;
 public class ParameterHandler {
 
     /**
-     * Adds parameters to a prepared statement.
+     * Adds parameters to a PreparedStatement.
      *
-     * @param sessionManager The session manager for LOB retrieval
-     * @param session        The current session
-     * @param ps             The prepared statement
-     * @param params         The parameters to add
-     * @throws SQLException if parameter setting fails
+     * @param sessionManager The session manager
+     * @param session       The session info
+     * @param ps            The prepared statement
+     * @param params        The parameters to add
+     * @throws SQLException If there is an error setting the parameters
      */
     public static void addParametersPreparedStatement(SessionManager sessionManager, SessionInfo session, 
-                                                     PreparedStatement ps, List<Parameter> params) throws SQLException {
+                                                     PreparedStatement ps, List<org.openjdbcproxy.grpc.dto.Parameter> params) throws SQLException {
         for (int i = 0; i < params.size(); i++) {
-            Parameter parameter = params.get(i);
+            org.openjdbcproxy.grpc.dto.Parameter parameter = params.get(i);
             addParam(sessionManager, session, parameter.getIndex(), ps, parameter);
         }
     }

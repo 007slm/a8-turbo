@@ -1,0 +1,103 @@
+# SQL处理器配置示例
+# 基于Spring框架的责任链模式配置
+
+ojp:
+  processor:
+    # 监控功能配置
+    monitoring:
+      enabled: true
+
+    # 验证处理器配置
+    validation:
+      enabled: true
+      priority: 100
+      block-dangerous-sql: true
+
+    # 缓存处理器配置
+    cache:
+      enabled: true
+      priority: 90
+      max-cache-size: 10000
+      ttl-seconds: 3600
+
+    # 日志处理器配置
+    logging:
+      enabled: true
+      priority: 80
+      log-sql: true
+      log-parameters: false
+      log-execution-time: true
+
+    # 限流处理器配置
+    rate-limit:
+      enabled: true
+      priority: 70
+      max-requests-per-minute: 1000
+      burst-capacity: 100
+
+    # 审计处理器配置
+    audit:
+      enabled: true
+      priority: 60
+      audit-sensitive-operations: true
+      audit-user-actions: true
+
+    # 加密处理器配置
+    encryption:
+      enabled: false
+      priority: 50
+      encrypt-sensitive-data: true
+      encryption-algorithm: AES-256
+
+    # 压缩处理器配置
+    compression:
+      enabled: false
+      priority: 40
+      compress-large-results: true
+      compression-threshold: 1024
+
+    # 路由处理器配置
+    routing:
+      enabled: true
+      priority: 30
+      route-by-database: true
+      route-by-operation: true
+
+    # 统计处理器配置
+    statistics:
+      enabled: true
+      priority: 20
+      collect-metrics: true
+      report-interval: 300
+
+    # 执行处理器配置
+    execution:
+      enabled: true
+      priority: 10
+      timeout-seconds: 30
+      max-rows: 10000
+
+# Spring Boot配置
+spring:
+  application:
+    name: ojp-server
+
+  # 启用调度功能
+  task:
+    scheduling:
+      pool:
+        size: 5
+
+  # 启用异步处理
+  async:
+    core-pool-size: 10
+    max-pool-size: 50
+    queue-capacity: 100
+
+# 日志配置
+logging:
+  level:
+    org.openjdbcproxy.grpc.server.chain: DEBUG
+    org.openjdbcproxy.grpc.server.chain.spring: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

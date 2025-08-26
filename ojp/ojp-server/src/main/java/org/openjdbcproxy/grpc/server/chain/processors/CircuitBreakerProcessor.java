@@ -1,8 +1,10 @@
 package org.openjdbcproxy.grpc.server.chain.processors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
+import org.springframework.stereotype.Component;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.PostProcessor;
+import org.openjdbcproxy.grpc.server.chain.PreProcessor;
 import org.openjdbcproxy.grpc.server.CircuitBreaker;
 import org.openjdbcproxy.grpc.server.SqlStatementXXHash;
 
@@ -19,12 +21,12 @@ import java.util.Set;
  * 4. 支持熔断器状态监控和统计
  */
 @Slf4j
-public class CircuitBreakerProcessor extends AbstractSqlProcessor {
+@Component
+public class CircuitBreakerProcessor extends AbstractSqlProcessor implements PreProcessor, PostProcessor {
     
     private static final String PROCESSOR_NAME = "CircuitBreakerProcessor";
     
     private final CircuitBreaker circuitBreaker;
-    private final boolean enabled;
     
     /**
      * 构造函数
@@ -32,25 +34,29 @@ public class CircuitBreakerProcessor extends AbstractSqlProcessor {
      * @param circuitBreaker 熔断器实例
      * @param enabled 是否启用熔断功能
      */
-    public CircuitBreakerProcessor(CircuitBreaker circuitBreaker, boolean enabled) {
+    public CircuitBreakerProcessor(CircuitBreaker circuitBreaker) {
         this.circuitBreaker = circuitBreaker;
-        this.enabled = enabled;
         
-        log.info("CircuitBreakerProcessor initialized: enabled={}", enabled);
+        log.info("CircuitBreakerProcessor initialized");
     }
     
     /**
-     * 默认构造函数（禁用状态）
+     * 默认构造函数
      */
     public CircuitBreakerProcessor() {
-        this(null, false);
+        this(null);
     }
     
+
+    
+    /**
+     * 前处理：在SQL执行前进行熔断检查
+     */
     @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
-        if (!enabled || circuitBreaker == null) {
-            // 禁用状态，直接传递给下一个处理器
-            return false;
+    public void preProcess(SqlProcessContext context) throws SQLException {
+        if (circuitBreaker == null) {
+            // 熔断器未配置，跳过处理
+            return;
         }
         
         String sql = context.getCurrentSql();
@@ -68,8 +74,6 @@ public class CircuitBreakerProcessor extends AbstractSqlProcessor {
             
             // 注册后处理回调，用于记录执行结果
             registerCircuitBreakerCallback(context, stmtHash);
-            
-            return false; // 继续传递给下一个处理器
             
         } catch (SQLException e) {
             // 熔断器阻止执行
@@ -114,7 +118,7 @@ public class CircuitBreakerProcessor extends AbstractSqlProcessor {
      * 后处理方法（在SQL执行完成后调用）
      */
     public void postProcess(SqlProcessContext context) {
-        if (!enabled || !context.hasAttribute("circuit_breaker_checked")) {
+        if (!context.hasAttribute("circuit_breaker_checked")) {
             return;
         }
         
@@ -145,7 +149,7 @@ public class CircuitBreakerProcessor extends AbstractSqlProcessor {
      * 获取熔断器统计信息
      */
     public CircuitBreakerStats getStats() {
-        if (!enabled || circuitBreaker == null) {
+        if (circuitBreaker == null) {
             return CircuitBreakerStats.builder()
                     .enabled(false)
                     .totalCircuits(0)
@@ -199,10 +203,7 @@ public class CircuitBreakerProcessor extends AbstractSqlProcessor {
         return 120; // 最高优先级，在所有其他处理器之前执行
     }
     
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
+
     
     @Override
     public Set<SqlProcessContext.SqlOperationType> getSupportedOperations() {

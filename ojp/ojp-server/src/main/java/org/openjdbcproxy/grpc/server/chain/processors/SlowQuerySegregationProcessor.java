@@ -1,14 +1,14 @@
 package org.openjdbcproxy.grpc.server.chain.processors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
+import org.springframework.stereotype.Component;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.PostProcessor;
 import org.openjdbcproxy.grpc.server.QueryPerformanceMonitor;
 import org.openjdbcproxy.grpc.server.SlotManager;
 
 import java.sql.SQLException;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * 慢查询隔离处理器
@@ -20,7 +20,8 @@ import java.util.concurrent.CompletableFuture;
  * 4. 性能统计和报告
  */
 @Slf4j
-public class SlowQuerySegregationProcessor extends AbstractSqlProcessor {
+@Component
+public class SlowQuerySegregationProcessor extends AbstractSqlProcessor implements PostProcessor {
     
     private static final String PROCESSOR_NAME = "SlowQuerySegregationProcessor";
     
@@ -64,12 +65,17 @@ public class SlowQuerySegregationProcessor extends AbstractSqlProcessor {
         this(1, 0, 0, 0, 0, false);
     }
     
+
+    
+    /**
+     * 前处理：在SQL执行前进行槽位管理
+     */
     @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
+    public void preProcess(SqlProcessContext context) throws SQLException {
         if (!enabled) {
             // 如果禁用，仍然进行性能监控但不做槽位管理
             recordPerformanceMetrics(context);
-            return false; // 继续传递给下一个处理器
+            return;
         }
         
         String operationHash = generateOperationHash(context);
@@ -106,8 +112,6 @@ public class SlowQuerySegregationProcessor extends AbstractSqlProcessor {
             
             // 记录性能监控信息
             recordPerformanceMetrics(context);
-            
-            return false; // 继续传递给下一个处理器
             
         } catch (Exception e) {
             log.error("Failed to acquire slot for operation: {}", operationHash, e);
@@ -272,10 +276,7 @@ public class SlowQuerySegregationProcessor extends AbstractSqlProcessor {
         return 70; // 在分片之后，缓存之前执行
     }
     
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
+
     
     @Override
     public Set<SqlProcessContext.SqlOperationType> getSupportedOperations() {

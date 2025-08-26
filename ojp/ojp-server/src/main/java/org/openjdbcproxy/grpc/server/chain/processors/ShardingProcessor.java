@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server.chain.processors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
+import org.springframework.stereotype.Component;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
 
 import java.sql.SQLException;
@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
  * 4. 处理跨库查询和事务
  */
 @Slf4j
+@Component
 public class ShardingProcessor extends AbstractSqlProcessor {
     
     private static final String PROCESSOR_NAME = "ShardingProcessor";
@@ -82,8 +83,13 @@ public class ShardingProcessor extends AbstractSqlProcessor {
         shardingRules.put("logs", new ShardingRule("logs", "create_time", ShardingStrategy.TIME, 12));
     }
     
+
+    
+    /**
+     * 前处理：在SQL执行前进行分片处理
+     */
     @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
+    public void preProcess(SqlProcessContext context) throws SQLException {
         String originalSql = context.getCurrentSql();
         String modifiedSql = originalSql;
         
@@ -105,8 +111,6 @@ public class ShardingProcessor extends AbstractSqlProcessor {
             // 设置目标数据库信息
             setTargetDatabase(context);
         }
-        
-        return false; // 继续传递给下一个处理器
     }
     
     /**

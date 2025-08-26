@@ -1,10 +1,9 @@
 package org.openjdbcproxy.grpc.server.chain;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.processors.DataPermissionProcessor;
+
 import org.openjdbcproxy.grpc.server.chain.processors.ShardingProcessor;
 import org.openjdbcproxy.grpc.server.chain.processors.SmartCacheProcessor;
-import org.openjdbcproxy.grpc.server.chain.processors.SqlExecutionProcessor;
 import org.openjdbcproxy.grpc.server.chain.processors.TransactionProcessor;
 import org.openjdbcproxy.grpc.server.chain.processors.CrudOperationProcessor;
 import org.openjdbcproxy.grpc.server.chain.processors.SlowQuerySegregationProcessor;
@@ -37,7 +36,7 @@ public class SqlProcessorChain {
      * 添加处理器到责任链
      */
     public SqlProcessorChain addProcessor(SqlProcessor processor) {
-        if (processor != null && processor.isEnabled()) {
+        if (processor != null) {
             processors.add(processor);
             log.debug("Added processor: {} with priority: {}", 
                      processor.getProcessorName(), processor.getPriority());
@@ -91,7 +90,11 @@ public class SqlProcessorChain {
         try {
             log.debug("Starting SQL processing chain for: {}", context.getCurrentSql());
             
+            // 执行主处理流程（前处理已集成到每个处理器中）
             boolean handled = chainHead.process(context);
+            
+            // 执行后处理
+            executePostProcess(context);
             
             long processingTime = System.currentTimeMillis() - startTime;
             log.debug("SQL processing chain completed in {}ms, handled: {}", processingTime, handled);
@@ -110,18 +113,18 @@ public class SqlProcessorChain {
     /**
      * 执行后处理操作（在SQL执行完成后调用）
      */
-    public void postProcess(SqlProcessContext context) {
+    public void executePostProcess(SqlProcessContext context) {
         for (SqlProcessor processor : processors) {
             try {
-                // 检查处理器是否支持后处理
-                if (processor instanceof SlowQuerySegregationProcessor) {
-                    ((SlowQuerySegregationProcessor) processor).postProcess(context);
-                } else if (processor instanceof SmartCacheProcessor) {
-                    ((SmartCacheProcessor) processor).postProcess(context, context.getResult());
-                } else if (processor instanceof CircuitBreakerProcessor) {
-                    ((CircuitBreakerProcessor) processor).postProcess(context);
+                // 检查处理器是否实现了PostProcessor接口
+                if (processor instanceof PostProcessor) {
+                    PostProcessor postProcessor = (PostProcessor) processor;
+                    
+                    // 直接执行后处理
+                    postProcessor.postProcess(context);
+                    log.debug("Post-processing completed for processor: {}", 
+                            processor.getProcessorName());
                 }
-                // 可以继续添加其他处理器的后处理逻辑
             } catch (Exception e) {
                 log.warn("Post-processing failed for processor {}: {}", 
                         processor.getProcessorName(), e.getMessage());
@@ -160,7 +163,7 @@ public class SqlProcessorChain {
     public ChainStatistics getStatistics() {
         ChainStatistics stats = new ChainStatistics();
         stats.totalProcessors = processors.size();
-        stats.enabledProcessors = (int) processors.stream().mapToLong(p -> p.isEnabled() ? 1 : 0).sum();
+        stats.enabledProcessors = processors.size();
         
         return stats;
     }
@@ -181,19 +184,21 @@ public class SqlProcessorChain {
     
     /**
      * 创建默认的SQL处理责任链
+     * 
+     * @deprecated 请使用 Spring 注入的方式获取责任链，而不是静态方法
+     * 推荐使用 SqlProcessorConfiguration.defaultSqlProcessorChain 或 SpringSqlProcessorChainFactory
      */
+    @Deprecated
     public static SqlProcessorChain createDefaultChain(SmartCacheManager cacheManager) {
         SqlProcessorChain chain = new SqlProcessorChain();
         
         // 按优先级添加处理器
         // 注意：默认链不包含熔断器，需要在具体使用时添加
         chain.addProcessor(new TransactionProcessor())       // 优先级: 110 (最高)
-             .addProcessor(new DataPermissionProcessor())    // 优先级: 100
              .addProcessor(new CrudOperationProcessor())     // 优先级: 95
              .addProcessor(new ShardingProcessor())           // 优先级: 80
              .addProcessor(new SlowQuerySegregationProcessor()) // 优先级: 70
-             .addProcessor(new SmartCacheProcessor(cacheManager)) // 优先级: 50
-             .addProcessor(new SqlExecutionProcessor());      // 优先级: -100 (最后执行)
+             .addProcessor(new SmartCacheProcessor(cacheManager)); // 优先级: 50
         
         chain.buildChain();
         return chain;
@@ -213,12 +218,16 @@ public class SqlProcessorChain {
         private final SqlProcessorChain chain = new SqlProcessorChain();
         
         public ChainBuilder addCircuitBreaker(CircuitBreaker circuitBreaker, boolean enabled) {
-            chain.addProcessor(new CircuitBreakerProcessor(circuitBreaker, enabled));
+            if (enabled && circuitBreaker != null) {
+                chain.addProcessor(new CircuitBreakerProcessor(circuitBreaker));
+            }
             return this;
         }
         
         public ChainBuilder addCircuitBreaker(CircuitBreaker circuitBreaker) {
-            chain.addProcessor(new CircuitBreakerProcessor(circuitBreaker, true));
+            if (circuitBreaker != null) {
+                chain.addProcessor(new CircuitBreakerProcessor(circuitBreaker));
+            }
             return this;
         }
         
@@ -232,10 +241,7 @@ public class SqlProcessorChain {
             return this;
         }
         
-        public ChainBuilder addDataPermission() {
-            chain.addProcessor(new DataPermissionProcessor());
-            return this;
-        }
+
         
         public ChainBuilder addSlowQuerySegregation() {
             chain.addProcessor(new SlowQuerySegregationProcessor());
@@ -264,7 +270,8 @@ public class SqlProcessorChain {
         }
         
         public ChainBuilder addSqlExecution() {
-            chain.addProcessor(new SqlExecutionProcessor());
+            // SQL execution is now handled directly in StatementServiceImpl
+            // This method is deprecated and will be removed
             return this;
         }
         

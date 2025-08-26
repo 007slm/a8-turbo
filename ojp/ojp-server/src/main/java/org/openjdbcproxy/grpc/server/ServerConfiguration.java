@@ -17,6 +17,7 @@ public class ServerConfiguration {
 
     // Configuration keys
     private static final String SERVER_PORT_KEY = "ojp.server.port";
+    private static final String HTTP_PORT_KEY = "ojp.http.port";
     private static final String PROMETHEUS_PORT_KEY = "ojp.prometheus.port";
     private static final String OPENTELEMETRY_ENABLED_KEY = "ojp.opentelemetry.enabled";
     private static final String OPENTELEMETRY_ENDPOINT_KEY = "ojp.opentelemetry.endpoint";
@@ -36,6 +37,7 @@ public class ServerConfiguration {
 
     // Default values
     public static final int DEFAULT_SERVER_PORT = CommonConstants.DEFAULT_PORT_NUMBER;
+    public static final int DEFAULT_HTTP_PORT = 8010;
     public static final int DEFAULT_PROMETHEUS_PORT = 9090;
     public static final boolean DEFAULT_OPENTELEMETRY_ENABLED = true;
     public static final String DEFAULT_OPENTELEMETRY_ENDPOINT = "";
@@ -56,6 +58,7 @@ public class ServerConfiguration {
 
     // Configuration values
     private final int serverPort;
+    private final int httpPort;
     private final int prometheusPort;
     private final boolean openTelemetryEnabled;
     private final String openTelemetryEndpoint;
@@ -75,6 +78,7 @@ public class ServerConfiguration {
 
     public ServerConfiguration() {
         this.serverPort = getIntProperty(SERVER_PORT_KEY, DEFAULT_SERVER_PORT);
+        this.httpPort = getIntProperty(HTTP_PORT_KEY, DEFAULT_HTTP_PORT);
         this.prometheusPort = getIntProperty(PROMETHEUS_PORT_KEY, DEFAULT_PROMETHEUS_PORT);
         this.openTelemetryEnabled = getBooleanProperty(OPENTELEMETRY_ENABLED_KEY, DEFAULT_OPENTELEMETRY_ENABLED);
         this.openTelemetryEndpoint = getStringProperty(OPENTELEMETRY_ENDPOINT_KEY, DEFAULT_OPENTELEMETRY_ENDPOINT);
@@ -172,6 +176,7 @@ public class ServerConfiguration {
     private void logConfigurationSummary() {
         logger.info("OJP Server Configuration:");
         logger.info("  Server Port: {}", serverPort);
+        logger.info("  HTTP Port: {}", httpPort);
         logger.info("  Prometheus Port: {}", prometheusPort);
         logger.info("  OpenTelemetry Enabled: {}", openTelemetryEnabled);
         logger.info("  OpenTelemetry Endpoint: {}", openTelemetryEndpoint.isEmpty() ? "default" : openTelemetryEndpoint);
@@ -193,6 +198,10 @@ public class ServerConfiguration {
     // Getters
     public int getServerPort() {
         return serverPort;
+    }
+
+    public int getHttpPort() {
+        return httpPort;
     }
 
     public int getPrometheusPort() {

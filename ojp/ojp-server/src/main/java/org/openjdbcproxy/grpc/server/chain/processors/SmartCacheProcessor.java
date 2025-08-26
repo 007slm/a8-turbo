@@ -2,9 +2,11 @@ package org.openjdbcproxy.grpc.server.chain.processors;
 
 import com.openjdbcproxy.grpc.OpResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.openjdbcproxy.grpc.dto.OpQueryResult;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.PostProcessor;
+import org.openjdbcproxy.grpc.server.chain.PreProcessor;
 import org.openjdbcproxy.grpc.server.resultset.ResultSetWrapper;
 import org.openjdbcproxy.grpc.server.smartcache.SmartCacheManager;
 import org.openjdbcproxy.grpc.server.smartcache.interceptor.CacheDecision;
@@ -28,7 +30,8 @@ import java.util.concurrent.CompletableFuture;
  * 5. 确保事务安全性和性能
  */
 @Slf4j
-public class SmartCacheProcessor extends AbstractSqlProcessor {
+@Component
+public class SmartCacheProcessor extends AbstractSqlProcessor implements PreProcessor, PostProcessor {
     
     private static final String PROCESSOR_NAME = "SmartCacheProcessor";
     
@@ -40,57 +43,23 @@ public class SmartCacheProcessor extends AbstractSqlProcessor {
         this.resultSetSerializer = new ResultSetSerializer(true); // Enable compression
     }
     
-    @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
-        // 智能缓存只处理SELECT查询
-        if (context.getOperationType() != SqlProcessContext.SqlOperationType.SELECT) {
-            return false;
+    @Override嗯
+    public boolean doProcess(SqlProcessContext context) throws SQLException {
+        // 检查是否已经处理了缓存命中
+        Boolean cacheHitProcessed = context.getAttribute("cache_hit_processed");
+        if (cacheHitProcessed != null && cacheHitProcessed) {
+            // 缓存命中已经在preProcess中处理，这里直接返回true表示处理完成
+            return true;
         }
         
-        // 如果缓存管理器未启用，跳过处理
-        if (smartCacheManager == null || !smartCacheManager.isEnabled()) {
-            log.debug("Smart cache is disabled, skipping cache processing");
-            return false;
-        }
-        
-        try {
-            // 构建查询拦截上下文
-            QueryInterceptContext interceptContext = buildQueryInterceptContext(context);
-            
-            // 拦截查询以检查缓存命中/未命中/跳过
-            CacheDecision decision = smartCacheManager.getInterceptor().interceptQuery(interceptContext);
-            
-            switch (decision.getType()) {
-                case HIT:
-                    // 缓存命中 - 返回缓存结果
-                    return handleCacheHit(context, decision);
-                    
-                case MISS:
-                    // 缓存未命中 - 标记需要缓存结果
-                    handleCacheMiss(context, decision);
-                    return false; // 继续执行查询
-                    
-                case SKIP:
-                    // 跳过缓存 - 正常执行查询
-                    log.debug("Skipping cache for query: {}", decision.getReason());
-                    return false;
-                    
-                default:
-                    log.warn("Unknown cache decision type: {}", decision.getType());
-                    return false;
-            }
-            
-        } catch (Exception e) {
-            log.error("Error in smart cache processing for SQL: {}", context.getCurrentSql(), e);
-            // 缓存出错不应该影响正常查询，继续执行
-            return false;
-        }
+        // 如果没有缓存命中，继续传递到下一个处理器
+        return false;
     }
     
     /**
      * 处理缓存命中场景
      */
-    private boolean handleCacheHit(SqlProcessContext context, CacheDecision decision) {
+    private void handleCacheHit(SqlProcessContext context, CacheDecision decision) {
         try {
             // 反序列化缓存结果
             String resultData = decision.getCacheEntry().getResultData();
@@ -124,14 +93,65 @@ public class SmartCacheProcessor extends AbstractSqlProcessor {
             // 标记处理完成
             context.markCompleted(opResult);
             
+            // 标记缓存命中已处理，doProcess方法会检查这个标记
+            context.setAttribute("cache_hit_processed", true);
+            
             log.info("Cache hit served for query, {} rows returned", results.size());
-            return true; // 处理完成，不需要继续执行
             
         } catch (Exception e) {
             log.warn("Failed to serve cached result for SQL: {}, falling back to database query", 
                     context.getCurrentSql(), e);
             // 缓存读取失败，继续执行正常查询
-            return false;
+        }
+    }
+    
+    /**
+     * 前处理：在SQL执行前检查缓存
+     */
+    @Override
+    public void preProcess(SqlProcessContext context) throws SQLException {
+        // 智能缓存只处理SELECT查询
+        if (context.getOperationType() != SqlProcessContext.SqlOperationType.SELECT) {
+            return;
+        }
+        
+        // 如果缓存管理器未启用，跳过处理
+        if (smartCacheManager == null || !smartCacheManager.isEnabled()) {
+            log.debug("Smart cache is disabled, skipping cache processing");
+            return;
+        }
+        
+        try {
+            // 构建查询拦截上下文
+            QueryInterceptContext interceptContext = buildQueryInterceptContext(context);
+            
+            // 拦截查询以检查缓存命中/未命中/跳过
+            CacheDecision decision = smartCacheManager.getInterceptor().interceptQuery(interceptContext);
+            
+            switch (decision.getType()) {
+                case HIT:
+                    // 缓存命中 - 处理缓存结果
+                    handleCacheHit(context, decision);
+                    break;
+                    
+                case MISS:
+                    // 缓存未命中 - 标记需要缓存结果
+                    handleCacheMiss(context, decision);
+                    break;
+                    
+                case SKIP:
+                    // 跳过缓存 - 正常执行查询
+                    log.debug("Skipping cache for query: {}", decision.getReason());
+                    break;
+                    
+                default:
+                    log.warn("Unknown cache decision type: {}", decision.getType());
+                    break;
+            }
+            
+        } catch (Exception e) {
+            log.error("Error in smart cache pre-processing for SQL: {}", context.getCurrentSql(), e);
+            // 缓存出错不应该影响正常查询，继续执行
         }
     }
     
@@ -169,9 +189,16 @@ public class SmartCacheProcessor extends AbstractSqlProcessor {
     /**
      * 后处理：在查询执行完成后缓存结果
      */
-    public void postProcess(SqlProcessContext context, OpResult result) {
-        // 只有在标记需要缓存且有结果时才处理
-        if (!context.getAttribute("should_cache_result", false) || result == null) {
+    @Override
+    public void postProcess(SqlProcessContext context) throws SQLException {
+        // 只有在标记需要缓存时才处理
+        if (!context.getAttribute("should_cache_result", false)) {
+            return;
+        }
+        
+        // 从上下文中获取结果
+        OpResult result = context.getResult();
+        if (result == null) {
             return;
         }
         
@@ -235,16 +262,13 @@ public class SmartCacheProcessor extends AbstractSqlProcessor {
         return Set.of(SqlProcessContext.SqlOperationType.SELECT); // 只处理查询操作
     }
     
-    @Override
-    public boolean isEnabled() {
-        return smartCacheManager != null && smartCacheManager.isEnabled();
-    }
+
     
     /**
      * 获取缓存统计信息
      */
     public CacheStats getStats() {
-        if (!isEnabled()) {
+        if (smartCacheManager == null || !smartCacheManager.isEnabled()) {
             return CacheStats.builder()
                     .enabled(false)
                     .cacheHits(0)

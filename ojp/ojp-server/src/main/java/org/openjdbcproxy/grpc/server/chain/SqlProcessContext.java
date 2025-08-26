@@ -99,10 +99,7 @@ public class SqlProcessContext {
      */
     private List<Parameter> parameters;
     
-    /**
-     * 用户上下文信息
-     */
-    private UserContext userContext;
+
     
     /**
      * 设置连接会话信息
@@ -482,52 +479,5 @@ public class SqlProcessContext {
         private String logicalOperator;
     }
 
-    /**
-     * 用户上下文信息
-     */
-    @Data
-    @Builder
-    public static class UserContext {
 
-        /**
-         * 用户ID
-         */
-        private String userId;
-
-        /**
-         * 租户ID
-         */
-        private String tenantId;
-
-        /**
-         * 用户角色
-         */
-        private java.util.Set<String> roles;
-
-        /**
-         * 数据权限范围
-         */
-        private DataScope dataScope;
-
-        /**
-         * 用户部门
-         */
-        private java.util.Set<String> departments;
-
-        /**
-         * 用户属性
-         */
-        @Builder.Default
-        private Map<String, Object> attributes = new HashMap<>();
-
-        /**
-         * 数据权限范围枚举
-         */
-        public enum DataScope {
-            ALL,           // 全部数据
-            DEPARTMENT,    // 部门数据
-            PERSONAL,      // 个人数据
-            CUSTOM         // 自定义范围
-        }
-    }
 }

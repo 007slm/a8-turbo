@@ -20,6 +20,7 @@ public class SlowQuerySegregationManager {
     /**
      * Creates a new SlowQuerySegregationManager.
      * 
+     * @param performanceMonitor The QueryPerformanceMonitor instance to use
      * @param totalSlots The maximum total number of concurrent operations (from HikariCP max pool size)
      * @param slowSlotPercentage The percentage of slots allocated to slow operations (0-100)
      * @param idleTimeoutMs The time in milliseconds before a slot is considered idle and eligible for borrowing
@@ -27,12 +28,12 @@ public class SlowQuerySegregationManager {
      * @param fastSlotTimeoutMs The timeout in milliseconds for acquiring fast operation slots
      * @param enabled Whether the slow query segregation feature is enabled
      */
-    public SlowQuerySegregationManager(int totalSlots, int slowSlotPercentage, long idleTimeoutMs,
+    public SlowQuerySegregationManager(QueryPerformanceMonitor performanceMonitor, int totalSlots, int slowSlotPercentage, long idleTimeoutMs,
                                      long slowSlotTimeoutMs, long fastSlotTimeoutMs, boolean enabled) {
+        this.performanceMonitor = performanceMonitor;
         this.enabled = enabled;
         this.slowSlotTimeoutMs = slowSlotTimeoutMs;
         this.fastSlotTimeoutMs = fastSlotTimeoutMs;
-        this.performanceMonitor = new QueryPerformanceMonitor();
         
         if (enabled) {
             this.slotManager = new SlotManager(totalSlots, slowSlotPercentage, idleTimeoutMs);

@@ -1,6 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * This gives 20% weight to the newest measurement, smoothing out outliers.
  */
 @Slf4j
+@Component
 public class QueryPerformanceMonitor {
     
     /**

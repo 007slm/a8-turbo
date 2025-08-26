@@ -1,8 +1,9 @@
 package org.openjdbcproxy.grpc.server.chain.processors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
+import org.springframework.stereotype.Component;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.PreProcessor;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -21,7 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * 5. SQL注入检测
  */
 @Slf4j
-public class CrudOperationProcessor extends AbstractSqlProcessor {
+@Component
+public class CrudOperationProcessor extends AbstractSqlProcessor implements PreProcessor {
     
     private static final String PROCESSOR_NAME = "CrudOperationProcessor";
     
@@ -45,33 +47,7 @@ public class CrudOperationProcessor extends AbstractSqlProcessor {
         }
     }
     
-    @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
-        SqlProcessContext.SqlOperationType operationType = context.getOperationType();
-        String sql = context.getCurrentSql();
-        
-        // 记录操作统计
-        recordOperation(operationType);
-        
-        // 验证和规范化SQL
-        validateAndNormalizeSql(context);
-        
-        // 检测危险操作
-        checkDangerousOperation(context);
-        
-        // 检测批量操作
-        detectBatchOperation(context);
-        
-        // 操作级别权限控制
-        checkOperationPermission(context);
-        
-        // 记录审计信息
-        recordAuditInfo(context);
-        
-        log.debug("CRUD operation processed: {} - {}", operationType, sql);
-        
-        return false; // 继续传递给下一个处理器
-    }
+
     
     /**
      * 验证和规范化SQL语句
@@ -114,18 +90,7 @@ public class CrudOperationProcessor extends AbstractSqlProcessor {
         
         for (String pattern : DANGEROUS_PATTERNS) {
             if (sql.matches(".*" + pattern + ".*")) {
-                SqlProcessContext.UserContext userContext = getUserContext(context);
-                
-                // 只有管理员可以执行危险操作
-                if (userContext == null || userContext.getRoles() == null || 
-                    !userContext.getRoles().contains("ADMIN")) {
-                    
-                    rejectedOperations.incrementAndGet();
-                    throw new SQLException("Dangerous operation detected and rejected: " + pattern);
-                }
-                
-                log.warn("Dangerous operation executed by admin user {}: {}", 
-                        userContext.getUserId(), context.getCurrentSql());
+                log.warn("Dangerous operation detected: {} in SQL: {}", pattern, context.getCurrentSql());
                 context.setAttribute("dangerous_operation", true);
                 context.setAttribute("danger_pattern", pattern);
                 break;
@@ -161,58 +126,16 @@ public class CrudOperationProcessor extends AbstractSqlProcessor {
         }
     }
     
-    /**
-     * 操作级别权限控制
-     */
-    private void checkOperationPermission(SqlProcessContext context) throws SQLException {
-        SqlProcessContext.UserContext userContext = getUserContext(context);
-        if (userContext == null) {
-            return; // 没有用户上下文，跳过权限检查
-        }
-        
-        SqlProcessContext.SqlOperationType operationType = context.getOperationType();
-        
-        // 检查操作权限
-        switch (operationType) {
-            case CREATE:
-            case DROP:
-            case ALTER:
-                // DDL操作需要DDL权限
-                if (!hasPermission(userContext, "DDL_OPERATIONS")) {
-                    throw new SQLException("User does not have DDL operation permission");
-                }
-                break;
-                
-            case TRUNCATE:
-                // TRUNCATE需要特殊权限
-                if (!hasPermission(userContext, "TRUNCATE_PERMISSION")) {
-                    throw new SQLException("User does not have TRUNCATE permission");
-                }
-                break;
-                
-            case DELETE:
-                // DELETE操作权限检查
-                if (!hasPermission(userContext, "DELETE_PERMISSION")) {
-                    throw new SQLException("User does not have DELETE permission");
-                }
-                break;
-                
-            default:
-                // SELECT, INSERT, UPDATE 由其他处理器处理
-                break;
-        }
-    }
+
     
     /**
      * 记录审计信息
      */
     private void recordAuditInfo(SqlProcessContext context) {
-        SqlProcessContext.UserContext userContext = getUserContext(context);
-        
         // 构建审计记录
         AuditRecord audit = AuditRecord.builder()
                 .sessionId(context.getSessionId())
-                .userId(userContext != null ? userContext.getUserId() : "unknown")
+                .userId("unknown")
                 .operationType(context.getOperationType())
                 .sql(context.getCurrentSql())
                 .timestamp(System.currentTimeMillis())
@@ -273,33 +196,7 @@ public class CrudOperationProcessor extends AbstractSqlProcessor {
         return sql.replaceAll("\\s+", " ").trim();
     }
     
-    /**
-     * 检查用户权限
-     */
-    private boolean hasPermission(SqlProcessContext.UserContext userContext, String permission) {
-        // 简化实现，实际应该查询权限系统
-        if (userContext.getRoles() == null) {
-            return false;
-        }
-        
-        // 管理员拥有所有权限
-        if (userContext.getRoles().contains("ADMIN")) {
-            return true;
-        }
-        
-        // 根据具体权限检查
-        switch (permission) {
-            case "DDL_OPERATIONS":
-                return userContext.getRoles().contains("DDL_USER");
-            case "TRUNCATE_PERMISSION":
-                return userContext.getRoles().contains("DATA_ADMIN");
-            case "DELETE_PERMISSION":
-                return userContext.getRoles().contains("DATA_WRITER") || 
-                       userContext.getRoles().contains("DATA_ADMIN");
-            default:
-                return false;
-        }
-    }
+
     
     /**
      * 获取操作统计信息
@@ -323,6 +220,30 @@ public class CrudOperationProcessor extends AbstractSqlProcessor {
     @Override
     public int getPriority() {
         return 95; // 在事务处理器之后，权限处理器之前
+    }
+    
+    /**
+     * 前处理：在SQL执行前进行验证和准备
+     */
+    @Override
+    public void preProcess(SqlProcessContext context) throws SQLException {
+        // 记录操作统计
+        SqlProcessContext.SqlOperationType operationType = context.getOperationType();
+        recordOperation(operationType);
+        
+        // 验证和规范化SQL
+        validateAndNormalizeSql(context);
+        
+        // 检测危险操作
+        checkDangerousOperation(context);
+        
+        // 检测批量操作
+        detectBatchOperation(context);
+        
+        // 记录审计信息
+        recordAuditInfo(context);
+        
+        log.debug("CRUD pre-processing completed for SQL: {}", context.getCurrentSql());
     }
     
     /**

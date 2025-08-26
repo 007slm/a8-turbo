@@ -46,15 +46,7 @@ public interface SqlProcessor {
         return 0;
     }
     
-    /**
-     * 处理器是否启用
-     * 
-     * @return true 如果启用
-     */
-    default boolean isEnabled() {
-        return true;
-    }
-    
+
     /**
      * 获取支持的SQL操作类型
      * 

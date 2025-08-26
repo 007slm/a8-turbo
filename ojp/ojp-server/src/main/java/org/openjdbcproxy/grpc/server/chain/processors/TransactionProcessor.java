@@ -1,9 +1,10 @@
 package org.openjdbcproxy.grpc.server.chain.processors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
+import org.springframework.stereotype.Component;
 
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
+import org.openjdbcproxy.grpc.server.chain.PreProcessor;
 import org.openjdbcproxy.grpc.server.smartcache.transaction.TransactionStateTracker;
 
 import java.sql.SQLException;
@@ -19,7 +20,8 @@ import java.util.Set;
  * 4. 事务隔离级别检查
  */
 @Slf4j
-public class TransactionProcessor extends AbstractSqlProcessor {
+@Component
+public class TransactionProcessor extends AbstractSqlProcessor implements PreProcessor {
     
     private static final String PROCESSOR_NAME = "TransactionProcessor";
     
@@ -33,9 +35,17 @@ public class TransactionProcessor extends AbstractSqlProcessor {
         this(new TransactionStateTracker());
     }
     
+
+    
+    /**
+     * 前处理：在SQL执行前进行事务相关处理
+     */
     @Override
-    protected boolean doProcess(SqlProcessContext context) throws SQLException {
+    public void preProcess(SqlProcessContext context) throws SQLException {
         String sessionId = context.getSessionId();
+        
+        // 记录事务状态到上下文
+        recordTransactionState(context, sessionId);
         
         // 处理不同类型的SQL操作
         switch (context.getOperationType()) {
@@ -55,22 +65,13 @@ public class TransactionProcessor extends AbstractSqlProcessor {
                 break;
         }
         
-        // 记录操作信息到上下文
-        recordTransactionState(context, sessionId);
-        
-        return false; // 继续传递给下一个处理器
+        log.debug("Transaction pre-processing completed for session: {}", sessionId);
     }
     
     /**
      * 处理写操作
      */
     private void handleWriteOperation(SqlProcessContext context, String sessionId) throws SQLException {
-        // 检查事务权限
-        SqlProcessContext.UserContext userContext = getUserContext(context);
-        if (!hasWritePermission(userContext, context)) {
-            throw new SQLException("User does not have permission to perform write operations");
-        }
-        
         // 标记当前事务有写操作
         if (transactionTracker.isInTransaction(sessionId)) {
             transactionTracker.markWrite(sessionId);
@@ -99,34 +100,7 @@ public class TransactionProcessor extends AbstractSqlProcessor {
         context.setAttribute("in_transaction", inTransaction);
     }
     
-    /**
-     * 检查用户是否有写权限
-     */
-    private boolean hasWritePermission(SqlProcessContext.UserContext userContext, SqlProcessContext context) {
-        if (userContext == null) {
-            return true; // 默认允许，由其他处理器控制权限
-        }
-        
-        // 检查角色权限
-        if (userContext.getRoles() != null) {
-            // 只读用户不能执行写操作
-            if (userContext.getRoles().contains("READ_ONLY")) {
-                return false;
-            }
-            
-            // 特定表的写权限控制
-            if (context.getParseInfo() != null && context.getParseInfo().getTableNames() != null) {
-                for (String tableName : context.getParseInfo().getTableNames()) {
-                    if (tableName.startsWith("system_") || tableName.startsWith("audit_")) {
-                        // 系统表需要管理员权限
-                        return userContext.getRoles().contains("ADMIN");
-                    }
-                }
-            }
-        }
-        
-        return true; // 默认允许
-    }
+
     
     /**
      * 记录事务状态到上下文

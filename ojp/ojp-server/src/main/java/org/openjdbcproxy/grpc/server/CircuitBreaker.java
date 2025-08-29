@@ -4,10 +4,13 @@ import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 /**
  * Implements a basic circuit breaker that counts failures and return the latest error if a threshold is exceeded.
  */
+@Component
 public class CircuitBreaker {
     private static class FailureRecord {
         private volatile SQLException lastError;
@@ -63,7 +66,8 @@ public class CircuitBreaker {
     private final long openMs;
     private final int failureThreashold;
 
-    public CircuitBreaker(long openMs, int failureThreashold) {
+    public CircuitBreaker(@Value("${ojp.server.circuit-breaker.timeout:60000}") long openMs, 
+                         @Value("${ojp.server.circuit-breaker.threshold:3}") int failureThreashold) {
         this.openMs = openMs;
         this.failureThreashold = failureThreashold;
     }

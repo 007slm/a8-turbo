@@ -19,7 +19,7 @@ public class ConnectionPoolServerConfigurationTest {
 
     private StatementServiceImpl createTestStatementServiceImpl() {
         ServerConfiguration testConfig = new ServerConfiguration();
-        return new StatementServiceImpl(null, null, testConfig);
+        return new StatementServiceImpl(null,  testConfig);
     }
 
     @Test

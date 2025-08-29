@@ -31,7 +31,7 @@ public class PerDatasourceSlowQuerySegregationTest {
         SessionManager sessionManager = Mockito.mock(SessionManager.class);
         CircuitBreaker circuitBreaker = Mockito.mock(CircuitBreaker.class);
         
-        statementService = new StatementServiceImpl(sessionManager, circuitBreaker, serverConfiguration);
+        statementService = new StatementServiceImpl(sessionManager,  serverConfiguration);
     }
 
     @Test

@@ -22,6 +22,9 @@ public class SerializationHandler {
     }
 
     public static <T> T deserialize(byte[] byteArray, Class<T> type) {
+        if (byteArray == null || byteArray.length == 0) {
+            return null;
+        }
         try (ByteArrayInputStream bi = new ByteArrayInputStream(byteArray)) {
             try (ObjectInputStream si = new ObjectInputStream(bi)) {
                 return type.cast(si.readObject());

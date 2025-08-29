@@ -19,7 +19,6 @@ import com.openjdbcproxy.grpc.SessionTerminationStatus;
 import com.openjdbcproxy.grpc.SqlErrorType;
 import com.openjdbcproxy.grpc.StatementRequest;
 import com.openjdbcproxy.grpc.StatementServiceGrpc;
-import com.openjdbcproxy.grpc.TargetCall;
 import com.openjdbcproxy.grpc.TransactionInfo;
 import com.openjdbcproxy.grpc.TransactionStatus;
 import com.zaxxer.hikari.HikariConfig;
@@ -37,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.constants.CommonConstants;
 import org.openjdbcproxy.grpc.dto.OpQueryResult;
 import org.openjdbcproxy.grpc.dto.Parameter;
+import org.openjdbcproxy.grpc.server.interceptor.StatementServiceGrpcInterceptor;
 import org.openjdbcproxy.grpc.server.utils.DateTimeUtils;
 import org.openjdbcproxy.database.DatabaseUtils;
 import org.openjdbcproxy.grpc.server.utils.DriverUtils;
@@ -51,6 +51,7 @@ import org.openjdbcproxy.grpc.server.statement.StatementFactory;
 import org.openjdbcproxy.grpc.server.resultset.ResultSetWrapper;
 import org.openjdbcproxy.grpc.server.lob.LobProcessor;
 import org.openjdbcproxy.grpc.server.utils.StatementRequestValidator;
+import org.springframework.grpc.server.service.GrpcService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -58,9 +59,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.sql.Array;
 import java.sql.Blob;
 import java.sql.CallableStatement;
@@ -74,17 +73,13 @@ import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,24 +91,21 @@ import static org.openjdbcproxy.grpc.SerializationHandler.deserialize;
 import static org.openjdbcproxy.grpc.SerializationHandler.serialize;
 import static org.openjdbcproxy.grpc.server.Constants.EMPTY_LIST;
 import static org.openjdbcproxy.grpc.server.Constants.EMPTY_MAP;
-import static org.openjdbcproxy.grpc.server.Constants.EMPTY_STRING;
-import static org.openjdbcproxy.grpc.server.Constants.SHA_256;
 import static org.openjdbcproxy.grpc.server.GrpcExceptionHandler.sendSQLExceptionMetadata;
 
 @Slf4j
 @RequiredArgsConstructor
+@GrpcService(interceptors = {StatementServiceGrpcInterceptor.class})
 public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceImplBase {
 
     private final Map<String, HikariDataSource> datasourceMap = new ConcurrentHashMap<>();
     private final SessionManager sessionManager;
-    private final CircuitBreaker circuitBreaker;
-    
     // Per-datasource slow query segregation managers
     private final Map<String, SlowQuerySegregationManager> slowQuerySegregationManagers = new ConcurrentHashMap<>();
-    
+
     // Server configuration for creating segregation managers
     private final ServerConfiguration serverConfiguration;
-    
+
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
     private final Map<String, DbName> dbNameMap = new ConcurrentHashMap<>();
 
@@ -140,7 +132,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             ds = new HikariDataSource(config);
             this.datasourceMap.put(connHash, ds);
-            
+
             // Create a slow query segregation manager for this datasource
             createSlowQuerySegregationManagerForDatasource(connHash, config.getMaximumPoolSize());
         }
@@ -157,7 +149,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
         responseObserver.onCompleted();
     }
-    
+
     /**
      * Creates a slow query segregation manager for a specific datasource.
      * Each datasource gets its own manager with pool size based on actual HikariCP configuration.
@@ -173,7 +165,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 true
             );
             slowQuerySegregationManagers.put(connHash, manager);
-            log.info("Created SlowQuerySegregationManager for datasource {} with pool size {}", 
+            log.info("Created SlowQuerySegregationManager for datasource {} with pool size {}",
                     connHash, actualPoolSize);
         } else {
             // Create disabled manager for consistency
@@ -184,7 +176,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             log.info("Created disabled SlowQuerySegregationManager for datasource {}", connHash);
         }
     }
-    
+
     /**
      * Gets the slow query segregation manager for a specific connection hash.
      * If no manager exists, creates a disabled one as a fallback.
@@ -205,44 +197,39 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeUpdate(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing update {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
+
         try {
-            circuitBreaker.preCheck(stmtHash);
-            
+            Object stmtHash2 = StatementServiceGrpcInterceptor.getCurrent().getAttribute("stmtHash");
+            log.info("从拦截器中获取的stmtHash: {}",stmtHash2);
             // Get the appropriate slow query segregation manager for this datasource
             String connHash = request.getSession().getConnHash();
             SlowQuerySegregationManager manager = getSlowQuerySegregationManagerForConnection(connHash);
-            
+
             // Execute with slow query segregation
             OpResult result = manager.executeWithSegregation(stmtHash, () -> {
                 return executeUpdateInternal(request);
             });
-            
+
             responseObserver.onNext(result);
             responseObserver.onCompleted();
-            circuitBreaker.onSuccess(stmtHash);
-            
+
         } catch (SQLDataException e) {
-            circuitBreaker.onFailure(stmtHash, e);
             log.error("SQL data failure during update execution: " + e.getMessage(), e);
             sendSQLExceptionMetadata(e, responseObserver, SqlErrorType.SQL_DATA_EXCEPTION);
         } catch (SQLException e) {
-            circuitBreaker.onFailure(stmtHash, e);
             log.error("Failure during update execution: " + e.getMessage(), e);
             sendSQLExceptionMetadata(e, responseObserver);
         } catch (Exception e) {
             log.error("Unexpected failure during update execution: " + e.getMessage(), e);
             if (e.getCause() instanceof SQLException) {
-                circuitBreaker.onFailure(stmtHash, (SQLException) e.getCause());
                 sendSQLExceptionMetadata((SQLException) e.getCause(), responseObserver);
             } else {
                 SQLException sqlException = new SQLException("Unexpected error: " + e.getMessage(), e);
-                circuitBreaker.onFailure(stmtHash, sqlException);
                 sendSQLExceptionMetadata(sqlException, responseObserver);
             }
         }
     }
-    
+
     /**
      * Internal method for executing updates without segregation logic.
      */
@@ -335,33 +322,28 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeQuery(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing query for {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
+
         try {
-            circuitBreaker.preCheck(stmtHash);
-            
+
             // Get the appropriate slow query segregation manager for this datasource
             String connHash = request.getSession().getConnHash();
             SlowQuerySegregationManager manager = getSlowQuerySegregationManagerForConnection(connHash);
-            
+
             // Execute with slow query segregation
             manager.executeWithSegregation(stmtHash, () -> {
                 executeQueryInternal(request, responseObserver);
                 return null; // Void return for query execution
             });
-            
-            circuitBreaker.onSuccess(stmtHash);
+
         } catch (SQLException e) {
-            circuitBreaker.onFailure(stmtHash, e);
             log.error("Failure during query execution: " + e.getMessage(), e);
             sendSQLExceptionMetadata(e, responseObserver);
         } catch (Exception e) {
             log.error("Unexpected failure during query execution: " + e.getMessage(), e);
             if (e.getCause() instanceof SQLException) {
-                circuitBreaker.onFailure(stmtHash, (SQLException) e.getCause());
                 sendSQLExceptionMetadata((SQLException) e.getCause(), responseObserver);
             } else {
                 SQLException sqlException = new SQLException("Unexpected error: " + e.getMessage(), e);
-                circuitBreaker.onFailure(stmtHash, sqlException);
                 sendSQLExceptionMetadata(sqlException, responseObserver);
             }
         }

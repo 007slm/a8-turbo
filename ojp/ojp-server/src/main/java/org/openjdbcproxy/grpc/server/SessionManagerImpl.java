@@ -16,8 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Component;
 
 @Slf4j
+@Component
 public class SessionManagerImpl implements SessionManager {
 
     private Map<String, String> connectionHashMap = new ConcurrentHashMap<>();
@@ -66,7 +68,7 @@ public class SessionManagerImpl implements SessionManager {
 
     @Override
     public Statement getStatement(SessionInfo sessionInfo, String uuid) {
-        return this.sessionMap.get(sessionInfo.getSessionUUID()).getStatement(uuid);
+        return  this.sessionMap.get(sessionInfo.getSessionUUID()).getStatement(uuid);
     }
 
     @Override

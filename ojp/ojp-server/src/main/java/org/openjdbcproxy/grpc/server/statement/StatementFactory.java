@@ -64,19 +64,19 @@ public class StatementFactory {
     }
 
     /**
-     * Creates a PreparedStatement with the given SQL and parameters.
+     * Creates a PreparedStatement based on the request properties and parameters.
      *
      * @param sessionManager The session manager
      * @param dto           The connection session DTO
      * @param sql           The SQL statement
-     * @param params        The parameters
+     * @param params        The parameters for the prepared statement
      * @param request       The statement request
-     * @return Created PreparedStatement
-     * @throws SQLException if prepared statement creation fails
+     * @return              The created PreparedStatement
+     * @throws SQLException If there is an error creating the statement
      */
     public static PreparedStatement createPreparedStatement(SessionManager sessionManager, 
                                                           ConnectionSessionDTO dto, String sql, 
-                                                          List<Parameter> params, StatementRequest request)
+                                                          List<org.openjdbcproxy.grpc.dto.Parameter> params, StatementRequest request)
             throws SQLException {
 
         PreparedStatement ps = null;

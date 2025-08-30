@@ -8,7 +8,6 @@ import io.grpc.stub.StreamObserver;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.openjdbcproxy.grpc.StatementServiceGrpc;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;

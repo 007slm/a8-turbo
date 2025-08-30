@@ -38,6 +38,19 @@ services:
       - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards
       - ./docker/grafana/data:/var/lib/grafana
 
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    hostname: redis-commander
+    ports:
+      - "8181:8081"
+    networks:
+      - a8
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+
 networks:
   a8:
     external: false

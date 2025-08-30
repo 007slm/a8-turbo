@@ -2,11 +2,10 @@ package org.openjdbcproxy.grpc.server.chain;
 
 import com.openjdbcproxy.grpc.OpResult;
 import com.openjdbcproxy.grpc.StatementRequest;
-import io.grpc.stub.StreamObserver;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.ConnectionSessionDTO;
+import org.openjdbcproxy.grpc.server.SessionContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +33,7 @@ public class SqlProcessContext {
     /**
      * 连接会话信息
      */
-    private ConnectionSessionDTO connectionSession;
+    private SessionContext connectionSession;
     
     /**
      * SQL操作类型
@@ -107,7 +106,7 @@ public class SqlProcessContext {
     /**
      * 设置连接会话信息
      */
-    public void setConnectionSession(ConnectionSessionDTO connectionSession) {
+    public void setConnectionSession(SessionContext connectionSession) {
         this.connectionSession = connectionSession;
     }
     

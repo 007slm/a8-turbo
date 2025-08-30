@@ -3,6 +3,7 @@ package org.openjdbcproxy.grpc.server.chain.processors;
 import com.google.protobuf.ByteString;
 import com.openjdbcproxy.grpc.OpResult;
 import com.openjdbcproxy.grpc.ResultType;
+import org.openjdbcproxy.grpc.server.SessionContext;
 import org.openjdbcproxy.grpc.server.chain.AbstractSqlProcessor;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessContext;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class SqlExecutionProcessor extends AbstractSqlProcessor {
     @Override
     protected boolean doProcess(SqlProcessContext context) throws SQLException {
         String sql = context.getCurrentSql();
-        org.openjdbcproxy.grpc.server.ConnectionSessionDTO connectionSession = context.getConnectionSession();
+        SessionContext connectionSession = context.getConnectionSession();
         
         if (connectionSession == null) {
             log.error("No connection session available for SQL execution");
@@ -70,7 +71,7 @@ public class SqlExecutionProcessor extends AbstractSqlProcessor {
      * 获取数据库连接
      */
     private Connection getConnection(SqlProcessContext context) throws SQLException {
-        org.openjdbcproxy.grpc.server.ConnectionSessionDTO connectionSession = context.getConnectionSession();
+        SessionContext connectionSession = context.getConnectionSession();
         
         // 检查是否指定了目标数据库（分片场景）
         String targetDatabase = context.getAttribute("target_database");

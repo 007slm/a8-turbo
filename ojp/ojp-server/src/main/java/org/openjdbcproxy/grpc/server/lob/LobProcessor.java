@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Utility class for handling LOB (Large Object) operations.
@@ -39,7 +38,7 @@ public class LobProcessor {
      */
     @SneakyThrows
     public static Object treatAsBlob(SessionManager sessionManager, SessionInfo session, 
-                                   ResultSet rs, int columnIndex, Map<String, DbName> dbNameMap) throws SQLException {
+                                   ResultSet rs, int columnIndex) throws SQLException {
         Blob blob = rs.getBlob(columnIndex + 1);
         if (blob == null) {
             return null;

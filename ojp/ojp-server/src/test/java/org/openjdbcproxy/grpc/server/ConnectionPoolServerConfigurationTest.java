@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariConfig;
 import org.junit.jupiter.api.Test;
 import org.openjdbcproxy.constants.CommonConstants;
 import org.openjdbcproxy.grpc.SerializationHandler;
+import org.openjdbcproxy.grpc.server.service.StatementServiceImpl;
 
 import java.lang.reflect.Method;
 import java.util.Properties;

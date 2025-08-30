@@ -1,11 +1,11 @@
-package org.openjdbcproxy.grpc.server.interceptor;
+package org.openjdbcproxy.grpc.server.service.interceptor;
 
-import com.openjdbcproxy.grpc.ConnectionDetails;
-import com.openjdbcproxy.grpc.SessionInfo;
+import com.openjdbcproxy.grpc.*;
 import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openjdbcproxy.grpc.server.service.interceptor.context.CurrentRequestContext;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,15 +19,15 @@ import java.util.List;
 @Slf4j
 public class StatementServiceGrpcInterceptor implements ServerInterceptor {
 
-    private static final Context.Key<StatementServiceInterceptContext> grpcContextWithInterceptorContextKey =
+    private static final Context.Key<CurrentRequestContext> grpcContextWithInterceptorContextKey =
             Context.key("statement.service.intercept.context");
 
 
     private final List<StatementServiceInterceptor> businessInterceptors;
     @SuppressWarnings("unchecked")
-    public static StatementServiceInterceptContext getCurrent() {
+    public static CurrentRequestContext getCurrent() {
         Context context = Context.current();
-        return (StatementServiceInterceptContext) grpcContextWithInterceptorContextKey.get(context);
+        return (CurrentRequestContext) grpcContextWithInterceptorContextKey.get(context);
     }
 
     @Override
@@ -40,7 +40,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
         String methodName = call.getMethodDescriptor().getBareMethodName();
 
         // 2. 创建业务上下文
-        StatementServiceInterceptContext<ReqT, RespT> context = new StatementServiceInterceptContext<>(
+        CurrentRequestContext<ReqT, RespT> context = new CurrentRequestContext<>(
                 methodName,
                 call,
                 headers
@@ -62,7 +62,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     /**
      * 执行所有拦截器的前置处理
      */
-    private void executePreProcessors(StatementServiceInterceptContext<?, ?> context) {
+    private void executePreProcessors(CurrentRequestContext<?, ?> context) {
         for (StatementServiceInterceptor interceptor : businessInterceptors) {
             // 先执行通用前置处理
             interceptor.preProcess(context);
@@ -76,7 +76,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
      */
     private <ReqT, RespT> ServerCall<ReqT, RespT> wrapServerCall(
             ServerCall<ReqT, RespT> original,
-            StatementServiceInterceptContext<ReqT, RespT> context) {
+            CurrentRequestContext<ReqT, RespT> context) {
         return new ForwardingServerCall.SimpleForwardingServerCall<ReqT, RespT>(original) {
             @Override
             public void sendMessage(RespT message) {
@@ -105,7 +105,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
      */
     private <ReqT, RespT> ServerCall.Listener<ReqT> wrapListener(
             ServerCall.Listener<ReqT> original,
-            StatementServiceInterceptContext<ReqT, RespT> context,
+            CurrentRequestContext<ReqT, RespT> context,
             ServerCall  call) {
         
         return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(original) {
@@ -175,7 +175,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     /**
      * 执行后置处理（逆序执行，保证责任链完整性）
      */
-    private void executePostProcessors(StatementServiceInterceptContext<?, ?> context) {
+    private void executePostProcessors(CurrentRequestContext<?, ?> context) {
         for (int i = businessInterceptors.size() - 1; i >= 0; i--) {
             StatementServiceInterceptor interceptor = businessInterceptors.get(i);
             dispatchPostProcess(interceptor, context);
@@ -186,7 +186,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     /**
      * 执行异常处理
      */
-    private void executeErrorProcessors(StatementServiceInterceptContext<?, ?> context) {
+    private void executeErrorProcessors(CurrentRequestContext<?, ?> context) {
         for (StatementServiceInterceptor interceptor : businessInterceptors) {
             interceptor.onError(context, context.getError());
         }
@@ -195,40 +195,40 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     /**
      * 路由到特定方法的前置处理
      */
-    private void dispatchPreProcess(StatementServiceInterceptor interceptor, StatementServiceInterceptContext<?, ?> context) {
+    private void dispatchPreProcess(StatementServiceInterceptor interceptor, CurrentRequestContext<?, ?> context) {
         switch (context.getMethodName()) {
             case "connect":
-                interceptor.preProcessConnect((StatementServiceInterceptContext<ConnectionDetails, StreamObserver<SessionInfo>>) context);
+                interceptor.preProcessConnect((CurrentRequestContext<ConnectionDetails, StreamObserver<SessionInfo>>) context);
                 break;
             case "executeUpdate":
-                interceptor.preProcessExecuteUpdate((StatementServiceInterceptContext<com.openjdbcproxy.grpc.StatementRequest, com.openjdbcproxy.grpc.OpResult>) context);
+                interceptor.preProcessExecuteUpdate((CurrentRequestContext<StatementRequest, OpResult>) context);
                 break;
             case "executeQuery":
-                interceptor.preProcessExecuteQuery((StatementServiceInterceptContext<com.openjdbcproxy.grpc.StatementRequest, StreamObserver<com.openjdbcproxy.grpc.OpResult>>) context);
+                interceptor.preProcessExecuteQuery((CurrentRequestContext<StatementRequest, StreamObserver<OpResult>>) context);
                 break;
             case "fetchNextRows":
-                interceptor.preProcessFetchNextRows((StatementServiceInterceptContext<com.openjdbcproxy.grpc.ResultSetFetchRequest, com.openjdbcproxy.grpc.OpResult>) context);
+                interceptor.preProcessFetchNextRows((CurrentRequestContext<ResultSetFetchRequest, OpResult>) context);
                 break;
             case "createLob":
-                interceptor.preProcessCreateLob((StatementServiceInterceptContext<StreamObserver<com.openjdbcproxy.grpc.LobDataBlock>, StreamObserver<com.openjdbcproxy.grpc.LobReference>>) context);
+                interceptor.preProcessCreateLob((CurrentRequestContext<StreamObserver<LobDataBlock>, StreamObserver<LobReference>>) context);
                 break;
             case "readLob":
-                interceptor.preProcessReadLob((StatementServiceInterceptContext<com.openjdbcproxy.grpc.ReadLobRequest, StreamObserver<com.openjdbcproxy.grpc.LobDataBlock>>) context);
+                interceptor.preProcessReadLob((CurrentRequestContext<ReadLobRequest, StreamObserver<LobDataBlock>>) context);
                 break;
             case "startTransaction":
-                interceptor.preProcessStartTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.preProcessStartTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "commitTransaction":
-                interceptor.preProcessCommitTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.preProcessCommitTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "rollbackTransaction":
-                interceptor.preProcessRollbackTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.preProcessRollbackTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "terminateSession":
-                interceptor.preProcessTerminateSession((StatementServiceInterceptContext<SessionInfo, com.openjdbcproxy.grpc.SessionTerminationStatus>) context);
+                interceptor.preProcessTerminateSession((CurrentRequestContext<SessionInfo, SessionTerminationStatus>) context);
                 break;
             case "callResource":
-                interceptor.preProcessCallResource((StatementServiceInterceptContext<com.openjdbcproxy.grpc.CallResourceRequest, com.openjdbcproxy.grpc.CallResourceResponse>) context);
+                interceptor.preProcessCallResource((CurrentRequestContext<CallResourceRequest, CallResourceResponse>) context);
                 break;
         }
     }
@@ -236,40 +236,40 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     /**
      * 路由到特定方法的后置处理
      */
-    private void dispatchPostProcess(StatementServiceInterceptor interceptor, StatementServiceInterceptContext<?, ?> context) {
+    private void dispatchPostProcess(StatementServiceInterceptor interceptor, CurrentRequestContext<?, ?> context) {
         switch (context.getMethodName()) {
             case "connect":
-                interceptor.postProcessConnect((StatementServiceInterceptContext<ConnectionDetails, SessionInfo>) context);
+                interceptor.postProcessConnect((CurrentRequestContext<ConnectionDetails, SessionInfo>) context);
                 break;
             case "executeUpdate":
-                interceptor.postProcessExecuteUpdate((StatementServiceInterceptContext<com.openjdbcproxy.grpc.StatementRequest, com.openjdbcproxy.grpc.OpResult>) context);
+                interceptor.postProcessExecuteUpdate((CurrentRequestContext<StatementRequest, OpResult>) context);
                 break;
             case "executeQuery":
-                interceptor.postProcessExecuteQuery((StatementServiceInterceptContext<com.openjdbcproxy.grpc.StatementRequest, StreamObserver<com.openjdbcproxy.grpc.OpResult>>) context);
+                interceptor.postProcessExecuteQuery((CurrentRequestContext<StatementRequest, StreamObserver<OpResult>>) context);
                 break;
             case "fetchNextRows":
-                interceptor.postProcessFetchNextRows((StatementServiceInterceptContext<com.openjdbcproxy.grpc.ResultSetFetchRequest, com.openjdbcproxy.grpc.OpResult>) context);
+                interceptor.postProcessFetchNextRows((CurrentRequestContext<ResultSetFetchRequest, OpResult>) context);
                 break;
             case "createLob":
-                interceptor.postProcessCreateLob((StatementServiceInterceptContext<StreamObserver<com.openjdbcproxy.grpc.LobDataBlock>, StreamObserver<com.openjdbcproxy.grpc.LobReference>>) context);
+                interceptor.postProcessCreateLob((CurrentRequestContext<StreamObserver<LobDataBlock>, StreamObserver<LobReference>>) context);
                 break;
             case "readLob":
-                interceptor.postProcessReadLob((StatementServiceInterceptContext<com.openjdbcproxy.grpc.ReadLobRequest, StreamObserver<com.openjdbcproxy.grpc.LobDataBlock>>) context);
+                interceptor.postProcessReadLob((CurrentRequestContext<ReadLobRequest, StreamObserver<LobDataBlock>>) context);
                 break;
             case "startTransaction":
-                interceptor.postProcessStartTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.postProcessStartTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "commitTransaction":
-                interceptor.postProcessCommitTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.postProcessCommitTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "rollbackTransaction":
-                interceptor.postProcessRollbackTransaction((StatementServiceInterceptContext<SessionInfo, SessionInfo>) context);
+                interceptor.postProcessRollbackTransaction((CurrentRequestContext<SessionInfo, SessionInfo>) context);
                 break;
             case "terminateSession":
-                interceptor.postProcessTerminateSession((StatementServiceInterceptContext<SessionInfo, com.openjdbcproxy.grpc.SessionTerminationStatus>) context);
+                interceptor.postProcessTerminateSession((CurrentRequestContext<SessionInfo, SessionTerminationStatus>) context);
                 break;
             case "callResource":
-                interceptor.postProcessCallResource((StatementServiceInterceptContext<com.openjdbcproxy.grpc.CallResourceRequest, com.openjdbcproxy.grpc.CallResourceResponse>) context);
+                interceptor.postProcessCallResource((CurrentRequestContext<CallResourceRequest, CallResourceResponse>) context);
                 break;
         }
     }

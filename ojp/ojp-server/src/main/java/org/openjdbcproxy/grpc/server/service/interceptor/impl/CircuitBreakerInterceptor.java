@@ -1,4 +1,4 @@
-package org.openjdbcproxy.grpc.server.interceptor.impl;
+package org.openjdbcproxy.grpc.server.service.interceptor.impl;
 
 import com.openjdbcproxy.grpc.StatementRequest;
 import lombok.RequiredArgsConstructor;
@@ -6,8 +6,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.grpc.server.CircuitBreaker;
 import org.openjdbcproxy.grpc.server.SqlStatementXXHash;
-import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptContext;
-import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptor;
+import org.openjdbcproxy.grpc.server.service.interceptor.context.CurrentRequestContext;
+import org.openjdbcproxy.grpc.server.service.interceptor.StatementServiceInterceptor;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLDataException;
@@ -28,14 +28,14 @@ public class CircuitBreakerInterceptor implements StatementServiceInterceptor {
      */
     @SneakyThrows
     @Override
-    public void preProcessExecuteUpdate(StatementServiceInterceptContext<?, ?> context) {
+    public void preProcessExecuteUpdate(CurrentRequestContext<?, ?> context) {
         // 获取请求参数
         StatementRequest request = context.getStatementRequest();
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
+
         // 执行熔断前置检查
         circuitBreaker.preCheck(stmtHash);
-        
+
         // 将stmtHash存入上下文供后续使用
         context.setAttribute("stmtHash", stmtHash);
     }
@@ -44,7 +44,7 @@ public class CircuitBreakerInterceptor implements StatementServiceInterceptor {
      * 后置处理：标记成功状态
      */
     @Override
-    public void postProcessExecuteUpdate(StatementServiceInterceptContext<?, ?> context) {
+    public void postProcessExecuteUpdate(CurrentRequestContext<?, ?> context) {
         String stmtHash = (String) context.getAttribute("stmtHash");
         if (stmtHash != null) {
             circuitBreaker.onSuccess(stmtHash);
@@ -55,7 +55,7 @@ public class CircuitBreakerInterceptor implements StatementServiceInterceptor {
      * 异常处理：根据异常类型标记失败状态
      */
     @Override
-    public void onError(StatementServiceInterceptContext<?, ?> context, Throwable error) {
+    public void onError(CurrentRequestContext<?, ?> context, Throwable error) {
         // 只处理executeUpdate方法的异常
         if (!"executeUpdate".equals(context.getMethodName()) && !"executeQuery".equals(context.getMethodName())) {
             return;

@@ -3,8 +3,7 @@ package org.openjdbcproxy.grpc.server.statement;
 import com.openjdbcproxy.grpc.StatementRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.constants.CommonConstants;
-import org.openjdbcproxy.grpc.dto.Parameter;
-import org.openjdbcproxy.grpc.server.ConnectionSessionDTO;
+import org.openjdbcproxy.grpc.server.SessionContext;
 import org.openjdbcproxy.grpc.server.SessionManager;
 
 import java.sql.Connection;
@@ -74,9 +73,9 @@ public class StatementFactory {
      * @return              The created PreparedStatement
      * @throws SQLException If there is an error creating the statement
      */
-    public static PreparedStatement createPreparedStatement(SessionManager sessionManager, 
-                                                          ConnectionSessionDTO dto, String sql, 
-                                                          List<org.openjdbcproxy.grpc.dto.Parameter> params, StatementRequest request)
+    public static PreparedStatement createPreparedStatement(SessionManager sessionManager,
+                                                            SessionContext dto, String sql,
+                                                            List<org.openjdbcproxy.grpc.dto.Parameter> params, StatementRequest request)
             throws SQLException {
 
         PreparedStatement ps = null;
@@ -116,7 +115,7 @@ public class StatementFactory {
             throw new SQLException("Incorrect number of properties for creating a new prepared statement.");
         }
 
-        ParameterHandler.addParametersPreparedStatement(sessionManager, dto.getSession(), ps, params);
+        ParameterHandler.addParametersPreparedStatement(sessionManager, dto.getSessionInfo(), ps, params);
         return ps;
     }
 }

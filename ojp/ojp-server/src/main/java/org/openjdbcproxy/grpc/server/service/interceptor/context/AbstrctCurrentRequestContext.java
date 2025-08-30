@@ -1,4 +1,4 @@
-package org.openjdbcproxy.grpc.server.interceptor;
+package org.openjdbcproxy.grpc.server.service.interceptor.context;
 
 import com.openjdbcproxy.grpc.ConnectionDetails;
 import com.openjdbcproxy.grpc.OpResult;
@@ -6,24 +6,19 @@ import com.openjdbcproxy.grpc.SessionInfo;
 import com.openjdbcproxy.grpc.StatementRequest;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
-import lombok.Getter;
 import lombok.Setter;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * gRPC拦截器上下文，封装调用相关的所有信息
- */
-@Getter
-public class StatementServiceInterceptContext<ReqT, RespT> {
+public abstract  class AbstrctCurrentRequestContext<ReqT, RespT> {
     // 方法名称
     private final String methodName;
-    
+
     // gRPC原生对象
     private final ServerCall<ReqT, RespT> serverCall;
     private final Metadata headers;
-    
+
     // 请求和响应数据
     @Setter
     private ReqT request;
@@ -31,11 +26,11 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     private RespT responseResult;
     @Setter
     private Throwable error;
-    
+
     // 自定义属性存储（用于拦截点间传递数据）
     private final Map<String, Object> attributes = new HashMap<>();
 
-    public StatementServiceInterceptContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers) {
+    public AbstrctCurrentRequestContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers) {
         this.methodName = methodName;
         this.serverCall = serverCall;
         this.headers = headers;
@@ -110,7 +105,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
      * 判断是否为需要SessionInfo参数的方法
      */
     private boolean isSessionInfoMethod() {
-        return "startTransaction".equals(methodName) 
+        return "startTransaction".equals(methodName)
                 || "commitTransaction".equals(methodName)
                 || "rollbackTransaction".equals(methodName)
                 || "terminateSession".equals(methodName);

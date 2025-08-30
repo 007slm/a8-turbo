@@ -8,12 +8,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.openjdbcproxy.grpc.SerializationHandler;
-import org.openjdbcproxy.grpc.server.utils.ConnectionHashGenerator;
+import org.openjdbcproxy.grpc.server.service.StatementServiceImpl;
 import org.openjdbcproxy.grpc.server.chain.SqlProcessorChain;
 import org.openjdbcproxy.grpc.server.chain.processors.SlowQuerySegregationProcessor;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;

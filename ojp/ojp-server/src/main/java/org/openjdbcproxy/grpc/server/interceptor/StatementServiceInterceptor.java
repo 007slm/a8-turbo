@@ -1,8 +1,8 @@
 package org.openjdbcproxy.grpc.server.interceptor;
 
 /**
- * StatementService专用拦截器接口
- * 包含通用拦截点和所有方法的专用拦截点
+ * 业务拦截器接口
+ * 定义了各种gRPC方法的前置、后置和异常处理方法
  */
 public interface StatementServiceInterceptor {
 
@@ -154,4 +154,24 @@ public interface StatementServiceInterceptor {
      * callResource方法后置处理
      */
     default void postProcessCallResource(StatementServiceInterceptContext<?, ?> context) {}
+
+    /**
+     * createStatement方法前置处理
+     */
+    default void preProcessCreateStatement(StatementServiceInterceptContext<?, ?> context) {}
+
+    /**
+     * createStatement方法后置处理
+     */
+    default void postProcessCreateStatement(StatementServiceInterceptContext<?, ?> context) {}
+
+    /**
+     * createPreparedStatement方法前置处理
+     */
+    default void preProcessCreatePreparedStatement(StatementServiceInterceptContext<?, ?> context) {}
+
+    /**
+     * createPreparedStatement方法后置处理
+     */
+    default void postProcessCreatePreparedStatement(StatementServiceInterceptContext<?, ?> context) {}
 }

@@ -1,46 +1,40 @@
 package org.openjdbcproxy.grpc.server.config;
 
-import io.grpc.health.v1.HealthCheckResponse;
 import io.opentelemetry.instrumentation.grpc.v1_6.GrpcTelemetry;
-import org.openjdbcproxy.grpc.server.*;
+import org.openjdbcproxy.grpc.server.OjpServerTelemetry;
+import org.openjdbcproxy.grpc.server.ServerConfiguration;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 
 /**
  * Spring 配置类
  * 配置 gRPC 服务和必要的 Bean
  */
 @Configuration
-public class SpringConfig {
-    
-    // ServerConfiguration 现在使用 @Component 注解，Spring 会自动管理
-    // 不需要手动创建 Bean
-    
-    // SessionManagerImpl 和 CircuitBreaker 现在使用 @Component 注解，Spring 会自动管理
-    // 不需要手动创建 Bean
-    
-    // StatementServiceImpl 现在使用 @Component 注解，Spring 会自动管理
-    // 不需要手动创建 Bean
+public class SpringConfig implements DisposableBean {
+
+    // 保存对GrpcTelemetry的引用，以便在销毁时进行清理
+    OjpServerTelemetry ojpServerTelemetry;
     
     @Bean
     public OjpServerTelemetry ojpServerTelemetry() {
-        return new OjpServerTelemetry();
+        ojpServerTelemetry = new OjpServerTelemetry();
+        return ojpServerTelemetry;
     }
     
     @Bean
     public GrpcTelemetry grpcTelemetry(OjpServerTelemetry ojpServerTelemetry, 
                                       ServerConfiguration config) {
-        if (config.isOpenTelemetryEnabled()) {
-            return ojpServerTelemetry.createGrpcTelemetry(
-                config.getPrometheusPort(), 
+        GrpcTelemetry grpcTelemetry = ojpServerTelemetry.createGrpcTelemetry(
+                config.getPrometheusPort(),
                 config.getPrometheusAllowedIps()
-            );
-        } else {
-            return ojpServerTelemetry.createNoOpGrpcTelemetry();
-        }
+        );
+        return grpcTelemetry;
     }
     
-    // OjpHealthManager 现在由 Spring gRPC 自动配置处理
-    // 不需要手动创建 Bean
+    @Override
+    public void destroy() {
+        this.ojpServerTelemetry.close();
+    }
 }

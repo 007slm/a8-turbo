@@ -1,16 +1,14 @@
 package org.openjdbcproxy.grpc.server;
 
-import org.codehaus.plexus.util.StringUtils;
 import org.openjdbcproxy.constants.CommonConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 /**
  * Configuration class for the OJP Server that loads settings from Spring configuration.
@@ -23,7 +21,6 @@ public class ServerConfiguration {
     // Default values
     public static final int DEFAULT_SERVER_PORT = CommonConstants.DEFAULT_PORT_NUMBER;
     public static final int DEFAULT_PROMETHEUS_PORT = 9090;
-    public static final boolean DEFAULT_OPENTELEMETRY_ENABLED = true;
     public static final String DEFAULT_OPENTELEMETRY_ENDPOINT = "";
     public static final int DEFAULT_THREAD_POOL_SIZE = 200;
     public static final int DEFAULT_MAX_REQUEST_SIZE = 4 * 1024 * 1024; // 4MB
@@ -47,8 +44,6 @@ public class ServerConfiguration {
     @Value("${ojp.prometheus.port:" + DEFAULT_PROMETHEUS_PORT + "}")
     private int prometheusPort;
 
-    @Value("${ojp.opentelemetry.enabled:" + DEFAULT_OPENTELEMETRY_ENABLED + "}")
-    private boolean openTelemetryEnabled;
 
     @Value("${ojp.opentelemetry.endpoint:'" + DEFAULT_OPENTELEMETRY_ENDPOINT + "'}")
     private String openTelemetryEndpoint;
@@ -118,7 +113,6 @@ public class ServerConfiguration {
         logger.info("OJP Server Configuration:");
         logger.info("  Server Port: {}", serverPort);
         logger.info("  Prometheus Port: {}", prometheusPort);
-        logger.info("  OpenTelemetry Enabled: {}", openTelemetryEnabled);
         logger.info("  OpenTelemetry Endpoint: {}", openTelemetryEndpoint);
         logger.info("  Thread Pool Size: {}", threadPoolSize);
         logger.info("  Max Request Size: {} bytes", maxRequestSize);
@@ -144,9 +138,6 @@ public class ServerConfiguration {
         return prometheusPort;
     }
 
-    public boolean isOpenTelemetryEnabled() {
-        return openTelemetryEnabled;
-    }
 
     public String getOpenTelemetryEndpoint() {
         return openTelemetryEndpoint;

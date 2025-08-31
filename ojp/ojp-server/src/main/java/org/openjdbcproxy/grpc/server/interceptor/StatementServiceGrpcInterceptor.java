@@ -22,7 +22,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
 
     private final List<StatementServiceInterceptor> businessInterceptors;
     @SuppressWarnings("unchecked")
-    public static StatementServiceInterceptContext getCurrent() {
+    public static StatementServiceInterceptContext getCurrentContext() {
         Context context = Context.current();
         return (StatementServiceInterceptContext) grpcContextWithInterceptorContextKey.get(context);
     }
@@ -46,7 +46,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
         // 4. 包装响应处理器（处理后置逻辑）
         ServerCall<ReqT, RespT> wrappedCall = wrapServerCall(call, context);
         
-        // 5. 处理请求和流式数据
+        // 5. 包装处理请求和流式数据
         Context grpcContextWithInterceptorContext = Context.current()
                 .withValue(grpcContextWithInterceptorContextKey,
                         context);
@@ -67,6 +67,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
             dispatchPreProcess(interceptor, context);
         }
     }
+
 
     /**
      * 包装ServerCall，处理响应发送和后置逻辑
@@ -227,6 +228,12 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
             case "callResource":
                 interceptor.preProcessCallResource(context);
                 break;
+            case "createStatement":
+                interceptor.preProcessCreateStatement(context);
+                break;
+            case "createPreparedStatement":
+                interceptor.preProcessCreatePreparedStatement(context);
+                break;
         }
     }
 
@@ -267,6 +274,12 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
                 break;
             case "callResource":
                 interceptor.postProcessCallResource(context);
+                break;
+            case "createStatement":
+                interceptor.postProcessCreateStatement(context);
+                break;
+            case "createPreparedStatement":
+                interceptor.postProcessCreatePreparedStatement(context);
                 break;
         }
     }

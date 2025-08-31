@@ -1,14 +1,12 @@
 package org.openjdbcproxy.grpc.server.interceptor;
 
-import com.openjdbcproxy.grpc.ConnectionDetails;
-import com.openjdbcproxy.grpc.OpResult;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import com.openjdbcproxy.grpc.*;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +17,8 @@ import java.util.Map;
 public class StatementServiceInterceptContext<ReqT, RespT> {
     // 方法名称
     private final String methodName;
-    
+
+
     // gRPC原生对象
     private final ServerCall<ReqT, RespT> serverCall;
     private final Metadata headers;
@@ -31,6 +30,28 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     private RespT responseResult;
     @Setter
     private Throwable error;
+
+
+
+    // 当前请求关联的信息
+    @Getter
+    @Setter
+    DbName currentDbName;
+
+    @Setter
+    @Getter
+    private SessionInfo currentSessionInfo;
+
+    @Setter
+    private Connection currentConnection;
+
+    @Setter
+    private Connection currentInterceptedConnection;
+
+    public Connection getCurrentConnection(){
+        // 优先从上下文获取 支持拦截器修改connection
+        return currentInterceptedConnection != null ? currentInterceptedConnection : currentConnection;
+    }
     
     // 自定义属性存储（用于拦截点间传递数据）
     private final Map<String, Object> attributes = new HashMap<>();
@@ -59,7 +80,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     /**
      * 类型安全的请求参数获取（executeUpdate等方法专用）
      */
-    public StatementRequest getStatementRequest() {
+    public StatementRequest requestToStatementRequest() {
         if (!"executeUpdate".equals(methodName) && !"executeQuery".equals(methodName)) {
             throw new IllegalStateException("Method [" + methodName + "] does not support StatementRequest");
         }
@@ -69,7 +90,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     /**
      * 类型安全的连接请求参数获取（connect方法专用）
      */
-    public ConnectionDetails getConnectionDetails() {
+    public ConnectionDetails requestToConnectionDetails() {
         if (!"connect".equals(methodName)) {
             throw new IllegalStateException("Method [" + methodName + "] does not support ConnectionDetails");
         }
@@ -79,7 +100,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     /**
      * 类型安全的会话信息获取（事务相关方法专用）
      */
-    public SessionInfo getSessionInfo() {
+    public SessionInfo requestToSessionInfo() {
         if (!isSessionInfoMethod()) {
             throw new IllegalStateException("Method [" + methodName + "] does not support SessionInfo");
         }
@@ -89,7 +110,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     /**
      * 类型安全的操作结果获取（executeUpdate等方法专用）
      */
-    public OpResult getOpResultResult() {
+    public OpResult responseToOpResultResult() {
         if (!"executeUpdate".equals(methodName) && !"fetchNextRows".equals(methodName)) {
             throw new IllegalStateException("Method [" + methodName + "] does not return OpResult");
         }
@@ -99,7 +120,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     /**
      * 类型安全的会话结果获取（connect等方法专用）
      */
-    public SessionInfo getSessionInfoResult() {
+    public SessionInfo responseToSessionInfo() {
         if (!isSessionResultMethod()) {
             throw new IllegalStateException("Method [" + methodName + "] does not return SessionInfo");
         }
@@ -125,4 +146,10 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
                 || "commitTransaction".equals(methodName)
                 || "rollbackTransaction".equals(methodName);
     }
+
+
+
+
+
+
 }

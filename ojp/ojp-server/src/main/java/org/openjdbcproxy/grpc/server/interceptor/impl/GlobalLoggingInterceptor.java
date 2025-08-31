@@ -1,4 +1,4 @@
-package org.openjdbcproxy.grpc.server.interceptor;
+package org.openjdbcproxy.grpc.server.interceptor.impl;
 
 import io.grpc.*;
 import lombok.extern.slf4j.Slf4j;

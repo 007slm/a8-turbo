@@ -16,23 +16,16 @@ import java.util.List;
  */
 public class OjpServerTelemetry {
 	private static final Logger logger = LoggerFactory.getLogger(OjpServerTelemetry.class);
-	private static final int DEFAULT_PROMETHEUS_PORT = 9090;
+    private PrometheusHttpServer prometheusServer;
 
-	/**
-	 * Creates GrpcTelemetry with default configuration.
-	 */
-	public GrpcTelemetry createGrpcTelemetry() {
-		return createGrpcTelemetry(DEFAULT_PROMETHEUS_PORT, List.of(IpWhitelistValidator.ALLOW_ALL_IPS));
-	}
+    /**
+     * Creates GrpcTelemetry with specified Prometheus port.
+     */
+    public GrpcTelemetry createGrpcTelemetry(int prometheusPort) {
+        return createGrpcTelemetry(prometheusPort, List.of(IpWhitelistValidator.ALLOW_ALL_IPS));
+    }
 
-	/**
-	 * Creates GrpcTelemetry with specified Prometheus port.
-	 */
-	public GrpcTelemetry createGrpcTelemetry(int prometheusPort) {
-		return createGrpcTelemetry(prometheusPort, List.of(IpWhitelistValidator.ALLOW_ALL_IPS));
-	}
-
-	/**
+    /**
 	 * Creates GrpcTelemetry with specified Prometheus port and IP whitelist.
 	 */
 	public GrpcTelemetry createGrpcTelemetry(int prometheusPort, List<String> allowedIps) {
@@ -45,9 +38,10 @@ public class OjpServerTelemetry {
 			allowedIps = List.of(IpWhitelistValidator.ALLOW_ALL_IPS);
 		}
 
-		PrometheusHttpServer prometheusServer = PrometheusHttpServer.builder()
+		this.prometheusServer = PrometheusHttpServer.builder()
 				.setPort(prometheusPort)
 				.build();
+
 
 		OpenTelemetry openTelemetry = OpenTelemetrySdk.builder()
 				.setMeterProvider(
@@ -59,11 +53,8 @@ public class OjpServerTelemetry {
 		return GrpcTelemetry.create(openTelemetry);
 	}
 
-	/**
-	 * Creates a no-op GrpcTelemetry when OpenTelemetry is disabled.
-	 */
-	public GrpcTelemetry createNoOpGrpcTelemetry() {
-		logger.info("OpenTelemetry disabled, using no-op implementation");
-		return GrpcTelemetry.create(OpenTelemetry.noop());
-	}
+    public void close() {
+        prometheusServer.close();
+    }
+
 }

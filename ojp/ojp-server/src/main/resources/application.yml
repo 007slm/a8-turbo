@@ -33,7 +33,7 @@ grpc:
         enabled: false # gRPC请求不兼容CSRF保护
     # 拦截器配置 - 现在通过 @GlobalServerInterceptor 注解自动发现
     # interceptors:
-    # - org.openjdbcproxy.grpc.server.interceptor.GlobalLoggingInterceptor
+    # - org.openjdbcproxy.grpc.server.interceptor.impl.GlobalLoggingInterceptor
 
 # OJP Server 自定义配置
 ojp:
@@ -64,7 +64,7 @@ ojp:
       enabled: true
       endpoint: ""
   prometheus:
-    port: 59040
+    port: 59050
     allowed-ips: "*"
 
   # 安全配置

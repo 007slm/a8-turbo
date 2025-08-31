@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 /**
  * Utility class for handling LOB (Large Object) operations.
@@ -33,13 +32,12 @@ public class LobProcessor {
      * @param session       The current session
      * @param rs           The result set
      * @param columnIndex  The column index (0-based)
-     * @param dbNameMap    Map of connection hash to database name (unused in hydrated approach)
      * @return The processed BLOB value as byte array
      * @throws SQLException if BLOB processing fails
      */
     @SneakyThrows
     public static Object treatAsBlob(SessionManager sessionManager, SessionInfo session, 
-                                   ResultSet rs, int columnIndex, Map<String, DbName> dbNameMap) throws SQLException {
+                                   ResultSet rs, int columnIndex) throws SQLException {
         Blob blob = rs.getBlob(columnIndex + 1);
         if (blob == null) {
             return null;

@@ -30,7 +30,7 @@ public class CircuitBreakerInterceptor implements StatementServiceInterceptor {
     @Override
     public void preProcessExecuteUpdate(StatementServiceInterceptContext<?, ?> context) {
         // 获取请求参数
-        StatementRequest request = context.getStatementRequest();
+        StatementRequest request = context.requestToStatementRequest();
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
         
         // 执行熔断前置检查

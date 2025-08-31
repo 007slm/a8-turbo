@@ -34,7 +34,6 @@ public class ServerConfigurationTest {
 
         assertEquals(ServerConfiguration.DEFAULT_SERVER_PORT, config.getServerPort());
         assertEquals(ServerConfiguration.DEFAULT_PROMETHEUS_PORT, config.getPrometheusPort());
-        assertEquals(ServerConfiguration.DEFAULT_OPENTELEMETRY_ENABLED, config.isOpenTelemetryEnabled());
         assertEquals(ServerConfiguration.DEFAULT_OPENTELEMETRY_ENDPOINT, config.getOpenTelemetryEndpoint());
         assertEquals(ServerConfiguration.DEFAULT_THREAD_POOL_SIZE, config.getThreadPoolSize());
         assertEquals(ServerConfiguration.DEFAULT_MAX_REQUEST_SIZE, config.getMaxRequestSize());
@@ -65,7 +64,6 @@ public class ServerConfigurationTest {
 
         assertEquals(8080, config.getServerPort());
         assertEquals(9091, config.getPrometheusPort());
-        assertFalse(config.isOpenTelemetryEnabled());
         assertEquals("http://localhost:4317", config.getOpenTelemetryEndpoint());
         assertEquals(100, config.getThreadPoolSize());
         assertEquals(8388608, config.getMaxRequestSize());
@@ -103,14 +101,6 @@ public class ServerConfigurationTest {
         assertEquals(ServerConfiguration.DEFAULT_CONNECTION_IDLE_TIMEOUT, config.getConnectionIdleTimeout());
     }
 
-    @Test
-    public void testBooleanValues() {
-        System.setProperty("ojp.opentelemetry.enabled", "true");
-
-        ServerConfiguration config = new ServerConfiguration();
-
-        assertTrue(config.isOpenTelemetryEnabled());
-    }
 
     @Test
     public void testListProperties() {

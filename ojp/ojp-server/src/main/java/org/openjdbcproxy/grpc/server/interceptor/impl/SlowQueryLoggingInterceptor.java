@@ -95,7 +95,7 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
             String methodName = context.getMethodName();
 
 
-            StatementRequest request = context.getStatementRequest();
+            StatementRequest request = context.requestToStatementRequest();
             SessionInfo session = request.getSession();
 
             // 构建慢查询信息

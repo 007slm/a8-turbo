@@ -1,8 +1,6 @@
-package org.openjdbcproxy.grpc.server.smartcache.interceptor;
+package org.openjdbcproxy.grpc.server.interceptor.impl;
 
 import lombok.Data;
-import org.openjdbcproxy.grpc.server.smartcache.cache.CacheEntry;
-import org.openjdbcproxy.grpc.server.smartcache.rule.CacheRule;
 
 /**
  * Represents the decision made by the cache interceptor
@@ -18,12 +16,12 @@ public class CacheDecision {
     
     private final Type type;
     private final String reason;
-    private final CacheEntry cacheEntry;
+    private final Object cacheEntry; // 使用Object类型避免依赖CacheEntry类
     private final String cacheKey;
-    private final CacheRule.CacheAction action;
+    private final Object action; // 使用Object类型避免依赖CacheRule.CacheAction接口
     
-    private CacheDecision(Type type, String reason, CacheEntry cacheEntry, 
-                         String cacheKey, CacheRule.CacheAction action) {
+    private CacheDecision(Type type, String reason, Object cacheEntry, 
+                         String cacheKey, Object action) {
         this.type = type;
         this.reason = reason;
         this.cacheEntry = cacheEntry;
@@ -34,14 +32,14 @@ public class CacheDecision {
     /**
      * Creates a cache hit decision
      */
-    public static CacheDecision hit(CacheEntry cacheEntry, String cacheKey) {
+    public static CacheDecision hit(Object cacheEntry, String cacheKey) {
         return new CacheDecision(Type.HIT, "Cache hit", cacheEntry, cacheKey, null);
     }
     
     /**
      * Creates a cache miss decision
      */
-    public static CacheDecision miss(String cacheKey, CacheRule.CacheAction action) {
+    public static CacheDecision miss(String cacheKey, Object action) {
         return new CacheDecision(Type.MISS, "Cache miss", null, cacheKey, action);
     }
     

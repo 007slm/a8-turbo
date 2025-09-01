@@ -1,0 +1,55 @@
+[
+  {
+    "name": "users_table_cache",
+    "description": "缓存用户表查询，TTL 5分钟",
+    "type": "TABLE_NAME",
+    "tables": ["users"],
+    "ttl": "PT5M",
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "orders_table_cache",
+    "description": "缓存订单表查询，TTL 10分钟",
+    "type": "TABLE_NAME",
+    "tables": ["orders"],
+    "ttl": "PT10M",
+    "priority": 10,
+    "enabled": true
+  },
+  {
+    "name": "product_analytics_cache",
+    "description": "缓存产品分析查询，TTL 1小时",
+    "type": "TABLE_NAME",
+    "tablesAny": ["products", "product_categories", "product_reviews"],
+    "ttl": "PT1H",
+    "priority": 8,
+    "enabled": true
+  },
+  {
+    "name": "report_query_cache",
+    "description": "缓存报告相关查询，TTL 30分钟",
+    "type": "REGEX",
+    "regex": ".*report.*|.*analytics.*|.*dashboard.*",
+    "ttl": "PT30M",
+    "priority": 5,
+    "enabled": true
+  },
+  {
+    "name": "select_only_cache",
+    "description": "只缓存SELECT查询，TTL 15分钟",
+    "type": "QUERY_TYPE",
+    "pattern": "SELECT",
+    "ttl": "PT15M",
+    "priority": 1,
+    "enabled": true
+  },
+  {
+    "name": "global_cache",
+    "description": "全局缓存规则，TTL 5分钟",
+    "type": "GLOBAL",
+    "ttl": "PT5M",
+    "priority": 0,
+    "enabled": false
+  }
+]

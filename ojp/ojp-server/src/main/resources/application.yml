@@ -35,7 +35,7 @@ grpc:
     # interceptors:
     # - org.openjdbcproxy.grpc.server.interceptor.impl.GlobalLoggingInterceptor
 
-# OJP Server 自定义配置
+    # OJP Server 自定义配置
 ojp:
   server:
     thread-pool-size: 200
@@ -57,6 +57,14 @@ ojp:
     base-path: /api
     cache:
       base-path: /api/cache
+  # Redis配置
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    database: ${REDIS_DATABASE:0}
+    password: ${REDIS_PASSWORD:}
+    username: ${REDIS_USERNAME:}
+    timeout: ${REDIS_TIMEOUT:10000}
 
   # 监控配置
   monitoring:

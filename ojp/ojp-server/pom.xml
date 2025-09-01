@@ -127,13 +127,6 @@
         </dependency>
 
 
-        <!-- Apache Commons Pool2 for Redis connection pooling -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-pool2</artifactId>
-            <version>2.11.1</version>
-        </dependency>
-
         <!-- Spring gRPC Server Web Starter - 同时支持HTTP和gRPC -->
         <dependency>
             <groupId>org.springframework.grpc</groupId>
@@ -169,10 +162,18 @@
             <version>2.17.1</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
+        </dependency>
+
+
         <!-- Fastjson for JSON processing -->
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
+            <version>1.2.83</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/net.jpountz.lz4/lz4 -->

@@ -127,15 +127,6 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
                 }
             }
 
-
-
-            // 处理Unary请求的关键：在调用业务方法前设置参数
-            @Override
-            public void onHalfClose() {
-                log.info("onHalfClose");
-                super.onHalfClose();
-            }
-
             @Override
             public void onComplete() {
                 for (StatementServiceInterceptor interceptor : businessInterceptors) {

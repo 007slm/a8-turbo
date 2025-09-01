@@ -1,15 +1,11 @@
 package org.openjdbcproxy.grpc.server.interceptor.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.openjdbcproxy.grpc.SessionInfo;
 import com.openjdbcproxy.grpc.StatementRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.grpc.SerializationHandler;
-import org.openjdbcproxy.grpc.dto.Parameter;
 import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptContext;
 import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptor;
-import org.openjdbcproxy.grpc.server.smartcache.parser.SqlParser;
-import org.openjdbcproxy.grpc.server.smartcache.rule.QueryContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -31,7 +27,7 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
 
     private final StringRedisTemplate stringRedisTemplate;
     private final SqlParser sqlParser;
-    
+
     /**
      * 慢查询阈值（毫秒），可通过配置文件ojp.server.interceptors.slow-query-threshold进行配置
      */
@@ -104,18 +100,8 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
             // 基本信息
             slowQueryInfo.put("sql", request.getSql());
             
-            // 使用fastjson序列化参数为JSON字符串
-            String parametersStr = "[]";
-            if (!request.getParameters().isEmpty()) {
-                try {
-                    List<Parameter> parameters = SerializationHandler.deserialize(
-                        request.getParameters().toByteArray(), List.class);
-                    parametersStr = parameters != null ? JSON.toJSONString(parameters) : "[]";
-                } catch (Exception e) {
-                    parametersStr = "JSON serialization failed: " + e.getMessage();
-                }
-            }
-            slowQueryInfo.put("parameters", parametersStr);
+            String paramsStr = SerializationHandler.deserializeParams(request.getParameters());
+            slowQueryInfo.put("parameters", paramsStr);
             
             slowQueryInfo.put("executionTime", String.valueOf(executionTime));
             slowQueryInfo.put("inTransaction", String.valueOf(session.hasTransactionInfo()));
@@ -129,7 +115,7 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
             String normalizedSql = sqlParser.normalizeSql(request.getSql());
             slowQueryInfo.put("normalizedSql", normalizedSql);
             
-            QueryContext.QueryType queryType = sqlParser.getQueryType(request.getSql());
+            QueryType queryType = sqlParser.getQueryType(request.getSql());
             slowQueryInfo.put("queryType", queryType.name());
             
             List<String> tableNames = sqlParser.extractTableNames(request.getSql());

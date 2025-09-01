@@ -1,7 +1,6 @@
-package org.openjdbcproxy.grpc.server.smartcache.parser;
+package org.openjdbcproxy.grpc.server.interceptor.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.openjdbcproxy.grpc.server.smartcache.rule.QueryContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,32 +68,32 @@ public class SqlParser {
     /**
      * Determines the query type from SQL statement
      */
-    public QueryContext.QueryType getQueryType(String sql) {
+    public QueryType getQueryType(String sql) {
         if (sql == null || sql.trim().isEmpty()) {
-            return QueryContext.QueryType.UNKNOWN;
+            return QueryType.UNKNOWN;
         }
         
         String trimmedSql = sql.trim();
         
         if (SELECT_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.SELECT;
+            return QueryType.SELECT;
         } else if (INSERT_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.INSERT;
+            return QueryType.INSERT;
         } else if (UPDATE_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.UPDATE;
+            return QueryType.UPDATE;
         } else if (DELETE_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.DELETE;
+            return QueryType.DELETE;
         } else if (CREATE_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.CREATE;
+            return QueryType.CREATE;
         } else if (DROP_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.DROP;
+            return QueryType.DROP;
         } else if (ALTER_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.ALTER;
+            return QueryType.ALTER;
         } else if (TRUNCATE_PATTERN.matcher(trimmedSql).find()) {
-            return QueryContext.QueryType.TRUNCATE;
+            return QueryType.TRUNCATE;
         }
         
-        return QueryContext.QueryType.UNKNOWN;
+        return QueryType.UNKNOWN;
     }
     
     /**
@@ -106,7 +105,7 @@ public class SqlParser {
         }
         
         List<String> tables = new ArrayList<>();
-        QueryContext.QueryType queryType = getQueryType(sql);
+        QueryType queryType = getQueryType(sql);
         
         switch (queryType) {
             case SELECT:
@@ -251,13 +250,18 @@ public class SqlParser {
      * Checks if the query is a write operation
      */
     public boolean isWriteOperation(String sql) {
-        QueryContext.QueryType queryType = getQueryType(sql);
-        return queryType == QueryContext.QueryType.INSERT ||
-               queryType == QueryContext.QueryType.UPDATE ||
-               queryType == QueryContext.QueryType.DELETE ||
-               queryType == QueryContext.QueryType.CREATE ||
-               queryType == QueryContext.QueryType.DROP ||
-               queryType == QueryContext.QueryType.ALTER ||
-               queryType == QueryContext.QueryType.TRUNCATE;
+        QueryType queryType = getQueryType(sql);
+        return queryType == QueryType.INSERT ||
+               queryType == QueryType.UPDATE ||
+               queryType == QueryType.DELETE ||
+               queryType == QueryType.CREATE ||
+               queryType == QueryType.DROP ||
+               queryType == QueryType.ALTER ||
+               queryType == QueryType.TRUNCATE;
+    }
+
+    public boolean isReadOperation(String sql) {
+        QueryType queryType = getQueryType(sql);
+        return queryType == QueryType.SELECT;
     }
 }

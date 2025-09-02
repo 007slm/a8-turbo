@@ -38,16 +38,17 @@ services:
       - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards
       - ./docker/grafana/data:/var/lib/grafana
 
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: redis-commander
-    hostname: redis-commander
+  phpredisadmin:
+    image: erikdubbelboer/phpredisadmin:latest
+    container_name: phpredisadmin
+    hostname: phpredisadmin
     ports:
-      - "8181:8081"
+      - "8181:80"
     networks:
       - a8
     environment:
-      - REDIS_HOSTS=local:redis:6379
+      - REDIS_1_HOST=redis
+      - REDIS_1_NAME=redis
     depends_on:
       - redis
 

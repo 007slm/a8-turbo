@@ -52,7 +52,12 @@ ojp:
     interceptors:
       # 慢查询阈值（毫秒），默认1000毫秒（1秒）
       slow-query-threshold: 1
-  # API配置
+      # 智能缓存配置（直接在此处填写，无需环境变量）
+      cache:
+        starrocks:
+          url: "jdbc:mysql://localhost:9030"
+          username: "root"
+          password: "a8"
   api:
     base-path: /api
     cache:
@@ -100,13 +105,25 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics,prometheus,env,configprops,beans,threaddump,heapdump
       base-path: /api/actuator
   endpoint:
     health:
       show-details: always
       show-components: always
+    metrics:
+      show-details: always
+    env:
+      show-values: always
   metrics:
     export:
       prometheus:
         enabled: true
+    enable:
+      hikaricp: true
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true
+            percentiles: 0.5,0.95,0.99

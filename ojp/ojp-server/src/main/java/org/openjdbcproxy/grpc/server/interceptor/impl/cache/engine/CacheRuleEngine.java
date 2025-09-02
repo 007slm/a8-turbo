@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 缓存规则引擎
@@ -39,13 +40,13 @@ public class CacheRuleEngine {
             String sql = request.getSql().trim();
             List<String> tables = extractTablesFromSql(sql);
             
-            // 按优先级排序规则
+            // 按优先级排序规则（优先级高的先匹配）
             rules.sort((r1, r2) -> Integer.compare(r2.getPriority(), r1.getPriority()));
             
             // 匹配规则
             for (CacheRule rule : rules) {
                 if (rule.matches(sql, tables, request.getParameters())) {
-                    return CacheDecision.miss(cacheKey, rule.getTtl(), rule.getName());
+                    return CacheDecision.hit(cacheKey, rule.getTtlDuration(), rule.getName());
                 }
             }
             
@@ -75,27 +76,149 @@ public class CacheRuleEngine {
     }
     
     /**
+     * 保存缓存规则到Redis
+     */
+    public void saveCacheRules(List<CacheRule> rules) {
+        try {
+            redisTemplate.opsForValue().set(CACHE_RULES_KEY, rules);
+            // 更新版本号
+            redisTemplate.opsForValue().increment(CACHE_RULES_VERSION_KEY);
+            log.info("Saved {} cache rules to Redis", rules.size());
+        } catch (Exception e) {
+            log.error("Error saving cache rules to Redis", e);
+            throw new RuntimeException("Failed to save cache rules", e);
+        }
+    }
+    
+    /**
+     * 获取规则版本号
+     */
+    public Long getRulesVersion() {
+        try {
+            Object version = redisTemplate.opsForValue().get(CACHE_RULES_VERSION_KEY);
+            return version instanceof Long ? (Long) version : 0L;
+        } catch (Exception e) {
+            log.error("Error getting rules version", e);
+            return 0L;
+        }
+    }
+    
+    /**
      * 从SQL中提取表名
      */
     public List<String> extractTablesFromSql(String sql) {
-        // 简单的表名提取逻辑，实际项目中可以使用SQL解析器
         List<String> tables = new java.util.ArrayList<>();
         
-        // 提取FROM和JOIN后的表名
-        String upperSql = sql.toUpperCase();
-        String[] parts = upperSql.split("\\s+");
+        if (sql == null || sql.trim().isEmpty()) {
+            return tables;
+        }
         
-        for (int i = 0; i < parts.length - 1; i++) {
-            if ("FROM".equals(parts[i]) || "JOIN".equals(parts[i])) {
-                if (i + 1 < parts.length) {
-                    String tableName = parts[i + 1].replaceAll("[;,\\(\\)]", "");
-                    if (!tableName.isEmpty() && !tableName.startsWith("(")) {
-                        tables.add(tableName.toLowerCase());
-                    }
+        // 转换为大写以便匹配关键字
+        String upperSql = sql.toUpperCase();
+        
+        // 提取FROM子句中的表名
+        String[] fromParts = upperSql.split("\\bFROM\\b");
+        for (int i = 1; i < fromParts.length; i++) {
+            String part = fromParts[i].trim();
+            String tableName = extractTableNameFromPart(part);
+            if (tableName != null) {
+                tables.add(tableName.toLowerCase());
+            }
+        }
+        
+        // 提取JOIN子句中的表名
+        String[] joinParts = upperSql.split("\\bJOIN\\b");
+        for (int i = 1; i < joinParts.length; i++) {
+            String part = joinParts[i].trim();
+            String tableName = extractTableNameFromPart(part);
+            if (tableName != null) {
+                tables.add(tableName.toLowerCase());
+            }
+        }
+        
+        // 提取UPDATE子句中的表名
+        if (upperSql.startsWith("UPDATE")) {
+            String[] updateParts = upperSql.split("\\bUPDATE\\b");
+            if (updateParts.length > 1) {
+                String part = updateParts[1].trim();
+                String tableName = extractTableNameFromPart(part);
+                if (tableName != null) {
+                    tables.add(tableName.toLowerCase());
+                }
+            }
+        }
+        
+        // 提取DELETE子句中的表名
+        if (upperSql.startsWith("DELETE")) {
+            String[] deleteParts = upperSql.split("\\bFROM\\b");
+            if (deleteParts.length > 1) {
+                String part = deleteParts[1].trim();
+                String tableName = extractTableNameFromPart(part);
+                if (tableName != null) {
+                    tables.add(tableName.toLowerCase());
                 }
             }
         }
         
         return tables;
+    }
+    
+    /**
+     * 从SQL片段中提取表名
+     */
+    private String extractTableNameFromPart(String part) {
+        if (part == null || part.trim().isEmpty()) {
+            return null;
+        }
+        
+        // 分割空格，取第一个非空的部分
+        String[] words = part.trim().split("\\s+");
+        if (words.length == 0) {
+            return null;
+        }
+        
+        String tableName = words[0];
+        
+        // 移除可能的别名（AS关键字后的部分）
+        if (tableName.contains(".")) {
+            // 处理schema.table格式
+            return tableName;
+        }
+        
+        // 移除可能的括号和分号
+        tableName = tableName.replaceAll("[;,\\(\\)]", "");
+        
+        // 检查是否是子查询
+        if (tableName.startsWith("(") || tableName.equals("SELECT")) {
+            return null;
+        }
+        
+        return tableName.isEmpty() ? null : tableName;
+    }
+    
+    /**
+     * 生成唯一的规则ID
+     */
+    public String generateRuleId() {
+        return "rule-" + UUID.randomUUID().toString().substring(0, 8);
+    }
+    
+    /**
+     * 验证规则是否与现有规则冲突
+     */
+    public boolean isRuleConflict(CacheRule newRule, List<CacheRule> existingRules) {
+        // 检查名称冲突
+        boolean nameConflict = existingRules.stream()
+                .anyMatch(rule -> rule.getName().equals(newRule.getName()));
+        
+        if (nameConflict) {
+            return true;
+        }
+        
+        // 检查规则逻辑冲突（相同优先级和相同匹配条件）
+        return existingRules.stream()
+                .anyMatch(rule -> rule.getPriority() == newRule.getPriority() && 
+                                rule.getRuleType() == newRule.getRuleType() &&
+                                rule.getRuleMatch().equals(newRule.getRuleMatch()));
     }
 }

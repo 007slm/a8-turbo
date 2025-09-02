@@ -62,6 +62,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     // Server configuration for creating segregation managers
     private final ServerConfiguration serverConfiguration;
+    
+    // Connection pool configurer with Micrometer support
+    private final ConnectionPoolConfigurer connectionPoolConfigurer;
 
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
 
@@ -83,8 +86,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             config.setUsername(connectionDetails.getUser());
             config.setPassword(connectionDetails.getPassword());
 
-            // Configure HikariCP using client properties or defaults
-            ConnectionPoolConfigurer.configureHikariPool(config, connectionDetails);
+            // Configure HikariCP using client properties or defaults with Micrometer support
+            connectionPoolConfigurer.configureHikariPool(config, connectionDetails);
 
             ds = new HikariDataSource(config);
             this.datasourceMap.put(connHash, ds);
@@ -981,46 +984,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
      */
     private StatementServiceInterceptContext acquireSessionContext(SessionInfo sessionInfo, boolean startSessionIfNone) throws SQLException {
         StatementServiceInterceptContext currentContext = StatementServiceGrpcInterceptor.getCurrentContext();
-        Connection conn;
-        if (StringUtils.isNotEmpty(sessionInfo.getSessionUUID())) {
-            conn = this.sessionManager.getConnection(sessionInfo);
-            if (conn == null) {
-                throw new SQLException("Connection not found for this sessionInfo");
-            }
-            if (conn.isClosed()) {
-                throw new SQLException("Connection is closed");
-            }
-        } else {
-            //TODO check why reaches here and can't find the datasource sometimes, conn hash should never change for a single client
-            //log.info("Lookup connection hash -> " + sessionInfo.getConnHash());
-            
-            // Get the datasource for this connection hash
-            HikariDataSource dataSource = this.datasourceMap.get(sessionInfo.getConnHash());
-            if (dataSource == null) {
-                throw new SQLException("No datasource found for connection hash: " + sessionInfo.getConnHash());
-            }
-            
-            try {
-                // Use enhanced connection acquisition with timeout protection
-                conn = ConnectionAcquisitionManager.acquireConnection(dataSource, sessionInfo.getConnHash());
-                log.debug("Successfully acquired connection from pool for hash: {}", sessionInfo.getConnHash());
-            } catch (SQLException e) {
-                log.error("Failed to acquire connection from pool for hash: {}. Error: {}",
-                    sessionInfo.getConnHash(), e.getMessage());
-                
-                // Re-throw the enhanced exception from ConnectionAcquisitionManager
-                throw e;
-            }
-            
-            if (startSessionIfNone) {
-                sessionInfo = this.sessionManager.createSession(sessionInfo.getClientUUID(), conn);
-            }
-        }
-        currentContext.setCurrentConnection(conn);
-        currentContext.setCurrentSessionInfo(sessionInfo);
-        currentContext.setCurrentDbName(DatabaseUtils.resolveDbName(conn.getMetaData().getURL()));
-
-        return currentContext;
+        return currentContext.acquireSessionContext(this.sessionManager, this.datasourceMap, sessionInfo, startSessionIfNone);
     }
 
     private void handleResultSet(SessionInfo session, String resultSetUUID, StreamObserver<OpResult> responseObserver)
@@ -1152,12 +1116,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     /**
      * Backward compatibility wrapper for configureHikariPool method.
      * This method was moved to ConnectionPoolConfigurer but tests still access it via reflection.
+     * Uses static method to avoid circular dependency.
      * 
      * @param config The HikariConfig to configure
      * @param connectionDetails The connection details containing properties
      */
     private void configureHikariPool(HikariConfig config, ConnectionDetails connectionDetails) {
-        ConnectionPoolConfigurer.configureHikariPool(config, connectionDetails);
+        ConnectionPoolConfigurer.configureHikariPoolStatic(config, connectionDetails);
     }
 
 }

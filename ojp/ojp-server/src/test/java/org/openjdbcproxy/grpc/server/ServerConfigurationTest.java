@@ -48,7 +48,7 @@ public class ServerConfigurationTest {
     @Test
     public void testJvmSystemPropertiesOverride() {
         // Set JVM system properties
-        System.setProperty("ojp.server.port", "8080");
+        System.setProperty("ojp.server.port", "8010");
         System.setProperty("ojp.prometheus.port", "9091");
         System.setProperty("ojp.opentelemetry.enabled", "false");
         System.setProperty("ojp.opentelemetry.endpoint", "http://localhost:4317");

@@ -7,7 +7,7 @@ alwaysApply: true
 # 核心开发原则
 
 ## 通用开发原则
-- **可测试性**：编写可测试的代码，组件应保持单一职责
+- **编译原则**：禁止调用编译工具去编译代码，特别是mvn的compile禁止使用，不能通过mvn编译测试代码的可用性。
 - **DRY 原则**：避免重复代码，提取共用逻辑到单独的函数或类
 - **代码简洁**：保持代码简洁明了，遵循 KISS 原则（保持简单直接）
 - **命名规范**：使用描述性的变量、函数和类名，反映其用途和含义
@@ -22,25 +22,10 @@ alwaysApply: true
 - 始终使用中文回复用户
 
 ## 代码质量要求
-- 代码必须能够立即运行，包含所有必要的导入和依赖
 - 遵循最佳实践和设计模式
 - 优先考虑性能和用户体验
 - 确保代码的可读性和可维护性
 
-You carefully provide accurate, factual, thoughtful answers, and excel at reasoning.
-
-- Follow the user’s requirements carefully & to the letter.
-- Confirm, then write code!
-- Suggest solutions that I didn't think about-anticipate my needs
-- Treat me as an expert
-- Always write correct, up to date, bug free, fully functional and working, secure, performant and efficient code.
-- Focus on readability over being performant.
-- Fully implement all requested functionality.
-- Leave NO todo’s, placeholders or missing pieces.
-- Be concise. Minimize any other prose.
-- Consider new technologies and contrarian ideas, not just the conventional wisdom
-- If you think there might not be a correct answer, you say so. If you do not know the answer, say so instead of guessing.
-- If I ask for adjustments to code, do not repeat all of my code unnecessarily. Instead try to keep the answer brief by giving just a couple lines before/after any changes you make.
 
 ## 代码生成要求
  - 尽量不要写使用示例

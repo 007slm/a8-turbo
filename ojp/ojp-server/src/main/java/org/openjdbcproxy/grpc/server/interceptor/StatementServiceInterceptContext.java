@@ -1,5 +1,10 @@
 package org.openjdbcproxy.grpc.server.interceptor;
 
+import com.zaxxer.hikari.HikariDataSource;
+import org.openjdbcproxy.grpc.server.ConnectionAcquisitionManager;
+import org.openjdbcproxy.database.DatabaseUtils;
+import org.openjdbcproxy.grpc.server.SessionManager;
+
 import com.openjdbcproxy.grpc.*;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
@@ -61,6 +66,57 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
         this.serverCall = serverCall;
         this.headers = headers;
 
+    }
+
+    /**
+     * 依据传入的 SessionInfo 在上下文中获取/创建数据库连接与会话，并回填上下文必要属性。
+     *
+     * 该方法整合了原先 StatementServiceImpl#acquireSessionContext 的逻辑。
+     *
+     * @param sessionManager       会话管理器
+     * @param datasourceMap        数据源映射（connHash -> HikariDataSource）
+     * @param sessionInfo          客户端传入的会话信息
+     * @param startSessionIfNone   若无会话则创建新会话
+     * @return 当前上下文（便于链式调用）
+     * @throws java.sql.SQLException 获取连接失败或连接关闭时抛出
+     */
+    public StatementServiceInterceptContext<ReqT, RespT> acquireSessionContext(
+            SessionManager sessionManager,
+            java.util.Map<String, HikariDataSource> datasourceMap,
+            SessionInfo sessionInfo,
+            boolean startSessionIfNone) throws java.sql.SQLException {
+
+        java.sql.Connection conn;
+        if (org.apache.commons.lang3.StringUtils.isNotEmpty(sessionInfo.getSessionUUID())) {
+            conn = sessionManager.getConnection(sessionInfo);
+            if (conn == null) {
+                throw new java.sql.SQLException("Connection not found for this sessionInfo");
+            }
+            if (conn.isClosed()) {
+                throw new java.sql.SQLException("Connection is closed");
+            }
+        } else {
+            com.zaxxer.hikari.HikariDataSource dataSource = datasourceMap.get(sessionInfo.getConnHash());
+            if (dataSource == null) {
+                throw new java.sql.SQLException("No datasource found for connection hash: " + sessionInfo.getConnHash());
+            }
+
+            try {
+                conn = ConnectionAcquisitionManager.acquireConnection(dataSource, sessionInfo.getConnHash());
+            } catch (java.sql.SQLException e) {
+                throw e;
+            }
+
+            if (startSessionIfNone) {
+                sessionInfo = sessionManager.createSession(sessionInfo.getClientUUID(), conn);
+            }
+        }
+
+        this.setCurrentConnection(conn);
+        this.setCurrentSessionInfo(sessionInfo);
+        this.setCurrentDbName(DatabaseUtils.resolveDbName(conn.getMetaData().getURL()));
+
+        return this;
     }
 
     /**

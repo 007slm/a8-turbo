@@ -230,11 +230,13 @@ export const monitoringApi = {
   // 获取系统资源使用情况 - 组合多个Actuator指标
   getSystemResources: async () => {
     // 将所有异步请求放在Promise.all中，避免嵌套异步调用
-    const [cpu, memoryUsed, memoryMax, diskFree] = await Promise.all([
+    const [cpu, memoryUsed, memoryMax, diskFree, diskTotal, uptime] = await Promise.all([
       request('/actuator/metrics/system.cpu.usage').then(ensureJson).catch(() => null),
       request('/actuator/metrics/jvm.memory.used').then(ensureJson).catch(() => null),
       request('/actuator/metrics/jvm.memory.max').then(ensureJson).catch(() => null),
       request('/actuator/metrics/disk.free').then(ensureJson).catch(() => null),
+      request('/actuator/metrics/disk.total').then(ensureJson).catch(() => null),
+      request('/actuator/metrics/process.uptime').then(ensureJson).catch(() => null),
     ])
     
     // 计算CPU使用率
@@ -248,12 +250,31 @@ export const monitoringApi = {
          (memoryMax.measurements.find(m => m.statistic === 'VALUE')?.value || 1)) * 100 
       : 0
     
+    // 获取运行时间（秒）
+    const uptimeSeconds = uptime && uptime.measurements 
+      ? uptime.measurements.find(m => m.statistic === 'VALUE')?.value || 0
+      : 0
+    
+    // 计算磁盘使用率
+    const diskFreeBytes = diskFree && diskFree.measurements 
+      ? diskFree.measurements.find(m => m.statistic === 'VALUE')?.value || 0
+      : 0
+    const diskTotalBytes = diskTotal && diskTotal.measurements 
+      ? diskTotal.measurements.find(m => m.statistic === 'VALUE')?.value || 1
+      : 1
+    const diskUsage = diskTotalBytes > 0 
+      ? ((diskTotalBytes - diskFreeBytes) / diskTotalBytes) * 100 
+      : 0
+    
     return {
       cpu,
       memory: memoryUsed,
       disk: diskFree,
+      diskTotal,
+      uptime: uptimeSeconds,
       cpuUsage: Math.round(cpuUsage * 100) / 100, // 保留两位小数
       memoryUsage: Math.round(memoryUsage * 100) / 100, // 保留两位小数
+      diskUsage: Math.round(diskUsage * 100) / 100, // 保留两位小数
       timestamp: new Date().toISOString() // 添加时间戳便于调试
     }
   },
@@ -857,35 +878,7 @@ export const monitoringApi = {
   },
 }
 
-// 日志相关接口
-export const logApi = {
-  // 获取应用日志
-  getApplicationLogs: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/logs/application?${queryString}`)
-  },
-  
-  // 获取访问日志
-  getAccessLogs: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/logs/access?${queryString}`)
-  },
-  
-  // 获取错误日志
-  getErrorLogs: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/logs/error?${queryString}`)
-  },
-  
-  // 下载日志文件
-  downloadLog: (logType, date) => request(`/logs/${logType}/download?date=${date}`),
-  
-  // 清理日志
-  clearLogs: (logType, beforeDate) => request(`/logs/${logType}/clear`, {
-    method: 'POST',
-    body: JSON.stringify({ beforeDate }),
-  }),
-}
+
 
 // 测试相关接口
 export const testingApi = {
@@ -937,7 +930,6 @@ export default {
   cache: cacheApi,
   rule: ruleApi,
   monitoring: monitoringApi,
-  log: logApi,
   testing: testingApi,
   // settings: settingsApi, // 已移除
 }

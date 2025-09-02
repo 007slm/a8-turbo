@@ -20,6 +20,23 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
     );
   }
   
+  // 格式化运行时间
+  const formatUptime = (seconds) => {
+    if (!seconds || seconds === 0) return '未知';
+    
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (days > 0) {
+      return `${days}天 ${hours}小时 ${minutes}分钟`;
+    } else if (hours > 0) {
+      return `${hours}小时 ${minutes}分钟`;
+    } else {
+      return `${minutes}分钟`;
+    }
+  };
+  
   // 计算CPU使用率
   const cpuUsage = resources.cpuUsage || 0;
   
@@ -43,10 +60,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
   // 获取内存使用率
   const memoryUsage = resources.memoryUsage || 0;
   
-  // 获取磁盘使用情况
-  const diskFree = resources.disk?.measurements?.find(m => m.statistic === 'VALUE')?.value || 0;
-  const diskTotal = 1000; // 假设总容量为1TB
-  const diskUsage = Math.max(0, Math.min(100, ((diskTotal - diskFree) / diskTotal) * 100));
+  // 获取磁盘使用率（直接使用API计算好的值）
+  const diskUsage = resources.diskUsage || 0;
   
   return (
     <div>
@@ -70,7 +85,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
             <Card size="small">
               <Statistic
                 title="运行时间"
-                value={resources.uptime || '未知'}
+                value={formatUptime(resources.uptime)}
                 prefix={<DashboardOutlined />}
               />
             </Card>

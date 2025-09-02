@@ -5,8 +5,6 @@ import {
   DashboardOutlined,
   DatabaseOutlined,
   MonitorOutlined,
-  ApiOutlined,
-  FileTextOutlined,
   BellOutlined,
   QuestionCircleOutlined,
   BugOutlined
@@ -15,8 +13,6 @@ import { useQuery } from 'react-query'
 import Dashboard from './components/Dashboard'
 import CacheManagement from './components/CacheManagement'
 import Monitoring from './components/Monitoring'
-import ApiDocs from './components/ApiDocs'
-import Logs from './components/Logs'
 import SqlStatistics from './components/SqlStatistics'
 import Testing from './components/Testing'
 
@@ -38,8 +34,6 @@ function AppContent() {
     if (path === '/statistics') return 'statistics'
     if (path === '/monitoring') return 'monitoring'
     if (path === '/testing') return 'testing'
-    if (path === '/api') return 'api'
-    if (path === '/logs') return 'logs'
     return 'dashboard'
   }
   
@@ -87,16 +81,6 @@ function AppContent() {
       icon: <BugOutlined />,
       label: '系统测试',
     },
-    {
-      key: 'api',
-      icon: <ApiOutlined />,
-      label: 'API 文档',
-    },
-    {
-      key: 'logs',
-      icon: <FileTextOutlined />,
-      label: '系统日志',
-    },
   ]
 
   // 处理菜单点击
@@ -106,9 +90,7 @@ function AppContent() {
       'cache': '/cache',
       'statistics': '/statistics',
       'monitoring': '/monitoring',
-      'testing': '/testing',
-      'api': '/api',
-      'logs': '/logs'
+      'testing': '/testing'
     }
     navigate(routes[key] || '/')
   }
@@ -226,8 +208,6 @@ function AppContent() {
                 <Route path="/statistics" element={<SqlStatistics />} />
                 <Route path="/monitoring" element={<Monitoring />} />
                 <Route path="/testing" element={<Testing />} />
-                <Route path="/api" element={<ApiDocs />} />
-                <Route path="/logs" element={<Logs />} />
               </Routes>
             </Content>
           </Layout>

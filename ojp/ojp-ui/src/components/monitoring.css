@@ -1,0 +1,147 @@
+/* 监控页面样式 */
+.monitoring-overview {
+  padding: 0;
+}
+
+.service-card {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.service-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.service-title {
+  margin: 8px 0 4px 0;
+  font-size: 16px;
+  font-weight: bold;
+  color: #262626;
+}
+
+.service-description {
+  margin: 0;
+  color: #8c8c8c;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.grafana-iframe {
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  min-height: 600px;
+}
+
+.grafana-iframe-fullsize {
+  border: none;
+  border-radius: 6px;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+}
+
+.monitoring-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.monitoring-stats {
+  margin-bottom: 24px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-connected {
+  color: #52c41a;
+  background-color: #f6ffed;
+  border: 1px solid #b7eb8f;
+}
+
+.status-disconnected {
+  color: #ff4d4f;
+  background-color: #fff2f0;
+  border: 1px solid #ffb3b3;
+}
+
+.help-section {
+  margin-top: 24px;
+}
+
+.help-section h4 {
+  color: #262626;
+  margin-bottom: 8px;
+}
+
+.help-section ul {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.help-section li {
+  margin-bottom: 4px;
+  color: #595959;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .service-card {
+    margin-bottom: 8px;
+  }
+  
+  .monitoring-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .grafana-iframe {
+    min-height: 500px;
+  }
+  
+  .grafana-iframe-fullsize {
+    height: 600px;
+    min-height: 600px;
+  }
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+}
+
+/* 菜单样式优化 */
+.ant-menu-submenu-title {
+  font-weight: 500;
+}
+
+.ant-menu-item {
+  display: flex;
+  align-items: center;
+}
+
+.ant-menu-item .anticon {
+  margin-right: 8px;
+}

@@ -14,6 +14,9 @@ import CacheManagement from './components/CacheManagement'
 import SqlStatistics from './components/SqlStatistics'
 import Monitoring from './components/Monitoring'
 import Testing from './components/Testing'
+import MonitoringOverview from './components/MonitoringOverview'
+import ServiceMonitoring from './components/ServiceMonitoring'
+import { getAllServices } from './config/monitoringConfig'
 
 import { fetchSystemStatus } from './services/api'
 import './App.css'
@@ -28,14 +31,16 @@ function AppContent() {
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
     const path = location.pathname
-    if (path === '/' || path === '/monitoring') return 'monitoring'
+    if (path === '/' || path === '/system-monitoring') return 'system-monitoring'
+    if (path.startsWith('/monitoring')) return 'grafana-monitoring'
     if (path === '/cache') return 'cache'
     if (path === '/statistics') return 'statistics'
     if (path === '/testing') return 'testing'
-    return 'monitoring'
+    return 'system-monitoring'
   }
   
   const selectedKey = getSelectedKey()
+  const services = getAllServices()
 
 
   const {
@@ -55,9 +60,24 @@ function AppContent() {
   // 菜单项配置
   const menuItems = [
     {
-      key: 'monitoring',
+      key: 'system-monitoring',
       icon: <MonitorOutlined />,
       label: '系统监控',
+    },
+    {
+      key: 'grafana-monitoring',
+      icon: <DashboardOutlined />,
+      label: 'Grafana 监控',
+      children: [
+        {
+          key: 'monitoring-overview',
+          label: '监控总览',
+        },
+        ...services.map(service => ({
+          key: `monitoring-${service.key}`,
+          label: `${service.icon} ${service.name}`,
+        }))
+      ]
     },
     {
       key: 'cache',
@@ -79,11 +99,20 @@ function AppContent() {
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
     const routes = {
-      'monitoring': '/',
+      'system-monitoring': '/',
+      'monitoring-overview': '/monitoring',
       'cache': '/cache',
       'statistics': '/statistics',
       'testing': '/testing'
     }
+    
+    // 处理服务监控路由
+    if (key.startsWith('monitoring-') && key !== 'monitoring-overview') {
+      const serviceKey = key.replace('monitoring-', '')
+      navigate(`/monitoring/${serviceKey}`)
+      return
+    }
+    
     navigate(routes[key] || '/')
   }
 
@@ -195,9 +224,11 @@ function AppContent() {
             >
               <Routes>
                 <Route path="/" element={<Monitoring />} />
+                <Route path="/system-monitoring" element={<Monitoring />} />
+                <Route path="/monitoring" element={<MonitoringOverview />} />
+                <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
                 <Route path="/cache" element={<CacheManagement />} />
                 <Route path="/statistics" element={<SqlStatistics />} />
-                <Route path="/monitoring" element={<Monitoring />} />
                 <Route path="/testing" element={<Testing />} />
               </Routes>
             </Content>

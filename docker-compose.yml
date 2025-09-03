@@ -28,6 +28,8 @@ services:
       - GF_USERS_ALLOW_ORG_CREATE=false
       #- GF_INSTALL_PLUGINS=grafana-piechart-panel,marcusolsson-json-datasource,marcusolsson-dynamictext-panel
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/a8-turbo-dashboard.json
+      - GF_SERVER_ROOT_URL=http://localhost:3000/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
     networks:
       - a8
     depends_on:

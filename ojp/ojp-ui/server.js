@@ -20,8 +20,8 @@ app.use((req, res, next) => {
 app.post('/api/grpc/test-connection', async (req, res) => {
   try {
     console.log('[Server] 收到 gRPC 连接测试请求');
-    const { host, port, timeout } = req.body;
-    const result = await grpcProxy.testConnection(host, port, timeout);
+    const { host, port, timeout, dbConfig } = req.body;
+    const result = await grpcProxy.testConnection(host, port, dbConfig, timeout);
     console.log('[Server] gRPC 连接测试完成', result);
     res.json(result);
   } catch (error) {

@@ -35,7 +35,6 @@ import {
   ClockCircleOutlined,
   ThunderboltOutlined,
   SearchOutlined,
-  DashboardOutlined,
   AppstoreOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'

@@ -415,50 +415,57 @@ class GrpcProxy {
             properties: Buffer.from([])
           };
 
-          let firstQueryTime = 0;
-          let secondQueryTime = 0;
+          let firstQueryStartTime = Date.now();
+          let firstQueryEndTime = 0;
+          let secondQueryStartTime = 0;
+          let secondQueryEndTime = 0;
 
-                     // 第一次查询 - 使用 executeQuery 因为这是 SELECT 操作
-           const firstCall = client.executeQuery(statementRequest, { deadline });
-           const firstResults = [];
-           
-           firstCall.on('data', (response) => {
-             firstResults.push(response);
-           });
-           
-           firstCall.on('end', () => {
-             firstQueryTime = Date.now();
-             console.log(`[GrpcProxy] 第一次查询完成，收到 ${firstResults.length} 个结果`);
-             
-             // 第二次查询
-             const secondRequest = {
-               ...statementRequest,
-               statementUUID: this.generateUUID()
-             };
-             
-             const secondCall = client.executeQuery(secondRequest, { deadline });
-             const secondResults = [];
-             
-             secondCall.on('data', (response) => {
-               secondResults.push(response);
-             });
-             
-             secondCall.on('end', () => {
-               secondQueryTime = Date.now();
-               console.log(`[GrpcProxy] 第二次查询完成，收到 ${secondResults.length} 个结果`);
-               
-               const cacheEfficiency = firstQueryTime > 0 ? 
-                 ((firstQueryTime - secondQueryTime) / firstQueryTime * 100).toFixed(2) : 0;
+          // 第一次查询 - 使用 executeQuery 因为这是 SELECT 操作
+          const firstCall = client.executeQuery(statementRequest, { deadline });
+          const firstResults = [];
+          
+          firstCall.on('data', (response) => {
+            firstResults.push(response);
+          });
+          
+          firstCall.on('end', () => {
+            firstQueryEndTime = Date.now();
+            const firstQueryDuration = firstQueryEndTime - firstQueryStartTime;
+            console.log(`[GrpcProxy] 第一次查询完成，耗时 ${firstQueryDuration}ms，收到 ${firstResults.length} 个结果`);
+            
+            // 第二次查询
+            secondQueryStartTime = Date.now();
+            const secondRequest = {
+              ...statementRequest,
+              statementUUID: this.generateUUID()
+            };
+            
+            const secondCall = client.executeQuery(secondRequest, { deadline });
+            const secondResults = [];
+            
+            secondCall.on('data', (response) => {
+              secondResults.push(response);
+            });
+            
+            secondCall.on('end', () => {
+              secondQueryEndTime = Date.now();
+              const secondQueryDuration = secondQueryEndTime - secondQueryStartTime;
+              console.log(`[GrpcProxy] 第二次查询完成，耗时 ${secondQueryDuration}ms，收到 ${secondResults.length} 个结果`);
+              
+              // 正确计算缓存效率：如果第二次查询更快，说明缓存生效
+              const cacheEfficiency = firstQueryDuration > 0 ? 
+                Math.max(0, ((firstQueryDuration - secondQueryDuration) / firstQueryDuration * 100)).toFixed(2) : 0;
 
-               resolve({
-                 success: true,
-                 firstQueryTime,
-                 secondQueryTime,
-                 cacheEfficiency: `${cacheEfficiency}%`,
-                 firstResult: firstResults,
-                 secondResult: secondResults
-               });
-             });
+              resolve({
+                success: true,
+                firstQueryDuration,
+                secondQueryDuration,
+                cacheEfficiency: `${cacheEfficiency}%`,
+                firstResult: firstResults,
+                secondResult: secondResults,
+                message: `缓存测试完成，第一次查询${firstQueryDuration}ms，第二次查询${secondQueryDuration}ms，缓存效率${cacheEfficiency}%`
+              });
+            });
              
              secondCall.on('error', (error2) => {
                console.error(`[GrpcProxy] 第二次查询失败:`, error2.message);

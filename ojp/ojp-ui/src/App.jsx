@@ -10,10 +10,9 @@ import {
   BugOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
-import Dashboard from './components/Dashboard'
 import CacheManagement from './components/CacheManagement'
-import Monitoring from './components/Monitoring'
 import SqlStatistics from './components/SqlStatistics'
+import Monitoring from './components/Monitoring'
 import Testing from './components/Testing'
 
 import { fetchSystemStatus } from './services/api'
@@ -29,12 +28,11 @@ function AppContent() {
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
     const path = location.pathname
-    if (path === '/' || path === '/dashboard') return 'dashboard'
+    if (path === '/' || path === '/monitoring') return 'monitoring'
     if (path === '/cache') return 'cache'
     if (path === '/statistics') return 'statistics'
-    if (path === '/monitoring') return 'monitoring'
     if (path === '/testing') return 'testing'
-    return 'dashboard'
+    return 'monitoring'
   }
   
   const selectedKey = getSelectedKey()
@@ -57,9 +55,9 @@ function AppContent() {
   // 菜单项配置
   const menuItems = [
     {
-      key: 'dashboard',
-      icon: <DashboardOutlined />,
-      label: '仪表盘',
+      key: 'monitoring',
+      icon: <MonitorOutlined />,
+      label: '系统监控',
     },
     {
       key: 'cache',
@@ -72,11 +70,6 @@ function AppContent() {
       label: 'SQL统计',
     },
     {
-      key: 'monitoring',
-      icon: <MonitorOutlined />,
-      label: '系统监控',
-    },
-    {
       key: 'testing',
       icon: <BugOutlined />,
       label: '系统测试',
@@ -86,10 +79,9 @@ function AppContent() {
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
     const routes = {
-      'dashboard': '/',
+      'monitoring': '/',
       'cache': '/cache',
       'statistics': '/statistics',
-      'monitoring': '/monitoring',
       'testing': '/testing'
     }
     navigate(routes[key] || '/')
@@ -202,8 +194,7 @@ function AppContent() {
               }}
             >
               <Routes>
-                <Route path="/" element={<Dashboard systemStatus={systemStatus} />} />
-                <Route path="/dashboard" element={<Dashboard systemStatus={systemStatus} />} />
+                <Route path="/" element={<Monitoring />} />
                 <Route path="/cache" element={<CacheManagement />} />
                 <Route path="/statistics" element={<SqlStatistics />} />
                 <Route path="/monitoring" element={<Monitoring />} />

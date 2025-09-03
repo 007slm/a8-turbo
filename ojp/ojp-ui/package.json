@@ -4,35 +4,44 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
+    "dev": "umi dev",
+    "build": "umi build",
+    "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "umi preview",
     "server": "node server.js",
     "dev:full": "concurrently \"npm run server\" \"npm run dev\""
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
+    "@ant-design/pro-card": "^2.10.0",
+    "@ant-design/pro-components": "^2.8.10",
+    "@ant-design/pro-descriptions": "^2.6.10",
+    "@ant-design/pro-form": "^2.32.0",
+    "@ant-design/pro-layout": "^7.22.7",
+    "@ant-design/pro-list": "^2.6.10",
+    "@ant-design/pro-skeleton": "^2.2.1",
+    "@ant-design/pro-table": "^3.21.0",
     "@grpc/grpc-js": "^1.13.4",
     "@grpc/proto-loader": "^0.8.0",
+    "@umijs/max": "^4.3.0",
+    "@umijs/plugins": "^4.3.0",
+    "@umijs/route-utils": "^4.0.1",
     "antd": "^5.12.8",
     "axios": "^1.11.0",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "lodash-es": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-query": "^3.39.3",
-    "react-router-dom": "^7.8.2"
+    "umi": "^4.3.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.55.0",
     "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "vite": "^5.0.8"
+    "eslint-plugin-react-hooks": "^4.6.0"
   }
 }

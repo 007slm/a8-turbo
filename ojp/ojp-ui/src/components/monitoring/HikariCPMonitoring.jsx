@@ -50,9 +50,9 @@ const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
 
   // 获取状态图标
   const getStatusIcon = (usagePercent) => {
-    if (usagePercent >= 90) return <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />;
-    if (usagePercent >= 70) return <WarningOutlined style={{ color: '#faad14' }} />;
-    return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+    if (usagePercent >= 90) return <ExclamationCircleOutlined style={{ color: 'var(--error-color)' }} />;
+    if (usagePercent >= 70) return <WarningOutlined style={{ color: 'var(--warning-color)' }} />;
+    return <CheckCircleOutlined style={{ color: 'var(--success-color)' }} />;
   };
 
   // 表格列定义
@@ -204,7 +204,7 @@ const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
             <Statistic 
               title="总活跃连接" 
               value={safeGet(summary, 'totalActiveConnections', 0)} 
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: 'var(--primary-color)' }}
             />
           </Col>
           <Col span={6}>
@@ -219,8 +219,8 @@ const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
               value={safeGet(summary, 'overallUsagePercent', 0)} 
               suffix="%"
               valueStyle={{ 
-                color: getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'error' ? '#ff4d4f' : 
-                       getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'warning' ? '#faad14' : '#52c41a'
+                color: getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'error' ? 'var(--error-color)' : 
+                       getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'warning' ? 'var(--warning-color)' : 'var(--success-color)'
               }}
             />
           </Col>

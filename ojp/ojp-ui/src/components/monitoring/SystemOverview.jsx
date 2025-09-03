@@ -133,7 +133,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
   }
   
   // 计算CPU使用率
-  const cpuUsage = resources.cpuUsage || 0;
+  const cpuUsage = resources?.cpuUsage || 0;
   
   // 获取系统状态
   const getSystemStatus = () => {
@@ -153,10 +153,10 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
   const systemStatus = getSystemStatus();
   
   // 获取内存使用率
-  const memoryUsage = resources.memoryUsage || 0;
+  const memoryUsage = resources?.memoryUsage || 0;
   
   // 获取磁盘使用率（直接使用API计算好的值）
-  const diskUsage = resources.diskUsage || 0;
+  const diskUsage = resources?.diskUsage || 0;
   
   // 系统状态指示器
   const renderSystemStatus = () => {
@@ -188,7 +188,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
       {/* 页面标题 */}
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-          <MonitorOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+          <MonitorOutlined style={{ marginRight: 8, color: 'var(--primary-color)' }} />
           系统概览
         </Title>
         <Text type="secondary">系统核心指标和资源使用情况</Text>
@@ -215,7 +215,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
             }}
           >
             <div style={{ textAlign: 'center', color: '#fff' }}>
-              <CloudServerOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
+              <CloudServerOutlined style={{ fontSize: 32, marginBottom: 12, color: 'var(--white-color)' }} />
               <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
                 {healthInfo?.status === 'UP' ? '正常' : '异常'}
               </div>
@@ -239,7 +239,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
             }}
           >
             <div style={{ textAlign: 'center', color: '#fff' }}>
-              <DatabaseOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
+              <DatabaseOutlined style={{ fontSize: 32, marginBottom: 12, color: 'var(--white-color)' }} />
               <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
                 {formatPercentage(resources?.memoryUsage || 0)}
               </div>
@@ -263,7 +263,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
             }}
           >
             <div style={{ textAlign: 'center', color: '#fff' }}>
-              <DesktopOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
+              <DesktopOutlined style={{ fontSize: 32, marginBottom: 12, color: 'var(--white-color)' }} />
               <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
                 {formatPercentage(resources?.cpuUsage || 0)}
               </div>
@@ -287,7 +287,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
             }}
           >
             <div style={{ textAlign: 'center', color: '#fff' }}>
-              <UserOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
+              <UserOutlined style={{ fontSize: 32, marginBottom: 12, color: 'var(--white-color)' }} />
               <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
                 {(threadInfo?.totalThreads || 0).toLocaleString()}
               </div>
@@ -299,7 +299,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
       
       {/* 资源使用详情 */}
         <Card 
-          title={<><DesktopOutlined style={{ marginRight: 8, color: '#1890ff' }} />资源使用详情</>}
+          title={<><DesktopOutlined style={{ marginRight: 8, color: 'var(--primary-color)' }} />资源使用详情</>}
           style={{ 
             marginBottom: 32, 
             borderRadius: 12,
@@ -324,13 +324,13 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                flexDirection: 'column',
                justifyContent: 'center'
              }}>
-               <DesktopOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '12px' }} />
+               <DesktopOutlined style={{ fontSize: '24px', color: 'var(--primary-color)', marginBottom: '12px' }} />
                <Statistic
                  title={<span style={{ color: '#666', fontSize: '14px' }}>CPU 使用率</span>}
                  value={cpuUsage}
                  precision={2}
                  suffix="%"
-                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#1890ff' }}
+                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--primary-color)' }}
                />
                <Progress 
                  percent={cpuUsage} 
@@ -352,13 +352,13 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                flexDirection: 'column',
                justifyContent: 'center'
              }}>
-               <DatabaseOutlined style={{ fontSize: '24px', color: '#52c41a', marginBottom: '12px' }} />
+               <DatabaseOutlined style={{ fontSize: '24px', color: 'var(--success-color)', marginBottom: '12px' }} />
                <Statistic
                  title={<span style={{ color: '#666', fontSize: '14px' }}>内存使用率</span>}
                  value={memoryUsage}
                  precision={2}
                  suffix="%"
-                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#52c41a' }}
+                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--success-color)' }}
                />
                <Progress 
                  percent={memoryUsage} 
@@ -380,13 +380,13 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                flexDirection: 'column',
                justifyContent: 'center'
              }}>
-               <HddOutlined style={{ fontSize: '24px', color: '#fa8c16', marginBottom: '12px' }} />
+               <HddOutlined style={{ fontSize: '24px', color: 'var(--warning-color)', marginBottom: '12px' }} />
                <Statistic
                  title={<span style={{ color: '#666', fontSize: '14px' }}>磁盘使用率</span>}
                  value={diskUsage}
                  precision={2}
                  suffix="%"
-                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#fa8c16' }}
+                 valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--warning-color)' }}
                />
                <Progress 
                  percent={diskUsage} 
@@ -402,7 +402,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
        {/* JVM 信息 */}
         {(memoryInfo || threadInfo || gcInfo) && (
           <Card 
-            title={<><ThunderboltOutlined style={{ marginRight: 8, color: '#722ed1' }} />JVM 信息</>}
+            title={<><ThunderboltOutlined style={{ marginRight: 8, color: 'var(--purple-color)' }} />JVM 信息</>}
             style={{ 
               marginBottom: 32, 
               borderRadius: 12,
@@ -509,7 +509,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
        {/* 系统信息 */}
         {resources && (
           <Card 
-            title={<><CloudServerOutlined style={{ marginRight: 8, color: '#52c41a' }} />系统信息</>}
+            title={<><CloudServerOutlined style={{ marginRight: 8, color: 'var(--success-color)' }} />系统信息</>}
             style={{ 
               marginBottom: 32, 
               borderRadius: 12,
@@ -535,8 +535,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                  flexDirection: 'column',
                  justifyContent: 'center'
                }}>
-                 <CheckCircleOutlined style={{ fontSize: '20px', color: '#52c41a', marginBottom: '8px' }} />
-                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#52c41a', marginBottom: '4px' }}>
+                 <CheckCircleOutlined style={{ fontSize: '20px', color: 'var(--success-color)', marginBottom: '8px' }} />
+                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--success-color)', marginBottom: '4px' }}>
                    {healthInfo?.status === 'UP' ? '运行中' : '已停止'}
                  </div>
                  <div style={{ fontSize: '12px', color: '#666' }}>系统状态</div>
@@ -554,8 +554,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                  flexDirection: 'column',
                  justifyContent: 'center'
                }}>
-                 <ClockCircleOutlined style={{ fontSize: '20px', color: '#1890ff', marginBottom: '8px' }} />
-                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>
+                 <ClockCircleOutlined style={{ fontSize: '20px', color: 'var(--primary-color)', marginBottom: '8px' }} />
+                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)', marginBottom: '4px' }}>
                    {formatDuration(resources?.uptime || 0)}
                  </div>
                  <div style={{ fontSize: '12px', color: '#666' }}>运行时间</div>
@@ -573,8 +573,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                  flexDirection: 'column',
                  justifyContent: 'center'
                }}>
-                 <DesktopOutlined style={{ fontSize: '20px', color: '#fa8c16', marginBottom: '8px' }} />
-                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fa8c16', marginBottom: '4px' }}>
+                 <DesktopOutlined style={{ fontSize: '20px', color: 'var(--warning-color)', marginBottom: '8px' }} />
+                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--warning-color)', marginBottom: '4px' }}>
                    {formatPercentage(resources?.cpuUsage || 0)}
                  </div>
                  <div style={{ fontSize: '12px', color: '#666' }}>CPU使用率</div>
@@ -592,8 +592,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                  flexDirection: 'column',
                  justifyContent: 'center'
                }}>
-                 <DatabaseOutlined style={{ fontSize: '20px', color: '#722ed1', marginBottom: '8px' }} />
-                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#722ed1', marginBottom: '4px' }}>
+                 <DatabaseOutlined style={{ fontSize: '20px', color: 'var(--purple-color)', marginBottom: '8px' }} />
+                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--purple-color)', marginBottom: '4px' }}>
                    {formatPercentage(resources?.memoryUsage || 0)}
                  </div>
                  <div style={{ fontSize: '12px', color: '#666' }}>内存使用率</div>
@@ -606,7 +606,7 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
        {/* 系统组件状态 */}
         {healthInfo && healthInfo.components && (
           <Card 
-            title={<><CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />系统组件状态</>}
+            title={<><CheckCircleOutlined style={{ marginRight: 8, color: 'var(--success-color)' }} />系统组件状态</>}
             style={{ 
               borderRadius: 12,
               boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
@@ -645,8 +645,8 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
                     <div style={{ 
                       fontSize: '24px', 
                       marginBottom: '8px',
-                      color: component.status === 'UP' ? '#52c41a' : 
-                             component.status === 'DOWN' ? '#ff4d4f' : '#fa8c16'
+                      color: component.status === 'UP' ? 'var(--success-color)' : 
+                             component.status === 'DOWN' ? 'var(--error-color)' : 'var(--warning-color)'
                     }}>
                       {component.status === 'UP' ? '✓' : 
                        component.status === 'DOWN' ? '✗' : '⚠'}

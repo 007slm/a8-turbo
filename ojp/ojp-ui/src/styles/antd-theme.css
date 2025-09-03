@@ -1,0 +1,329 @@
+/* Ant Design 组件主题定制 - OJP 管理系统 */
+
+/* ProLayout 布局组件样式 */
+.ant-pro-layout {
+  background: var(--bg-tertiary);
+}
+
+.ant-pro-layout .ant-layout-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-light);
+  padding: 0 var(--spacing-lg);
+}
+
+.ant-pro-layout .ant-layout-sider {
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-secondary);
+  box-shadow: var(--shadow-light);
+}
+
+.ant-pro-layout .ant-layout-content {
+  background: var(--bg-tertiary);
+  margin: 0;
+  padding: var(--spacing-lg);
+}
+
+/* 菜单样式优化 */
+.ant-pro-sider-menu .ant-menu {
+  background: transparent;
+  border: none;
+}
+
+.ant-pro-sider-menu .ant-menu-item {
+  margin: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-normal);
+}
+
+.ant-pro-sider-menu .ant-menu-item:hover {
+  background: var(--primary-lighter);
+  color: var(--primary-color);
+}
+
+.ant-pro-sider-menu .ant-menu-item-selected {
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.ant-pro-sider-menu .ant-menu-item-selected::after {
+  display: none;
+}
+
+.ant-pro-sider-menu .ant-menu-submenu-title {
+  margin: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-normal);
+}
+
+.ant-pro-sider-menu .ant-menu-submenu-title:hover {
+  background: var(--primary-lighter);
+  color: var(--primary-color);
+}
+
+/* 头部样式 */
+.ant-pro-global-header {
+  background: var(--bg-primary);
+  box-shadow: var(--shadow-light);
+}
+
+.ant-pro-global-header-logo {
+  background: var(--bg-primary);
+}
+
+.ant-pro-global-header-trigger {
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+
+.ant-pro-global-header-trigger:hover {
+  background: var(--bg-tertiary);
+  color: var(--primary-color);
+}
+
+/* 面包屑样式 */
+.ant-breadcrumb {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.ant-breadcrumb a {
+  color: var(--text-secondary);
+  transition: var(--transition-fast);
+}
+
+.ant-breadcrumb a:hover {
+  color: var(--primary-color);
+}
+
+.ant-breadcrumb-separator {
+  color: var(--text-tertiary);
+}
+
+/* 卡片组件增强 */
+.ant-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-light);
+  transition: var(--transition-normal);
+}
+
+.ant-card:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.ant-card-head {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-secondary);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.ant-card-head-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: var(--font-size-md);
+}
+
+.ant-card-body {
+  padding: var(--spacing-lg);
+}
+
+/* 表格组件增强 */
+.ant-table {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: var(--spacing-md) var(--spacing-md);
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--border-secondary);
+  padding: var(--spacing-md) var(--spacing-md);
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--primary-lighter);
+}
+
+.ant-table-tbody > tr:last-child > td {
+  border-bottom: none;
+}
+
+/* 表单组件增强 */
+.ant-form-item {
+  margin-bottom: var(--spacing-md);
+}
+
+.ant-form-item-label > label {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.ant-input {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-sm) var(--spacing-sm);
+  transition: var(--transition-fast);
+}
+
+.ant-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.ant-select-selector {
+  border: 1px solid var(--border-primary) !important;
+  border-radius: var(--border-radius-md) !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px var(--primary-light) !important;
+}
+
+/* 按钮组件增强 */
+.ant-btn {
+  border-radius: var(--border-radius-md);
+  font-weight: 500;
+  transition: var(--transition-normal);
+  box-shadow: none;
+}
+
+.ant-btn-primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.ant-btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+}
+
+.ant-btn-default {
+  background: var(--bg-primary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.ant-btn-default:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* 标签组件 */
+.ant-tag {
+  border-radius: var(--border-radius-sm);
+  font-weight: 500;
+  font-size: var(--font-size-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+/* 统计数值组件 */
+.ant-statistic {
+  text-align: center;
+}
+
+.ant-statistic-content {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.ant-statistic-title {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* 加载组件 */
+.ant-spin {
+  color: var(--primary-color);
+}
+
+/* 空状态组件 */
+.ant-empty {
+  color: var(--text-tertiary);
+}
+
+.ant-empty-description {
+  color: var(--text-tertiary);
+}
+
+/* 分页组件 */
+.ant-pagination {
+  text-align: center;
+  margin-top: var(--spacing-lg);
+}
+
+.ant-pagination-item {
+  border-radius: var(--border-radius-md);
+}
+
+.ant-pagination-item-active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* 消息提示组件 */
+.ant-message {
+  top: var(--spacing-xl);
+}
+
+.ant-notification {
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-medium);
+}
+
+/* 抽屉组件 */
+.ant-drawer-content {
+  background: var(--bg-primary);
+}
+
+.ant-drawer-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+/* 模态框组件 */
+.ant-modal-content {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+}
+
+.ant-modal-header {
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-secondary);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.ant-modal-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .ant-pro-layout .ant-layout-content {
+    padding: var(--spacing-md);
+  }
+  
+  .ant-card-body {
+    padding: var(--spacing-md);
+  }
+  
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: var(--spacing-sm) var(--spacing-xs);
+  }
+}

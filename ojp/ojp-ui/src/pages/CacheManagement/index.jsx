@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { 
   Card, 
   Tabs, 
@@ -17,7 +17,7 @@ import {
   Divider,
   List,
   message
-} from 'antd'
+} from 'antd';
 import { 
   DatabaseOutlined, 
   ThunderboltOutlined, 
@@ -33,13 +33,13 @@ import {
   BarChartOutlined,
   SyncOutlined,
   RocketOutlined
-} from '@ant-design/icons'
-import { useQuery } from 'react-query'
-import { cacheApi, ruleApi } from '../services/api'
-import CacheRules from './cache/CacheRules'
-import QueryCache from './cache/QueryCache'
-import TableCache from './cache/TableCache'
-import CacheStats from './cache/CacheStats'
+} from '@ant-design/icons';
+import { useQuery } from 'react-query';
+import { cacheApi, ruleApi } from '../../services/api';
+import CacheRules from '../../components/cache/CacheRules';
+import QueryCache from '../../components/cache/QueryCache';
+import TableCache from '../../components/cache/TableCache';
+import CacheStats from '../../components/cache/CacheStats';
 
 const { Title, Text, Paragraph } = Typography
 const { TabPane } = Tabs
@@ -86,25 +86,25 @@ const CacheManagement = () => {
 
   // 获取系统状态类型和颜色
   const getSystemStatus = (stats) => {
-    if (!stats) return { type: 'info', color: '#1890ff', text: '未知' }
+    if (!stats) return { type: 'info', color: 'var(--primary-color)', text: '未知' }
     
     const { hitRate = 0, memoryUsage = 0, avgResponseTime = 0 } = stats
     
     if (hitRate >= 80 && memoryUsage < 70 && avgResponseTime < 100) {
-      return { type: 'success', color: '#52c41a', text: '优秀' }
+      return { type: 'success', color: 'var(--success-color)', text: '优秀' }
     } else if (hitRate >= 60 && memoryUsage < 85 && avgResponseTime < 200) {
-      return { type: 'warning', color: '#faad14', text: '良好' }
+      return { type: 'warning', color: 'var(--warning-color)', text: '良好' }
     } else {
-      return { type: 'error', color: '#ff4d4f', text: '需优化' }
+      return { type: 'error', color: 'var(--error-color)', text: '需优化' }
     }
   }
 
   // 获取性能等级
   const getPerformanceLevel = (value, thresholds) => {
     const { excellent, good, poor } = thresholds
-    if (value >= excellent) return { level: '优秀', color: '#52c41a', icon: <CheckCircleOutlined /> }
-    if (value >= good) return { level: '良好', color: '#faad14', icon: <InfoCircleOutlined /> }
-    return { level: '需优化', color: '#ff4d4f', icon: <WarningOutlined /> }
+    if (value >= excellent) return { level: '优秀', color: 'var(--success-color)', icon: <CheckCircleOutlined /> }
+    if (value >= good) return { level: '良好', color: 'var(--warning-color)', icon: <InfoCircleOutlined /> }
+    return { level: '需优化', color: 'var(--error-color)', icon: <WarningOutlined /> }
   }
 
   // 渲染概览统计
@@ -113,7 +113,7 @@ const CacheManagement = () => {
       return (
         <div style={{ textAlign: 'center', padding: '50px' }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: '#666' }}>正在加载缓存数据...</div>
+          <div style={{ marginTop: 16, color: 'var(--text-secondary)' }}>正在加载缓存数据...</div>
         </div>
       )
     }
@@ -142,10 +142,10 @@ const CacheManagement = () => {
 
     // 模拟缓存类型分布
     const cacheTypes = [
-      { type: '查询结果', count: Math.round(totalCaches * 0.6), color: '#1890ff' },
-      { type: '表格数据', count: Math.round(totalCaches * 0.25), color: '#52c41a' },
-      { type: '配置信息', count: Math.round(totalCaches * 0.1), color: '#722ed1' },
-      { type: '其他', count: Math.round(totalCaches * 0.05), color: '#fa8c16' },
+      { type: '查询结果', count: Math.round(totalCaches * 0.6), color: 'var(--primary-color)' },
+      { type: '表格数据', count: Math.round(totalCaches * 0.25), color: 'var(--success-color)' },
+      { type: '配置信息', count: Math.round(totalCaches * 0.1), color: 'var(--purple-color)' },
+      { type: '其他', count: Math.round(totalCaches * 0.05), color: 'var(--warning-color)' },
     ]
 
     return (
@@ -159,7 +159,7 @@ const CacheManagement = () => {
         }}>
           <div>
             <Title level={2} style={{ marginBottom: 8 }}>
-              <DatabaseOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+              <DatabaseOutlined style={{ marginRight: 8, color: 'var(--primary-color)' }} />
               缓存概览
             </Title>
             <Paragraph type="secondary">
@@ -213,12 +213,12 @@ const CacheManagement = () => {
               <Statistic
                 title={
                   <Space>
-                    <DatabaseOutlined style={{ color: '#1890ff' }} />
+                    <DatabaseOutlined style={{ color: 'var(--primary-color)' }} />
                     总缓存数
                   </Space>
                 }
                 value={totalCaches}
-                valueStyle={{ color: '#1890ff', fontWeight: 600, fontSize: '24px' }}
+                valueStyle={{ color: 'var(--primary-color)', fontWeight: 600, fontSize: '24px' }}
                 suffix={
                   <Text type="secondary" style={{ fontSize: '12px' }}>
                     {activeCaches} 活跃
@@ -233,12 +233,12 @@ const CacheManagement = () => {
               <Statistic
                 title={
                   <Space>
-                    <ThunderboltOutlined style={{ color: '#52c41a' }} />
+                    <ThunderboltOutlined style={{ color: 'var(--success-color)' }} />
                     活跃缓存
                   </Space>
                 }
                 value={activeCaches}
-                valueStyle={{ color: '#52c41a', fontWeight: 600, fontSize: '24px' }}
+                valueStyle={{ color: 'var(--success-color)', fontWeight: 600, fontSize: '24px' }}
                 suffix={
                   <Text type="secondary" style={{ fontSize: '12px' }}>
                     {totalCaches > 0 ? Math.round((activeCaches / totalCaches) * 100) : 0}%
@@ -253,12 +253,12 @@ const CacheManagement = () => {
               <Statistic
                 title={
                   <Space>
-                    <TableOutlined style={{ color: '#722ed1' }} />
+                    <TableOutlined style={{ color: 'var(--purple-color)' }} />
                     缓存键数量
                   </Space>
                 }
                 value={totalKeys}
-                valueStyle={{ color: '#722ed1', fontWeight: 600, fontSize: '24px' }}
+                valueStyle={{ color: 'var(--purple-color)', fontWeight: 600, fontSize: '24px' }}
                 suffix={
                   <Text type="secondary" style={{ fontSize: '12px' }}>
                     总计
@@ -273,17 +273,17 @@ const CacheManagement = () => {
               <Statistic
                 title={
                   <Space>
-                    <SettingOutlined style={{ color: '#fa8c16' }} />
+                    <SettingOutlined style={{ color: 'var(--warning-color)' }} />
                     内存使用率
                   </Space>
                 }
                 value={memoryUsage}
                 suffix="%"
-                valueStyle={{ color: '#fa8c16', fontWeight: 600, fontSize: '24px' }}
+                valueStyle={{ color: 'var(--warning-color)', fontWeight: 600, fontSize: '24px' }}
               />
               <Progress
                 percent={memoryUsage}
-                strokeColor={memoryUsage > 80 ? '#ff4d4f' : memoryUsage > 60 ? '#faad14' : '#52c41a'}
+                strokeColor={memoryUsage > 80 ? 'var(--error-color)' : memoryUsage > 60 ? 'var(--warning-color)' : 'var(--success-color)'}
                 showInfo={false}
                 style={{ marginTop: 8 }}
                 size="small"
@@ -298,7 +298,7 @@ const CacheManagement = () => {
             <Card 
               title={
                 <Space>
-                  <BarChartOutlined style={{ color: '#52c41a' }} />
+                  <BarChartOutlined style={{ color: 'var(--success-color)' }} />
                   缓存命中率
                 </Space>
               } 
@@ -332,7 +332,7 @@ const CacheManagement = () => {
             <Card 
               title={
                 <Space>
-                  <ClockCircleOutlined style={{ color: '#1890ff' }} />
+                  <ClockCircleOutlined style={{ color: 'var(--primary-color)' }} />
                   平均响应时间
                 </Space>
               } 
@@ -368,7 +368,7 @@ const CacheManagement = () => {
             <Card 
               title={
                 <Space>
-                  <SyncOutlined style={{ color: '#722ed1' }} />
+                  <SyncOutlined style={{ color: 'var(--purple-color)' }} />
                   缓存类型分布
                 </Space>
               } 
@@ -406,7 +406,7 @@ const CacheManagement = () => {
             <Card 
               title={
                 <Space>
-                  <FireOutlined style={{ color: '#ff4d4f' }} />
+                  <FireOutlined style={{ color: 'var(--error-color)' }} />
                   热门缓存
                 </Space>
               }
@@ -441,15 +441,15 @@ const CacheManagement = () => {
               description={
                 <div>
                   <Paragraph style={{ marginBottom: 8 }}>
-                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
+                    <CheckCircleOutlined style={{ color: 'var(--success-color)', marginRight: 8 }} />
                     缓存系统运行正常
                   </Paragraph>
                   <Paragraph style={{ marginBottom: 8 }}>
-                    <InfoCircleOutlined style={{ color: '#1890ff', marginRight: 8 }} />
+                    <InfoCircleOutlined style={{ color: 'var(--primary-color)', marginRight: 8 }} />
                     建议定期清理过期缓存
                   </Paragraph>
                   <Paragraph style={{ marginBottom: 0 }}>
-                    <WarningOutlined style={{ color: '#faad14', marginRight: 8 }} />
+                    <WarningOutlined style={{ color: 'var(--warning-color)', marginRight: 8 }} />
                     监控内存使用率变化
                   </Paragraph>
                 </div>

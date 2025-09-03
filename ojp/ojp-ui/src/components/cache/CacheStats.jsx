@@ -160,7 +160,7 @@ const CacheStats = () => {
                 type="circle"
                 percent={hitRateData.currentRate || 0}
                 size={120}
-                strokeColor="#52c41a"
+                strokeColor="var(--success-color)"
                 format={percent => `${percent}%`}
               />
               <div style={{ marginTop: 16 }}>
@@ -183,7 +183,7 @@ const CacheStats = () => {
                     title="最高命中率"
                     value={hitRateData.maxRate || 0}
                     suffix="%"
-                    valueStyle={{ fontSize: '16px', color: '#52c41a' }}
+                    valueStyle={{ fontSize: '16px', color: 'var(--success-color)' }}
                   />
                 </Col>
               </Row>
@@ -198,7 +198,7 @@ const CacheStats = () => {
                 title="平均查询时间"
                 value={performanceData.avgQueryTime || 0}
                 suffix="ms"
-                valueStyle={{ fontSize: '24px', color: '#1890ff' }}
+                valueStyle={{ fontSize: '24px', color: 'var(--primary-color)' }}
               />
             </div>
             
@@ -207,7 +207,7 @@ const CacheStats = () => {
                 title="缓存查询时间"
                 value={performanceData.avgCachedQueryTime || 0}
                 suffix="ms"
-                valueStyle={{ fontSize: '16px', color: '#52c41a' }}
+                valueStyle={{ fontSize: '16px', color: 'var(--success-color)' }}
               />
             </div>
             
@@ -216,7 +216,7 @@ const CacheStats = () => {
                 title="非缓存查询时间"
                 value={performanceData.avgNonCachedQueryTime || 0}
                 suffix="ms"
-                valueStyle={{ fontSize: '16px', color: '#fa8c16' }}
+                valueStyle={{ fontSize: '16px', color: 'var(--warning-color)' }}
               />
             </div>
             
@@ -243,7 +243,7 @@ const CacheStats = () => {
                         width: 32, 
                         height: 32, 
                         borderRadius: '50%', 
-                        backgroundColor: index < 3 ? '#1890ff' : '#d9d9d9',
+                        backgroundColor: index < 3 ? 'var(--primary-color)' : 'var(--text-color-secondary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -285,7 +285,7 @@ const CacheStats = () => {
                         width: 32, 
                         height: 32, 
                         borderRadius: '50%', 
-                        backgroundColor: '#ff4d4f',
+                        backgroundColor: 'var(--error-color)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

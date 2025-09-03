@@ -143,16 +143,16 @@ const TableCache = () => {
       render: (cached) => {
         if (cached) {
           return (
-            <Space>
-              <Tag color="success">已缓存</Tag>
-            </Space>
-          )
+                <Space>
+                  <Tag color="green">已缓存</Tag>
+                </Space>
+              )
         } else {
           return (
-            <Space>
-              <Tag color="default">未缓存</Tag>
-            </Space>
-          )
+                <Space>
+                  <Tag color="gray">未缓存</Tag>
+                </Space>
+              )
         }
       },
     },

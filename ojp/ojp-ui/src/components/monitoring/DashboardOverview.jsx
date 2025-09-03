@@ -125,18 +125,18 @@ const DashboardOverview = () => {
   // 获取状态颜色
   const getStatusColor = (status) => {
     switch (status) {
-      case 'UP': return '#52c41a'
-      case 'DOWN': return '#ff4d4f'
-      case 'WARNING': return '#faad14'
-      default: return '#d9d9d9'
+      case 'UP': return 'var(--success-color)'
+      case 'DOWN': return 'var(--error-color)'
+      case 'WARNING': return 'var(--warning-color)'
+      default: return 'var(--text-color-secondary)'
     }
   }
 
   // 获取进度条颜色
   const getProgressColor = (percent) => {
-    if (percent >= 90) return '#ff4d4f'
-    if (percent >= 75) return '#faad14'
-    return '#52c41a'
+    if (percent >= 90) return 'var(--error-color)'
+    if (percent >= 75) return 'var(--warning-color)'
+    return 'var(--success-color)'
   }
 
   // 系统状态指示器
@@ -180,7 +180,7 @@ const DashboardOverview = () => {
       {/* 页面标题 */}
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
-          <DashboardOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+          <DashboardOutlined style={{ marginRight: 8, color: 'var(--primary-color)' }} />
           系统仪表盘
         </Title>
         <Text type="secondary">系统核心指标概览</Text>
@@ -195,12 +195,12 @@ const DashboardOverview = () => {
           <Card className="stats-card" hoverable style={{ borderRadius: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div className="stats-number" style={{ color: healthInfo?.status === 'UP' ? '#52c41a' : '#ff4d4f', fontSize: 18, fontWeight: 'bold' }}>
+                <div className="stats-number" style={{ color: healthInfo?.status === 'UP' ? 'var(--success-color)' : 'var(--error-color)', fontSize: 18, fontWeight: 'bold' }}>
                   {healthInfo?.status === 'UP' ? '正常' : '异常'}
                 </div>
                 <div className="stats-label">服务器状态</div>
               </div>
-              <CloudServerOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+              <CloudServerOutlined style={{ fontSize: 24, color: 'var(--primary-color)' }} />
             </div>
           </Card>
         </Col>
@@ -212,12 +212,12 @@ const DashboardOverview = () => {
                   type="circle"
                   percent={resources?.memoryUsage || 0}
                   size={60}
-                  strokeColor="#1890ff"
+                  strokeColor="var(--primary-color)"
                   format={percent => `${percent}%`}
                 />
                 <div className="stats-label" style={{ marginTop: 8 }}>内存使用率</div>
               </div>
-              <DatabaseOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+              <DatabaseOutlined style={{ fontSize: 24, color: 'var(--primary-color)' }} />
             </div>
           </Card>
         </Col>
@@ -229,12 +229,12 @@ const DashboardOverview = () => {
                   type="circle"
                   percent={resources?.cpuUsage || 0}
                   size={60}
-                  strokeColor="#52c41a"
+                  strokeColor="var(--success-color)"
                   format={percent => `${percent}%`}
                 />
                 <div className="stats-label" style={{ marginTop: 8 }}>CPU使用率</div>
               </div>
-              <DesktopOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+              <DesktopOutlined style={{ fontSize: 24, color: 'var(--primary-color)' }} />
             </div>
           </Card>
         </Col>
@@ -242,12 +242,12 @@ const DashboardOverview = () => {
           <Card className="stats-card" hoverable style={{ borderRadius: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div className="stats-number" style={{ color: '#1890ff', fontSize: 18, fontWeight: 'bold' }}>
+                <div className="stats-number" style={{ color: 'var(--primary-color)', fontSize: 18, fontWeight: 'bold' }}>
                   {jvmInfo?.threadsLive || 0}
                 </div>
                 <div className="stats-label">活跃线程</div>
               </div>
-              <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />
+              <UserOutlined style={{ fontSize: 24, color: 'var(--primary-color)' }} />
             </div>
           </Card>
         </Col>
@@ -265,7 +265,7 @@ const DashboardOverview = () => {
                />
                <Progress
                  percent={jvmInfo?.heapUsage || 0}
-                 strokeColor="#1890ff"
+                 strokeColor="var(--primary-color)"
                  showInfo={false}
                  style={{ marginTop: 8 }}
                />
@@ -278,7 +278,7 @@ const DashboardOverview = () => {
                />
                <Progress
                  percent={jvmInfo?.nonHeapUsage || 0}
-                 strokeColor="#52c41a"
+                 strokeColor="var(--success-color)"
                  showInfo={false}
                  style={{ marginTop: 8 }}
                />
@@ -309,7 +309,7 @@ const DashboardOverview = () => {
               <Statistic
                 title="系统状态"
                 value={healthInfo.status === 'UP' ? '运行中' : '已停止'}
-                valueStyle={{ color: healthInfo.status === 'UP' ? '#52c41a' : '#ff4d4f' }}
+                valueStyle={{ color: healthInfo.status === 'UP' ? 'var(--success-color)' : 'var(--error-color)' }}
               />
             </Col>
             <Col xs={24} sm={12}>
@@ -358,8 +358,8 @@ const DashboardOverview = () => {
                         text={key.charAt(0).toUpperCase() + key.slice(1)}
                       />
                       <div style={{ marginTop: 4 }}>
-                        <Tag color={component.status === 'UP' ? 'green' : 
-                                  component.status === 'DOWN' ? 'red' : 'orange'}>
+                        <Tag color={component.status === 'UP' ? 'success' : 
+                                  component.status === 'DOWN' ? 'error' : 'warning'}>
                           {component.status}
                         </Tag>
                       </div>

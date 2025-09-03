@@ -385,7 +385,7 @@ const CacheRules = () => {
           <Popconfirm
             title="确定要删除这个缓存规则吗？"
             description="删除后将无法恢复"
-            icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
+            icon={<ExclamationCircleOutlined style={{ color: 'var(--error-color)' }} />}
             onConfirm={() => handleDeleteRule(record.id)}
             okText="确定"
             cancelText="取消"
@@ -403,7 +403,7 @@ const CacheRules = () => {
     <div className="cache-rules">
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>
-          <SettingOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+          <SettingOutlined style={{ marginRight: 8, color: 'var(--primary-color)' }} />
           缓存规则管理
         </Title>
         <Text type="secondary">管理缓存策略和规则配置，支持多种匹配方式和灵活的TTL设置</Text>

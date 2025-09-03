@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   Button,
@@ -20,7 +20,7 @@ import {
   Input,
   Select,
   Switch
-} from 'antd'
+} from 'antd';
 import {
   PlayCircleOutlined,
   CheckCircleOutlined,
@@ -30,10 +30,10 @@ import {
   BugOutlined,
   ApiOutlined,
   DatabaseOutlined
-} from '@ant-design/icons'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
-import grpcClient from '../services/grpcClient'
-import './Testing.css'
+} from '@ant-design/icons';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import grpcClient from '../../services/grpcClient';
+import './index.css';
 
 const { Title, Text, Paragraph } = Typography
 const { Option } = Select
@@ -379,7 +379,7 @@ const Testing = () => {
             <Statistic
               title="成功次数"
               value={testStats.success}
-              valueStyle={{ color: '#3f8600' }}
+              valueStyle={{ color: 'var(--success-color)' }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
@@ -389,7 +389,7 @@ const Testing = () => {
             <Statistic
               title="失败次数"
               value={testStats.failed}
-              valueStyle={{ color: '#cf1322' }}
+              valueStyle={{ color: 'var(--error-color)' }}
               prefix={<CloseCircleOutlined />}
             />
           </Card>

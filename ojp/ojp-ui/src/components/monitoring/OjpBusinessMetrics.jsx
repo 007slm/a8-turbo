@@ -116,7 +116,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
           <Card 
             title={
               <Space>
-                <DatabaseOutlined style={{ color: '#1890ff' }} />
+                <DatabaseOutlined style={{ color: 'var(--primary-color)' }} />
                 <span>缓存性能指标</span>
               </Space>
             }
@@ -128,8 +128,8 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="缓存命中"
                     value={getMetricValue(cacheMetrics.find(m => m.name === 'ojp.cache.hit'))}
-                    prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                    valueStyle={{ color: '#52c41a' }}
+                    prefix={<CheckCircleOutlined style={{ color: 'var(--success-color)' }} />}
+                    valueStyle={{ color: 'var(--success-color)' }}
                   />
                 </Tooltip>
               </Col>
@@ -138,8 +138,8 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="缓存未命中"
                     value={getMetricValue(cacheMetrics.find(m => m.name === 'ojp.cache.miss'))}
-                    prefix={<ExclamationCircleOutlined style={{ color: '#faad14' }} />}
-                    valueStyle={{ color: '#faad14' }}
+                    prefix={<ExclamationCircleOutlined style={{ color: 'var(--warning-color)' }} />}
+                    valueStyle={{ color: 'var(--warning-color)' }}
                   />
                 </Tooltip>
               </Col>
@@ -148,8 +148,8 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="缓存跳过"
                     value={getMetricValue(cacheMetrics.find(m => m.name === 'ojp.cache.skip'))}
-                    prefix={<WarningOutlined style={{ color: '#ff7875' }} />}
-                    valueStyle={{ color: '#ff7875' }}
+                    prefix={<WarningOutlined style={{ color: 'var(--error-color)' }} />}
+                    valueStyle={{ color: 'var(--error-color)' }}
                   />
                 </Tooltip>
               </Col>
@@ -178,7 +178,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="缓存处理时间"
                     value={formatTime(getMetricValue(cacheMetrics.find(m => m.name === 'ojp.cache.processing.time')))}
-                    prefix={<ClockCircleOutlined style={{ color: '#722ed1' }} />}
+                    prefix={<ClockCircleOutlined style={{ color: 'var(--purple-color)' }} />}
                   />
                 </Tooltip>
               </Col>
@@ -191,7 +191,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
           <Card 
             title={
               <Space>
-                <RocketOutlined style={{ color: '#52c41a' }} />
+                <RocketOutlined style={{ color: 'var(--success-color)' }} />
                 <span>查询性能指标</span>
               </Space>
             }
@@ -203,8 +203,8 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="查询执行次数"
                     value={getMetricValue(queryMetrics.find(m => m.name === 'ojp.query.execution'))}
-                    prefix={<ThunderboltOutlined style={{ color: '#1890ff' }} />}
-                    valueStyle={{ color: '#1890ff' }}
+                    prefix={<ThunderboltOutlined style={{ color: 'var(--primary-color)' }} />}
+                    valueStyle={{ color: 'var(--primary-color)' }}
                   />
                 </Tooltip>
               </Col>
@@ -213,8 +213,8 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
                   <Statistic
                     title="查询错误次数"
                     value={getMetricValue(queryMetrics.find(m => m.name === 'ojp.query.error'))}
-                    prefix={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
-                    valueStyle={{ color: '#ff4d4f' }}
+                    prefix={<ExclamationCircleOutlined style={{ color: 'var(--error-color)' }} />}
+                    valueStyle={{ color: 'var(--error-color)' }}
                   />
                 </Tooltip>
               </Col>
@@ -264,7 +264,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
           <Card 
             title={
               <Space>
-                <BarChartOutlined style={{ color: '#722ed1' }} />
+                <BarChartOutlined style={{ color: 'var(--purple-color)' }} />
                 <span>详细指标数据</span>
               </Space>
             }

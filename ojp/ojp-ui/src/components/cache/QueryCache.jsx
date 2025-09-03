@@ -183,7 +183,7 @@ const QueryCache = () => {
       render: (tables) => (
         <Space>
           {tables?.map(table => (
-            <Tag key={table} color="blue">{table}</Tag>
+            <Tag key={table} color="processing">{table}</Tag>
           ))}
         </Space>
       ),
@@ -327,7 +327,7 @@ const QueryCache = () => {
             <Descriptions.Item label="涉及表格">
               <Space>
                 {selectedQuery.tables?.map(table => (
-                  <Tag key={table} color="blue">{table}</Tag>
+                  <Tag key={table} color="processing">{table}</Tag>
                 ))}
               </Space>
             </Descriptions.Item>

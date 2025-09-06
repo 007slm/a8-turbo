@@ -95,20 +95,40 @@ const QueryCache = () => {
     }
   }
 
-  const queries = queriesData?.data || []
-  const tables = tablesData?.data || []
+  // 处理按数据库分组的数据结构
+  const processGroupedData = (groupedData) => {
+    if (!groupedData) return []
+    
+    const flattenedData = []
+    Object.entries(groupedData).forEach(([databaseName, items]) => {
+      items.forEach(item => {
+        flattenedData.push({
+          ...item,
+          databaseName // 添加数据库名称字段
+        })
+      })
+    })
+    return flattenedData
+  }
+
+  const queries = processGroupedData(queriesData)
+  const tables = processGroupedData(tablesData)
 
   // 处理创建缓存规则
   const handleCreateRule = async (values) => {
     try {
       const ruleData = {
+        databaseName: selectedQuery?.databaseName,
+        name: `query_${selectedQuery?.queryId}_cache_rule`,
         ttl: values.ttl,
         ruleType: values.ruleType,
+        description: values.description,
+        status: 'ACTIVE'
       }
       
       // 根据规则类型填充匹配条件
       if (values.ruleType === 'queryIds' && selectedQuery?.queryId) {
-        ruleData.matchValue = selectedQuery.queryId
+        ruleData.matchValue = [selectedQuery.queryId]
       } else {
         ruleData.matchValue = values.matchValue
       }
@@ -158,6 +178,12 @@ const QueryCache = () => {
 
   // 表格列定义
   const columns = [
+    {
+      title: '数据库',
+      dataIndex: 'databaseName',
+      key: 'databaseName',
+      render: (text) => <Tag color="geekblue">{text}</Tag>,
+    },
     {
       title: '查询ID',
       dataIndex: 'queryId',

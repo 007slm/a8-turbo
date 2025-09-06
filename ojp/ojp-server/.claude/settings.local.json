@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.\\ls:*)",
+      "Bash(.\\ls:*)",
+      "Bash(dir:*)",
+      "Read(/E:\\a8-turbo\\ojp\\ojp-server/**)",
+      "Bash(.ls -la docs)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

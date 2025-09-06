@@ -88,7 +88,7 @@ export const cacheApi = {
   // 获取查询列表
   getQueries: (params = {}) => {
     const queryString = new URLSearchParams(params).toString()
-    return request(`/cache/queries?${queryString}`)
+    return request(`/cache/queries/list?${queryString}`)
   },
   
   // 获取特定查询的缓存规则
@@ -103,7 +103,7 @@ export const cacheApi = {
   // 获取表格列表
   getTables: (params = {}) => {
     const queryString = new URLSearchParams(params).toString()
-    return request(`/cache/tables?${queryString}`)
+    return request(`/cache/stats/tables/list?${queryString}`)
   },
   
   // 获取特定表格的缓存规则
@@ -116,7 +116,7 @@ export const cacheApi = {
   }),
   
   // 获取表格统计
-  getTableStats: (tableName) => request(`/cache/tables/${tableName}/stats`),
+  getTableStats: (tableName) => request(`/cache/stats/tables/${tableName}/details`),
   
   // 获取缓存列表
   getCaches: () => request('/caches'),
@@ -153,10 +153,10 @@ export const cacheApi = {
   }),
 }
 
-// 缓存规则管理相关接口 - 已整合到cacheApi中
+// 缓存规则管理相关接口
 export const ruleApi = {
   // 获取所有缓存规则
-  getRules: () => request('/cache/rules'),
+  getRules: () => request('/cache/rules/list'),
   
   // 根据ID获取缓存规则
   getRule: (ruleId) => request(`/cache/rules/${ruleId}`),
@@ -185,6 +185,16 @@ export const ruleApi = {
   
   // 禁用缓存规则
   disableRule: (ruleId) => request(`/cache/rules/${ruleId}/disable`, {
+    method: 'POST',
+  }),
+  
+  // 验证规则
+  validateRules: () => request('/cache/rules/validate', {
+    method: 'POST',
+  }),
+  
+  // 提交规则
+  commitRules: () => request('/cache/rules/commit', {
     method: 'POST',
   })
 }

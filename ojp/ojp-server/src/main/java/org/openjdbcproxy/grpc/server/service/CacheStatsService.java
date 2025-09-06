@@ -299,9 +299,79 @@ public class CacheStatsService {
                             .collect(Collectors.toList());
                 }
             }
+            // 如果Redis中没有数据，返回空列表
             
         } catch (Exception e) {
             log.error("Error getting tables", e);
+            // 返回空列表而不是抛出异常
+        }
+        
+        return tables;
+    }
+    
+    /**
+     * 初始化示例数据
+     */
+    private void initializeSampleData() {
+        try {
+            // 创建示例表格统计数据
+            Map<String, Long> sampleTableStats = new HashMap<>();
+            sampleTableStats.put("users", 1250L);
+            sampleTableStats.put("orders", 890L);
+            sampleTableStats.put("products", 650L);
+            sampleTableStats.put("categories", 320L);
+            sampleTableStats.put("inventory", 180L);
+            
+            // 保存到Redis
+            redisTemplate.opsForValue().set(TABLE_STATS_KEY, sampleTableStats);
+            
+            // 创建示例查询统计数据
+            Map<String, Object> sampleQueryStats = new HashMap<>();
+            sampleQueryStats.put("query_001", Map.of(
+                "sql", "SELECT * FROM users WHERE status = 'active'",
+                "tables", Arrays.asList("users"),
+                "count", 125L,
+                "meanQueryTime", 45.2,
+                "isCached", true,
+                "currentTtl", "30m",
+                "description", "获取活跃用户列表"
+            ));
+            sampleQueryStats.put("query_002", Map.of(
+                "sql", "SELECT o.*, u.name FROM orders o JOIN users u ON o.user_id = u.id",
+                "tables", Arrays.asList("orders", "users"),
+                "count", 89L,
+                "meanQueryTime", 78.5,
+                "isCached", false,
+                "currentTtl", "",
+                "description", "订单用户关联查询"
+            ));
+            
+            redisTemplate.opsForValue().set(QUERY_STATS_KEY, sampleQueryStats);
+            
+            log.info("Sample data initialized successfully");
+        } catch (Exception e) {
+            log.error("Error initializing sample data", e);
+        }
+    }
+    
+    /**
+     * 创建示例表格列表
+     */
+    private List<CacheStatsDto.TableInfo> createSampleTableList() {
+        List<CacheStatsDto.TableInfo> tables = new ArrayList<>();
+        
+        String[] tableNames = {"users", "orders", "products", "categories", "inventory"};
+        Long[] frequencies = {1250L, 890L, 650L, 320L, 180L};
+        
+        for (int i = 0; i < tableNames.length; i++) {
+            CacheStatsDto.TableInfo tableInfo = new CacheStatsDto.TableInfo();
+            tableInfo.setName(tableNames[i]);
+            tableInfo.setAccessFrequency(frequencies[i]);
+            tableInfo.setAvgQueryTime(Math.random() * 200 + 50); // 模拟数据
+            tableInfo.setCached(Math.random() > 0.3); // 模拟缓存状态
+            tableInfo.setTtl("30m"); // 模拟TTL
+            tableInfo.setRelatedTables(Arrays.asList("related_table1", "related_table2")); // 模拟相关表
+            tables.add(tableInfo);
         }
         
         return tables;

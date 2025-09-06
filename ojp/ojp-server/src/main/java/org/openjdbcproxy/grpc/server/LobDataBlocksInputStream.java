@@ -19,15 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * waiting for new blocks while feeding the InputStream at the same time.
  */
 @Slf4j
+@Getter
 public class LobDataBlocksInputStream extends InputStream {
-    @Getter
+    
     private final String uuid;
     private final List<LobDataBlock> blocksReceived;
     private final AtomicBoolean atomicFinished;
     private byte[] currentBlock;
     private int currentIdx;
     private SettableFuture<Boolean> blockArrived;
-    @Getter
     private AtomicBoolean fullyConsumed;
 
     public LobDataBlocksInputStream(LobDataBlock firstBlock) {

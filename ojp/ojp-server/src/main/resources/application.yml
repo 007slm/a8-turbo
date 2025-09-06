@@ -17,7 +17,31 @@ spring:
     default-property-inclusion: non_null
     serialization:
       write-dates-as-timestamps: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: your_password # 如果需要密码，请取消注释并设置
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: true
+  packages-to-scan: org.openjdbcproxy
+  paths-to-match:
+    - /api/**
+    - /cache/**
 # Spring gRPC 配置 - 单端口模式
 grpc:
   server:

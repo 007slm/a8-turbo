@@ -46,10 +46,11 @@ import {
   SettingOutlined,
   TagsOutlined,
   DatabaseOutlined,
-  CodeOutlined
+  CodeOutlined,
+  ClockCircleOutlined
 } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { ruleApi } from '../../services/api'
+import { ruleApi, cacheApi } from '../../services/api'
 
 const { Title, Text, Paragraph } = Typography
 const { TextArea } = Input
@@ -66,10 +67,10 @@ const CacheRuleType = {
 }
 
 const CacheRules = () => {
-  const [editingRule, setEditingRule] = useState(null)
   const [showRuleModal, setShowRuleModal] = useState(false)
-  const [ruleForm] = Form.useForm()
+  const [editingRule, setEditingRule] = useState(null)
   const [pendingChanges, setPendingChanges] = useState([])
+  const [ruleForm] = Form.useForm()
   const queryClient = useQueryClient()
 
   // 获取缓存规则列表
@@ -84,7 +85,7 @@ const CacheRules = () => {
   // 获取表格列表
   const { data: tablesData } = useQuery(
     'tables',
-    () => ruleApi.getTables(),
+    () => cacheApi.getTables(),
     {
       refetchInterval: 60000, // 1分钟刷新一次
     }
@@ -166,8 +167,32 @@ const CacheRules = () => {
     }
   )
 
-  const rules = rulesData?.data || []
-  const tables = tablesData?.data || []
+  // 处理按数据库分组的数据结构
+  const processGroupedData = (groupedData) => {
+    if (!groupedData) return []
+    
+    // 如果数据已经是数组格式，直接返回
+    if (Array.isArray(groupedData)) {
+      return groupedData
+    }
+    
+    const flattenedData = []
+    Object.entries(groupedData).forEach(([databaseName, items]) => {
+      // 确保items是数组
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          flattenedData.push({
+            ...item,
+            databaseName // 添加数据库名称字段
+          })
+        })
+      }
+    })
+    return flattenedData
+  }
+
+  const rules = processGroupedData(rulesData)
+  const tables = processGroupedData(tablesData)
 
   // 获取规则类型中文名称
   const getRuleTypeLabel = (ruleType) => {
@@ -201,9 +226,10 @@ const CacheRules = () => {
     if (rule) {
       // 编辑模式：设置表单值
       ruleForm.setFieldsValue({
+        databaseName: rule.databaseName || 'user_service_db',
         name: rule.name,
         ruleType: rule.ruleType || CacheRuleType.TABLES_ANY,
-        matchValue: rule.ruleMatch || '',
+        matchValue: rule.ruleMatch || rule.tables || '',
         ttl: rule.ttl || '30m',
         description: rule.description || '',
         status: rule.status || 'ACTIVE'
@@ -212,6 +238,7 @@ const CacheRules = () => {
       // 创建模式：重置表单并设置默认值
       ruleForm.resetFields()
       ruleForm.setFieldsValue({
+        databaseName: 'user_service_db',
         ruleType: CacheRuleType.TABLES_ANY,
         ttl: '30m',
         status: 'ACTIVE'
@@ -234,6 +261,7 @@ const CacheRules = () => {
 
       // 构建规则数据
       const ruleData = {
+        databaseName: values.databaseName,
         name: values.name,
         ruleType: values.ruleType,
         ttl: values.ttl,
@@ -289,9 +317,18 @@ const CacheRules = () => {
   // 表格列定义
   const columns = [
     {
-      title: '规则名称',
-      dataIndex: 'name',
-      key: 'name',
+      title: '数据库',
+      dataIndex: 'databaseName',
+      key: 'databaseName',
+      width: 150,
+      render: (text) => (
+        <Tag color="blue">{text}</Tag>
+      ),
+    },
+    {
+      title: '规则ID',
+      dataIndex: 'id',
+      key: 'id',
       render: (text, record) => (
         <Space>
           <Text strong>{text}</Text>
@@ -311,16 +348,30 @@ const CacheRules = () => {
     },
     {
       title: '匹配条件',
-      dataIndex: 'ruleMatch',
-      key: 'ruleMatch',
+      dataIndex: 'tables',
+      key: 'tables',
       ellipsis: {
         showTitle: false,
       },
-      render: (text) => (
-        <Tooltip placement="topLeft" title={text}>
-          <Text code style={{ fontSize: '12px' }}>{text}</Text>
-        </Tooltip>
-      ),
+      render: (tables, record) => {
+        // 根据规则类型显示不同的匹配条件
+        let matchText = ''
+        if (record.tables && record.tables.length > 0) {
+          matchText = record.tables.join(', ')
+        } else if (record.tablesAny && record.tablesAny.length > 0) {
+          matchText = record.tablesAny.join(', ') + ' (任意匹配)'
+        } else if (record.tablesAll && record.tablesAll.length > 0) {
+          matchText = record.tablesAll.join(', ') + ' (全部匹配)'
+        } else {
+          matchText = '匹配所有'
+        }
+        
+        return (
+          <Tooltip placement="topLeft" title={matchText}>
+            <Text code style={{ fontSize: '12px' }}>{matchText}</Text>
+          </Tooltip>
+        )
+      },
     },
     {
       title: 'TTL',
@@ -351,9 +402,9 @@ const CacheRules = () => {
     },
     {
       title: '最后更新',
-      dataIndex: 'lastUpdated',
-      key: 'lastUpdated',
-      render: (text) => new Date(text).toLocaleString('zh-CN'),
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (text) => text ? new Date(text).toLocaleString('zh-CN') : '-',
     },
     {
       title: '操作',
@@ -502,11 +553,24 @@ const CacheRules = () => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
+            databaseName: 'user_service_db',
             ruleType: CacheRuleType.TABLES_ANY,
             ttl: '30m',
             status: 'ACTIVE'
           }}
         >
+          <Form.Item
+            name="databaseName"
+            label="数据库"
+            rules={[{ required: true, message: '请选择数据库' }]}
+            tooltip="选择规则适用的数据库"
+          >
+            <Select placeholder="选择数据库">
+              <Option value="user_service_db">用户服务数据库</Option>
+              <Option value="product_service_db">产品服务数据库</Option>
+            </Select>
+          </Form.Item>
+
           <Form.Item
             name="name"
             label="规则名称"
@@ -599,21 +663,29 @@ const CacheRules = () => {
                       prefix={<CodeOutlined />}
                     />
                   ) : ruleType?.includes('tables') ? (
-                    <Select
-                      mode="multiple"
-                      placeholder="请选择表格"
-                      options={tables.map(table => ({
-                        label: table.name,
-                        value: table.name
-                      }))}
-                      showSearch
-                      filterOption={(input, option) =>
-                        option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                      }
-                      allowClear
-                      showArrow
-                      prefix={<TableOutlined />}
-                    />
+                    <Form.Item noStyle shouldUpdate={(prev, curr) => prev.databaseName !== curr.databaseName}>
+                      {({ getFieldValue }) => {
+                        const selectedDatabase = getFieldValue('databaseName')
+                        const filteredTables = tables.filter(table => table.databaseName === selectedDatabase)
+                        return (
+                          <Select
+                            mode="multiple"
+                            placeholder="请选择表格"
+                            options={filteredTables.map(table => ({
+                              label: table.name,
+                              value: table.name
+                            }))}
+                            showSearch
+                            filterOption={(input, option) =>
+                              option.label.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                            }
+                            allowClear
+                            showArrow
+                            prefix={<TableOutlined />}
+                          />
+                        )
+                      }}
+                    </Form.Item>
                   ) : ruleType === CacheRuleType.QUERY_IDS ? (
                     <Input
                       placeholder="输入查询ID（CRC32哈希值），多个用逗号分隔，如: 5a934c95, beab0f6f"

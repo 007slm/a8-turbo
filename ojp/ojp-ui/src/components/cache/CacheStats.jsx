@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { 
   Card, 
+  Button,
   Row, 
   Col, 
   Statistic, 
@@ -15,7 +16,8 @@ import {
   Tag
 } from 'antd'
 import { 
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  ReloadOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import { cacheApi } from '../../services/api'

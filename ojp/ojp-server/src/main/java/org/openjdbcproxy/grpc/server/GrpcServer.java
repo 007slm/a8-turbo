@@ -15,7 +15,7 @@ import org.springframework.context.ConfigurableApplicationContext;
  * - gRPC 服务映射到 /<service-name>/* 路径
  */
 @Slf4j
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "org.openjdbcproxy")
 public class GrpcServer {
     
     private static ConfigurableApplicationContext applicationContext;

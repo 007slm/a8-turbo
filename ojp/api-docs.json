@@ -1,0 +1,2096 @@
+﻿{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "OJP Server API",
+        "description": "Open JDBC Proxy (OJP) Server API ææ¡£ãOJP æ¯ä¸ä¸ªå¼æºç JDBC é©±å¨å Layer 7 æ°æ®åºä»£çæå¡ï¼æ¨å¨è§£å³ç°ä»£æ¶æï¼å¦å¾®æå¡ãäºä»¶é©±å¨ãServerlessï¼ä¸­æ°æ®åºè¿æ¥ç®¡ççææã",
+        "contact": {
+            "name": "OJP å¼åå¢é",
+            "url": "https://github.com/Open-JDBC-Proxy/ojp",
+            "email": "openjdbcproxy@example.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "0.0.8-alpha"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8010",
+            "description": "æ¬å°å¼åæå¡å¨"
+        },
+        {
+            "url": "https://localhost:5173",
+            "description": "åç«¯ä»£çæå¡å¨"
+        }
+    ],
+    "paths": {
+        "/api/caches/{name}/keys/{key}": {
+            "get": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "getCacheValue",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "setCacheValue",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseString"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "deleteCacheKey",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseString"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/{id}": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getRuleById",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "updateRule",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CacheRule"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "deleteRule",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseBoolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/cleanup": {
+            "post": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "cleanupExpiredStatistics",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/caches/{name}/clear": {
+            "post": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "clearCache",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseString"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/tables/{tableName}/rules": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getTableRules",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createTableRuleForName",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/tables/create-rule": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createTableRule",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getAllRules",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createRule",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CacheRule"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/{id}/enable": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "enableRule",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/{id}/disable": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "disableRule",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/validate": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "validateRules",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CacheRule"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseRuleValidationResult"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/regex": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createRegexRule",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/global": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createGlobalRule",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/commit": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "commitRules",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseString"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/queries/{queryId}/rules": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getQueryRules",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createQueryRuleForId",
+                "parameters": [],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/queries/create-rule": {
+            "post": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "createQueryRule",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseCacheRule"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/tables": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getAllTableStatistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/tables/{tableName}": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getTableStatistics",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/tables/hot": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getHotTables",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/sql": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getAllSqlStatistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/sql/{queryId}": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getSqlStatistics",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/sql/slow": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getSlowQueries",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/sql/hot": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getHotSqlQueries",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/overview": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getStatisticsOverview",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/export": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "exportStatistics",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arg1",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/statistics/cache/hit-rate": {
+            "get": {
+                "tags": [
+                    "sql-statistics-controller"
+                ],
+                "operationId": "getCacheHitRateStatistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/caches": {
+            "get": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "getCaches",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListString"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/caches/{name}": {
+            "get": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "getCache",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/caches/{name}/stats": {
+            "get": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "getCacheStats",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/caches/{name}/keys": {
+            "get": {
+                "tags": [
+                    "cache-management-controller"
+                ],
+                "operationId": "getCacheKeys",
+                "parameters": [
+                    {
+                        "name": "arg1",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arg2",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 100
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListString"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/tables": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getTables",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListTableInfo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/tables/{tableName}/stats": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getTableStats",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseTableInfo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/stats/top-tables": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getTopTablesStats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListTopTableStats"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/stats/slow-queries": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getSlowQueriesStats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListSlowQueryStats"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/stats/query-performance": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getQueryPerformanceStats",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "24h"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseQueryPerformanceStats"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/stats/overview": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getOverviewStats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseOverviewStats"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/stats/hit-rate": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getHitRateStats",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "24h"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseHitRateStats"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/rules/stats": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getRuleStats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/cache/queries": {
+            "get": {
+                "tags": [
+                    "cache-controller"
+                ],
+                "operationId": "getQueries",
+                "parameters": [
+                    {
+                        "name": "arg0",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arg1",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "arg2",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseListQueryInfo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/actuator/metrics": {
+            "get": {
+                "tags": [
+                    "system-status-controller"
+                ],
+                "operationId": "getMetrics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseMapStringObject"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/actuator/info": {
+            "get": {
+                "tags": [
+                    "system-status-controller"
+                ],
+                "operationId": "getSystemInfo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseSystemInfo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/actuator/health": {
+            "get": {
+                "tags": [
+                    "system-status-controller"
+                ],
+                "operationId": "getHealth",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ApiResponseHealthInfo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiResponseString": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "string"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "CacheRule": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "ruleType": {
+                        "type": "string",
+                        "enum": [
+                            "TABLES",
+                            "TABLES_ANY",
+                            "TABLES_ALL",
+                            "QUERY_IDS",
+                            "REGEX",
+                            "ANY"
+                        ]
+                    },
+                    "ruleMatch": {
+                        "type": "string"
+                    },
+                    "ttl": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "INACTIVE",
+                            "PENDING",
+                            "ERROR"
+                        ]
+                    },
+                    "lastUpdated": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "enabled": {
+                        "type": "boolean"
+                    },
+                    "tables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "tablesAny": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "tablesAll": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "queryIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "regex": {
+                        "type": "string"
+                    },
+                    "queryType": {
+                        "type": "string"
+                    },
+                    "default": {
+                        "type": "boolean"
+                    },
+                    "valid": {
+                        "type": "boolean"
+                    },
+                    "ttlDuration": {
+                        "type": "object",
+                        "properties": {
+                            "seconds": {
+                                "type": "integer",
+                                "format": "int64"
+                            },
+                            "zero": {
+                                "type": "boolean"
+                            },
+                            "nano": {
+                                "type": "integer",
+                                "format": "int32"
+                            },
+                            "negative": {
+                                "type": "boolean"
+                            },
+                            "positive": {
+                                "type": "boolean"
+                            },
+                            "units": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "durationEstimated": {
+                                            "type": "boolean"
+                                        },
+                                        "timeBased": {
+                                            "type": "boolean"
+                                        },
+                                        "dateBased": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "ApiResponseCacheRule": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/CacheRule"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseMapStringObject": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseRuleValidationResult": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/RuleValidationResult"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "RuleValidationResult": {
+                "type": "object",
+                "properties": {
+                    "valid": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "ApiResponseListString": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseObject": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseListTableInfo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TableInfo"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "TableInfo": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "ttl": {
+                        "type": "string"
+                    },
+                    "avgQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "accessFrequency": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "cached": {
+                        "type": "boolean"
+                    },
+                    "relatedTables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "ApiResponseTableInfo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/TableInfo"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseListCacheRule": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CacheRule"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ApiResponseListTopTableStats": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TopTableStats"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "TopTableStats": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "accessFrequency": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "avgQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "cached": {
+                        "type": "boolean"
+                    },
+                    "ttl": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApiResponseListSlowQueryStats": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/SlowQueryStats"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "SlowQueryStats": {
+                "type": "object",
+                "properties": {
+                    "sql": {
+                        "type": "string"
+                    },
+                    "executionTime": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "lastExecuted": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "ApiResponseQueryPerformanceStats": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/QueryPerformanceStats"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "QueryPerformanceStats": {
+                "type": "object",
+                "properties": {
+                    "avgQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "avgCachedQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "avgNonCachedQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "performanceImprovement": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "ApiResponseOverviewStats": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/OverviewStats"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "OverviewStats": {
+                "type": "object",
+                "properties": {
+                    "totalCaches": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "activeCaches": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "totalKeys": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "memoryUsage": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "hitRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "avgResponseTime": {
+                        "type": "number",
+                        "format": "double"
+                    }
+                }
+            },
+            "ApiResponseHitRateStats": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/HitRateStats"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "HitRateStats": {
+                "type": "object",
+                "properties": {
+                    "currentRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "averageRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "maxRate": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "trend": {
+                        "type": "string"
+                    },
+                    "timeSeries": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TimeSeriesPoint"
+                        }
+                    }
+                }
+            },
+            "TimeSeriesPoint": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "value": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "label": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApiResponseListQueryInfo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/QueryInfo"
+                        }
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "QueryInfo": {
+                "type": "object",
+                "properties": {
+                    "queryId": {
+                        "type": "string"
+                    },
+                    "sql": {
+                        "type": "string"
+                    },
+                    "tables": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "count": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "meanQueryTime": {
+                        "type": "number",
+                        "format": "double"
+                    },
+                    "cached": {
+                        "type": "boolean"
+                    },
+                    "currentTtl": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ApiResponseSystemInfo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/SystemInfo"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "SystemInfo": {
+                "type": "object",
+                "properties": {
+                    "applicationName": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "javaVersion": {
+                        "type": "string"
+                    },
+                    "javaVendor": {
+                        "type": "string"
+                    },
+                    "osName": {
+                        "type": "string"
+                    },
+                    "osVersion": {
+                        "type": "string"
+                    },
+                    "osArch": {
+                        "type": "string"
+                    },
+                    "userTimezone": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "startTime": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "uptime": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "inputArguments": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "systemProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "ApiResponseHealthInfo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/HealthInfo"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "HealthInfo": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "jvm": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "memory": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "system": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                }
+            },
+            "ApiResponseBoolean": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "boolean"
+                    },
+                    "errorCode": {
+                        "type": "string"
+                    },
+                    "timestamp": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -43,7 +43,7 @@ const TableCache = () => {
   const queryClient = useQueryClient()
 
   // 获取表格列表
-  const { data: tablesData, isLoading } = useQuery(
+  const { data: tablesData, isLoading, refetch } = useQuery(
     ['tables', searchText],
     () => cacheApi.getTables({ search: searchText }),
     {
@@ -66,17 +66,36 @@ const TableCache = () => {
     }
   )
 
-  const tables = tablesData?.data || []
+  // 处理按数据库分组的数据结构
+  const processGroupedData = (groupedData) => {
+    if (!groupedData) return []
+    
+    const flattenedData = []
+    Object.entries(groupedData).forEach(([databaseName, items]) => {
+      items.forEach(item => {
+        flattenedData.push({
+          ...item,
+          databaseName // 添加数据库名称字段
+        })
+      })
+    })
+    return flattenedData
+  }
+
+  const tables = processGroupedData(tablesData)
 
   // 处理创建缓存规则
   const handleCreateRule = async (values) => {
     try {
       const ruleData = {
+        databaseName: selectedTable?.databaseName,
+        name: `${selectedTable?.name}_cache_rule`,
         tableName: selectedTable?.name,
         ttl: values.ttl,
         ruleType: 'TABLES',
-        matchValue: selectedTable?.name,
-        description: values.description
+        matchValue: [selectedTable?.name],
+        description: values.description,
+        status: 'ACTIVE'
       }
       
       await createRuleMutation.mutateAsync(ruleData)
@@ -102,6 +121,15 @@ const TableCache = () => {
 
   // 表格列定义
   const columns = [
+    {
+      title: '数据库',
+      dataIndex: 'databaseName',
+      key: 'databaseName',
+      width: 150,
+      render: (text) => (
+        <Tag color="blue">{text}</Tag>
+      ),
+    },
     {
       title: '表格名称',
       dataIndex: 'name',

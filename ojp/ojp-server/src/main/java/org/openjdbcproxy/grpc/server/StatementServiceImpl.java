@@ -54,7 +54,7 @@ import static org.openjdbcproxy.grpc.server.GrpcExceptionHandler.sendSQLExceptio
 @RequiredArgsConstructor
 @GrpcService(interceptors = {StatementServiceGrpcInterceptor.class})
 public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceImplBase {
-
+    
     private final Map<String, HikariDataSource> datasourceMap = new ConcurrentHashMap<>();
     private final SessionManager sessionManager;
     // Per-datasource slow query segregation managers

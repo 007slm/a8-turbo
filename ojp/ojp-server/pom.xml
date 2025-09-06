@@ -102,7 +102,8 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>${lombok.version}</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
@@ -277,22 +278,38 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- OJP Cache Module -->
+        <dependency>
+            <groupId>org.openjdbcproxy</groupId>
+            <artifactId>ojp-cache</artifactId>
+            <version>0.0.8-alpha</version>
+        </dependency>
+
+        <!-- SpringDoc OpenAPI UI -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
             <!-- Spring Boot Maven Plugin -->
+             <!-- Spring Boot Maven 插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>3.3.3</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <configuration>
+                    <!-- 启用 Lombok 注解处理 -->
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
             
             <plugin>
@@ -339,11 +356,16 @@
                     </container>
                 </configuration>
             </plugin>
+            <!-- Maven 编译插件（关键配置） -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.13.0</version> <!-- 支持 Java 22 的版本 -->
                 <configuration>
+                    <source>22</source>
+                    <target>22</target>
+                    <encoding>UTF-8</encoding>
+                    <!-- 配置 Lombok 注解处理器 -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -353,6 +375,10 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+            
+            
+           
         </plugins>
     </build>
 </project>

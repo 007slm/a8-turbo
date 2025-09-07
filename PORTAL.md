@@ -34,6 +34,21 @@
 | StarRocks | 8040 | [http://localhost:8040](http://localhost:8040) | StarRocks Broker端口 |
 | StarRocks | 8080 | [http://localhost:8080](http://localhost:8080) | StarRocks FE HTTP端口 |
 
+### OJP服务
+
+| 服务名称 | 端口 | 访问地址 | 描述 |
+|---------|------|---------|------|
+| OJP Server | 1059 | [http://localhost:1059](http://localhost:1059) | OJP gRPC 服务端 |
+| OJP Prometheus | 9026 | [http://localhost:9026](http://localhost:9026) | OJP服务监控端点 |
+| OJP UI (开发) | 5173 | [http://localhost:5173](http://localhost:5173) | OJP前端开发服务器 |
+| OJP UI (生产) | 50080 | [http://localhost:50080](http://localhost:50080) | OJP前端生产服务器 |
+
+### Smart Cache演示服务
+
+| 服务名称 | 端口 | 访问地址 | 描述 |
+|---------|------|---------|------|
+| Smart Cache Demo | 8070 | [http://localhost:8070](http://localhost:8070) | Redis Smart Cache演示应用 |
+
 ## 项目结构说明
 
 本项目包含多个 Docker Compose 配置文件：
@@ -41,6 +56,7 @@
 1. [docker-compose.yml](file:///E:/a8-turbo/docker-compose.yml) - 主配置文件，包含基础监控服务
 2. [docker-compose-cdc-sync.yml](file:///E:/a8-turbo/docker-compose-cdc-sync.yml) - CDC数据同步相关服务
 3. [docker-compose-smart-cache.yml](file:///E:/a8-turbo/docker-compose-smart-cache.yml) - Redis Smart Cache演示环境
+4. [docker-compose-ojp.yml](file:///E:/a8-turbo/docker-compose-ojp.yml) - OJP服务配置文件
 
 ## 常用操作命令
 

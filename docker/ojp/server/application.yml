@@ -1,0 +1,102 @@
+server:
+  port: 8010 # 统一端口：HTTP + gRPC
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ojp-server
+  main:
+    web-application-type: servlet
+  web:
+    cors:
+      allowed-origins: "*"
+      allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+      allowed-headers: "*"
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: your_password # 如果需要密码，请取消注释并设置
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  show-actuator: true
+  packages-to-scan: org.openjdbcproxy
+  paths-to-match:
+    - /api/**
+    - /cache/**
+
+# Spring gRPC 配置 - 单端口模式
+grpc:
+  server:
+    # 不指定独立端口，使用 HTTP 服务器端口
+    # port: 1059  # 注释掉独立端口
+    max-inbound-message-size: 4194304 # 4MB
+    # 启用HTTP/2支持
+    http2:
+      enabled: true
+    # 安全配置
+    security:
+      csrf:
+        enabled: false # gRPC请求不兼容CSRF保护
+    # 拦截器配置 - 现在通过 @GlobalServerInterceptor 注解自动发现
+    # interceptors:
+    # - org.openjdbcproxy.grpc.server.interceptor.impl.GlobalLoggingInterceptor
+
+    # OJP Server 自定义配置
+ojp:
+  server:
+    thread-pool-size: 200
+    connection-idle-timeout: 30000 # 30秒
+    circuit-breaker:
+      timeout: 60000 # 60秒
+      threshold: 3
+    slow-query-segregation:
+      enabled: true
+      slow-slot-percentage: 20
+      idle-timeout: 10000 # 10秒
+      slow-slot-timeout: 120000 # 120秒
+      fast-slot-timeout: 60000 # 60秒
+    interceptors:
+      # 慢查询阈值（毫秒），默认1000毫秒（1秒）
+      slow-query-threshold: 1
+      # 智能缓存配置（直接在此处填写，无需环境变量）
+      cache:
+        starrocks:
+          url: "jdbc:mysql://localhost:9030"
+          username: "root"
+          password: "a8"
+  api:
+    base-path: /api
+    cache:
+      base-path: /api/cache
+  # Redis配置
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    database: ${REDIS_DATABASE:0}
+    password: ${REDIS_PASSWORD:}
+    username: ${REDIS_USERNAME:}
+    timeout: ${REDIS_TIMEOUT:10000}
+
+  # 监控配置
+  monitoring:
+    opentelemetry:
+      enabled: true

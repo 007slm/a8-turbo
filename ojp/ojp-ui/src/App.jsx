@@ -7,15 +7,17 @@ import {
   MonitorOutlined,
   BellOutlined,
   QuestionCircleOutlined,
-  BugOutlined
+
+  ShopOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import CacheManagement from './components/CacheManagement'
-import SqlStatistics from './components/SqlStatistics'
+
 import Monitoring from './components/Monitoring'
-import Testing from './components/Testing'
+
 import MonitoringOverview from './components/MonitoringOverview'
 import ServiceMonitoring from './components/ServiceMonitoring'
+import ShopService from './components/shopservice/ShopService'
 import { getAllServices } from './config/monitoringConfig'
 
 import { fetchSystemStatus } from './services/api'
@@ -34,8 +36,15 @@ function AppContent() {
     if (path === '/' || path === '/system-monitoring') return 'system-monitoring'
     if (path.startsWith('/monitoring')) return 'grafana-monitoring'
     if (path === '/cache') return 'cache'
-    if (path === '/statistics') return 'statistics'
-    if (path === '/testing') return 'testing'
+
+    if (path.startsWith('/shopservice')) {
+      if (path.startsWith('/shopservice/users')) return 'shopservice-users'
+      if (path.startsWith('/shopservice/products')) return 'shopservice-products'
+      if (path.startsWith('/shopservice/orders')) return 'shopservice-orders'
+      if (path.startsWith('/shopservice/reviews')) return 'shopservice-reviews'
+      return 'shopservice-users'
+    }
+
     return 'system-monitoring'
   }
   
@@ -84,16 +93,31 @@ function AppContent() {
       icon: <DatabaseOutlined />,
       label: '缓存管理',
     },
+
     {
-      key: 'statistics',
-      icon: <MonitorOutlined />,
-      label: 'SQL统计',
+      key: 'shopservice',
+      icon: <ShopOutlined />,
+      label: 'ShopService',
+      children: [
+        {
+          key: 'shopservice-users',
+          label: '用户管理',
+        },
+        {
+          key: 'shopservice-products',
+          label: '商品管理',
+        },
+        {
+          key: 'shopservice-orders',
+          label: '订单管理',
+        },
+        {
+          key: 'shopservice-reviews',
+          label: '评价管理',
+        }
+      ]
     },
-    {
-      key: 'testing',
-      icon: <BugOutlined />,
-      label: '系统测试',
-    },
+
   ]
 
   // 处理菜单点击
@@ -102,8 +126,12 @@ function AppContent() {
       'system-monitoring': '/',
       'monitoring-overview': '/monitoring',
       'cache': '/cache',
-      'statistics': '/statistics',
-      'testing': '/testing'
+
+      'shopservice-users': '/shopservice/users',
+      'shopservice-products': '/shopservice/products',
+      'shopservice-orders': '/shopservice/orders',
+      'shopservice-reviews': '/shopservice/reviews',
+
     }
     
     // 处理服务监控路由
@@ -228,8 +256,10 @@ function AppContent() {
                 <Route path="/monitoring" element={<MonitoringOverview />} />
                 <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
                 <Route path="/cache" element={<CacheManagement />} />
-                <Route path="/statistics" element={<SqlStatistics />} />
-                <Route path="/testing" element={<Testing />} />
+
+                <Route path="/shopservice" element={<ShopService />} />
+                <Route path="/shopservice/*" element={<ShopService />} />
+
               </Routes>
             </Content>
           </Layout>

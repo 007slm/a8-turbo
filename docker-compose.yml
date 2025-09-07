@@ -1,6 +1,5 @@
 include:
   - ./docker-compose-cdc-sync.yml
-  - ./docker-compose-smart-cache.yml
   - ./docker-compose-ojp.yml
 
 services:
@@ -45,7 +44,7 @@ services:
     container_name: phpredisadmin
     hostname: phpredisadmin
     ports:
-      - "8181:80"
+      - "50082:80"
     networks:
       - a8
     environment:

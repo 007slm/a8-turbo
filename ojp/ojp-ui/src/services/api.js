@@ -890,38 +890,7 @@ export const monitoringApi = {
 
 
 
-// 测试相关接口
-export const testingApi = {
-  // 获取测试历史
-  getTestHistory: () => request('/api/testing/history'),
-  
-  // 运行健康检查测试
-  runHealthCheck: () => request('/api/testing/health-check', {
-    method: 'POST',
-  }),
-  
-  // 运行所有测试
-  runAllTests: () => request('/api/testing/run-all', {
-    method: 'POST',
-  }),
-  
-  // 获取测试配置
-  getTestConfig: () => request('/api/testing/config'),
-  
-  // 更新测试配置
-  updateTestConfig: (config) => request('/api/testing/config', {
-    method: 'PUT',
-    body: JSON.stringify(config),
-  }),
-  
-  // 获取测试报告
-  getTestReport: (testId) => request(`/api/testing/report/${testId}`),
-  
-  // 清理测试历史
-  clearTestHistory: () => request('/api/testing/history', {
-    method: 'DELETE',
-  }),
-}
+
 
 // 系统设置相关接口 - 已移除
 // export const settingsApi = {
@@ -940,6 +909,6 @@ export default {
   cache: cacheApi,
   rule: ruleApi,
   monitoring: monitoringApi,
-  testing: testingApi,
+
   // settings: settingsApi, // 已移除
 }

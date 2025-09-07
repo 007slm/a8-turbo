@@ -16,17 +16,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      '/actuator': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        secure: false,
-      },
-      // gRPC 代理
-      '/api/grpc': {
-        target: 'http://localhost:50080',
-        changeOrigin: true,
-        secure: false,
-      },
       // Grafana 代理
       '/grafana': {
         target: 'http://localhost:3000',
@@ -37,6 +26,12 @@ export default defineConfig({
             proxyReq.setHeader('X-Forwarded-For', req.connection.remoteAddress)
           })
         }
+      },
+      '/shop/': {
+        target: 'http://localhost:8180',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/shop/, '/')
       }
     }
   },

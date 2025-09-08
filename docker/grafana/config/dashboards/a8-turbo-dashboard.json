@@ -673,7 +673,7 @@
       "links": [
         {
           "title": "查看详细监控",
-          "url": "/d/ojp-server-dashboard?orgId=1"
+          "url": "/d/ojp-server-overview?orgId=1"
         }
       ],
       "options": {

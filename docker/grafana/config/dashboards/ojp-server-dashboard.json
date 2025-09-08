@@ -1646,7 +1646,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "OJP Server Dashboard",
-  "uid": "ojp-server-dashboard",
+  "uid": "ojp-server-overview",
   "version": 1,
   "weekStart": ""
 }

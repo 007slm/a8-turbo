@@ -37,6 +37,7 @@ services:
     depends_on:
       - prometheus
     volumes:
+      - ./docker/grafana/config/grafana.ini:/etc/grafana/grafana.ini
       - ./docker/grafana/config/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
       - ./docker/grafana/config/datasources:/etc/grafana/provisioning/datasources
       - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards

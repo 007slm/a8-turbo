@@ -1,13 +1,15 @@
 include:
   - ./docker-compose-cdc-sync.yml
   - ./docker-compose-ojp.yml
+  - ./docker-compose-kong.yml
 
 services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    ports:
-      - "9090:9090"
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -17,8 +19,9 @@ services:
     image: grafana/grafana:latest
     hostname: grafana
     container_name: grafana
-    ports:
-      - "3000:3000"
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=fluxDB
       - GF_SECURITY_ADMIN_USER=fluxDB
@@ -43,8 +46,9 @@ services:
     image: erikdubbelboer/phpredisadmin:latest
     container_name: phpredisadmin
     hostname: phpredisadmin
-    ports:
-      - "50082:80"
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "50082:80"
     networks:
       - a8
     environment:

@@ -6,6 +6,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: true, // 允许外部访问
+    strictPort: true,
     headers: {
       'X-Frame-Options': 'SAMEORIGIN'
     },
@@ -27,11 +29,11 @@ export default defineConfig({
           })
         }
       },
-      '/shop/': {
+      '/shopservice/': {
         target: 'http://localhost:8180',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/shop/, '/')
+        rewrite: (path) => path.replace(/^\/shopservice/, '/')
       }
     }
   },

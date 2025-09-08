@@ -28,4 +28,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:8010/api/actuator/health || exit 1
 
 # 设置Spring Boot标准启动命令
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO -jar ojp-server.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.yml -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO -jar ojp-server.jar"]

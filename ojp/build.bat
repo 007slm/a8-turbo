@@ -10,7 +10,7 @@ echo ==============================================
 echo.
 
 :: 1. 检查Maven是否安装
-echo [步骤 1/8] 正在检查Maven安装状态...
+echo [步骤 1/9] 正在检查Maven安装状态...
 call mvn -v >nul 2>&1
 if %errorLevel% neq 0 (
     echo.
@@ -23,7 +23,7 @@ echo Maven已安装。
 
 :: 2. 检查Java是否安装
 echo.
-echo [步骤 2/8] 正在检查Java安装状态...
+echo [步骤 2/9] 正在检查Java安装状态...
 call java -version >nul 2>&1
 if %errorLevel% neq 0 (
     echo.
@@ -36,7 +36,7 @@ echo Java已安装。
 
 :: 检查Docker是否安装
 echo.
-echo [步骤 3/8] 正在检查Docker安装状态...
+echo [步骤 3/9] 正在检查Docker安装状态...
 call docker --version >nul 2>&1
 if %errorLevel% neq 0 (
     echo.
@@ -49,7 +49,7 @@ echo Docker已安装。
 
 :: 检查Docker Compose是否安装
 echo.
-echo [步骤 4/8] 正在检查Docker Compose安装状态...
+echo [步骤 4/9] 正在检查Docker Compose安装状态...
 call docker-compose --version >nul 2>&1
 if %errorLevel% neq 0 (
     echo.
@@ -62,7 +62,7 @@ echo Docker Compose已安装。
 
 :: 显示环境信息
 echo.
-echo [步骤 5/8] 显示环境信息...
+echo [步骤 5/9] 显示环境信息...
 echo.
 echo ---------------- Maven版本 ----------------
 call mvn -v
@@ -78,13 +78,13 @@ call docker-compose --version
 echo.
 
 :: 进入项目根目录（脚本所在目录）
-echo [步骤 6/8] 导航到项目根目录...
+echo [步骤 6/9] 导航到项目根目录...
 cd /d %~dp0
 echo 当前工作目录: %cd%
 echo.
 
 :: 清理并构建项目
-echo [步骤 7/8] 清理之前的构建并开始新构建...
+echo [步骤 7/9] 清理之前的构建并开始新构建...
 echo 这可能需要几分钟时间...
 echo.
 call mvn clean package -DskipTests -Dmaven.javadoc.skip=true
@@ -112,13 +112,27 @@ echo 文件大小:
 for %%A in ("%jarPath%") do echo %%~zA 字节
 echo.
 
+:: 验证shopservice JAR文件是否存在
+set "shopJarPath=shopservice\target\shopservice-0.0.7-alpha.jar"
+if not exist "%shopJarPath%" (
+    echo 错误: 在 %shopJarPath% 位置未找到JAR文件
+    echo Maven构建可能失败
+    pause
+    exit /b 1
+)
+
+echo JAR文件验证通过: %shopJarPath%
+echo 文件大小: 
+for %%A in ("%shopJarPath%") do echo %%~zA 字节
+echo.
+
 echo ==============================================
 echo Maven构建完成。开始Docker构建...
 echo ==============================================
 echo.
 
 :: 构建所有Docker镜像（利用缓存优化）
-echo [步骤 8/8] 正在构建Docker镜像...
+echo [步骤 8/9] 正在构建Docker镜像...
 echo.
 cd ..
 
@@ -163,7 +177,7 @@ echo 所有Docker镜像构建成功完成！
 echo.
 
 :: 使用docker-compose启动服务
-echo 正在启动OJP相关服务...
+echo [步骤 9/9] 正在启动OJP相关服务...
 call docker-compose -f docker-compose.yml up -d
 if %errorLevel% neq 0 (
     echo.

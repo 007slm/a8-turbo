@@ -8,8 +8,9 @@ services:
         - BUILDKIT_INLINE_CACHE=1
     image: fluxdb-server:0.0.8-alpha
     container_name: ojp-server
-    ports:
-      - "8010:8010"
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "8010:8010"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -43,9 +44,10 @@ services:
 
     image: fluxdb-shopservice:0.0.7-alpha
     container_name: shopservice
-    ports:
-      - "8180:8180"
-      - "5005:5005"  # Java远程调试端口
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "8180:8180"
+    #   - "5005:5005"  # Java远程调试端口
     environment:
       - JAVA_OPTS=-Xms256m -Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - MAVEN_CONFIG=/root/.m2
@@ -60,7 +62,7 @@ services:
       - ./docker/ojp/shopservice/application.properties:/app/config/application.properties
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8180/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8280/actuator/health"]
       interval: 30s
       timeout: 10s
       start_period: 60s
@@ -73,13 +75,16 @@ services:
       dockerfile: Dockerfile
     image: ojp-ui:latest
     container_name: ojp-ui
-    ports:
-      - "5173:5173"
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "5173:5173"
     depends_on:
       - ojp-server
       - shopservice
     networks:
       - a8
+    volumes:
+      - ./docker/ojp/ui/vite.config.js:/app/vite.config.js
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173/health"]
       interval: 30s

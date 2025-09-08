@@ -1,0 +1,86 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: ojp-server
+    url: http://ojp-server:8010
+    routes:
+      - name: ojp-server-api
+        paths:
+          - /api/
+        strip_path: false
+        preserve_host: true
+
+  - name: shopservice
+    url: http://shopservice:8280
+    routes:
+      - name: shopservice-api
+        paths:
+          - /shop/
+        strip_path: true
+        preserve_host: true
+
+  - name: grafana
+    url: http://grafana:3000
+    routes:
+      - name: grafana-ui
+        paths:
+          - /grafana
+        strip_path: false
+        preserve_host: true
+
+  - name: prometheus
+    url: http://prometheus:9090
+    routes:
+      - name: prometheus-ui
+        paths:
+          - /prometheus
+        strip_path: true
+        preserve_host: true
+
+  - name: nats-dashboard
+    url: http://nats-dashboard
+    routes:
+      - name: nats-dashboard-ui
+        paths:
+          - /nats-dashboard
+        strip_path: true
+        preserve_host: true
+
+  - name: phpredisadmin
+    url: http://phpredisadmin
+    routes:
+      - name: phpredisadmin-ui
+        paths:
+          - /phpredisadmin
+        strip_path: true
+        preserve_host: true
+
+  - name: ojp-ui
+    url: http://ojp-ui:5173
+    routes:
+      - name: ojp-ui-main
+        paths:
+          - /
+        strip_path: true
+        preserve_host: true
+
+  # Kong Admin API代理服务
+  - name: kong-admin
+    url: http://kong:8001
+    routes:
+      - name: kong-admin-api
+        paths:
+          - /kong-admin
+        strip_path: true
+        preserve_host: true
+
+  # Kong Dashboard服务
+  - name: kong-dashboard
+    url: http://kong-dashboard:8080
+    routes:
+      - name: kong-dashboard-ui
+        paths:
+          - /kong-dashboard
+        strip_path: true
+        preserve_host: true

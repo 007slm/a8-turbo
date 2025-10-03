@@ -58,7 +58,7 @@
         <dependency>
             <groupId>org.openjdbcproxy</groupId>
             <artifactId>ojp-jdbc-driver</artifactId>
-            <version>0.0.7-alpha</version>
+            <version>0.0.8-alpha</version>
         </dependency>
     </dependencies>
     <build>

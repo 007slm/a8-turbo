@@ -1,15 +1,36 @@
+networks:
+  a8:
+    external: false
+
+
 include:
   - ./docker-compose-cdc-sync.yml
-  - ./docker-compose-ojp.yml
   - ./docker-compose-kong.yml
+#  - ./docker-compose-ojp.yml
+#  - ./docker-compose-shopservice.yml
+  - ./docker-compose-ojp-local.yml
+
 
 services:
+  # 1. 自定义 DNS 服务器（dnsmasq）
+  dns-server:
+    image: andyshinn/dnsmasq
+    volumes:
+      - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf  # 挂载解析规则
+    ports:
+      - "50053:53/udp"
+      - "50053:53/tcp"
+    networks:
+      - a8
+    cap_add:
+      - NET_ADMIN
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
     # 移除对外暴露的端口，通过Kong网关访问
-    # ports:
-    #   - "9090:9090"
+    ports:
+      - "9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -43,21 +64,48 @@ services:
       - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards
       - ./docker/grafana/data:/var/lib/grafana
 
-  phpredisadmin:
-    image: erikdubbelboer/phpredisadmin:latest
-    container_name: phpredisadmin
-    hostname: phpredisadmin
+  redis:
+    image: redis-server-with-cache-cli
+    build:
+      context: ./docker/redis
+      dockerfile: ./Dockerfile
+    hostname: redis
+    container_name: redis-server-with-cache-cli
+    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    ports:
+      - 6379:6379
+    networks:
+      - a8
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis-exporter
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    networks:
+      - a8
+    depends_on:
+      - redis
+
+  phpredmin:
+    image: sasanrose/phpredmin:latest
+    container_name: phpredmin
+    hostname: phpredmin
     # 移除对外暴露的端口，通过Kong网关访问
     # ports:
     #   - "50082:80"
     networks:
       - a8
     environment:
-      - REDIS_1_HOST=redis
-      - REDIS_1_NAME=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - redis
+    volumes:
+      - ./docker/phpredmin/custom-apache.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./docker/phpredmin/config.php:/var/www/html/phpredmin/config.php
+      - ./docker/phpredmin/index.php:/var/www/html/phpredmin/public/index.php
 
-networks:
-  a8:
-    external: false

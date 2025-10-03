@@ -158,25 +158,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #f0f0f0;
 }
 
 .management-header h2 {
   margin: 0;
   color: #262626;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .management-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
 }
 
 .search-bar {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .search-bar .ant-input-search {
@@ -189,6 +189,7 @@
   font-weight: 600;
   color: #262626;
   border-bottom: 2px solid #f0f0f0;
+  padding: 8px 8px;
 }
 
 .ant-table-tbody > tr:hover > td {
@@ -197,50 +198,53 @@
 
 .ant-table-tbody > tr > td {
   border-bottom: 1px solid #f5f5f5;
+  padding: 8px 8px;
 }
 
 /* 操作按钮样式 */
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: 4px;
 }
 
 .action-buttons .ant-btn {
   border-radius: 4px;
   font-size: 12px;
-  height: 28px;
-  padding: 0 12px;
+  height: 24px;
+  padding: 0 8px;
 }
 
 /* 模态框样式 */
 .ant-modal-header {
   border-bottom: 1px solid #f0f0f0;
-  padding: 16px 24px;
+  padding: 12px 16px;
 }
 
 .ant-modal-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #262626;
 }
 
 .ant-modal-body {
-  padding: 24px;
+  padding: 16px;
 }
 
 .ant-modal-footer {
   border-top: 1px solid #f0f0f0;
-  padding: 12px 24px;
+  padding: 8px 16px;
 }
 
 /* 表单样式 */
 .ant-form-item-label > label {
   font-weight: 500;
   color: #262626;
+  font-size: 13px;
 }
 
 .ant-input, .ant-select-selector, .ant-input-number {
-  border-radius: 6px;
+  border-radius: 4px;
+  font-size: 13px;
 }
 
 .ant-input:focus, .ant-select-focused .ant-select-selector, .ant-input-number-focused {
@@ -286,21 +290,22 @@
   }
   
   .shop-service-content {
-    padding: 16px;
+    padding: 12px;
   }
   
   .stats-cards .ant-col {
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
   
   .action-cards .ant-col {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
   
   .management-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 12px;
   }
   
   .management-actions {
@@ -314,30 +319,30 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 200px;
+  height: 100px;
 }
 
 /* 空状态样式 */
 .empty-container {
   text-align: center;
-  padding: 48px 24px;
+  padding: 24px 12px;
   color: #8c8c8c;
 }
 
 .empty-container .anticon {
-  font-size: 48px;
+  font-size: 32px;
   color: #d9d9d9;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .empty-container h3 {
   color: #8c8c8c;
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 
 .empty-container p {
   color: #bfbfbf;
-  font-size: 14px;
+  font-size: 12px;
   margin: 0;
 }

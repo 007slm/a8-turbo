@@ -1,0 +1,58 @@
+# A8-Turbo Kubernetes 一键部署脚本
+# 按依赖顺序部署所有组件
+
+# 1. 创建命名空间
+kubectl apply -f namespace.yaml
+
+# 2. 创建持久化存储
+kubectl apply -f storage/persistent-volumes.yaml
+
+# 3. 创建配置映射
+kubectl apply -f configmaps/mysql-config.yaml
+kubectl apply -f configmaps/prometheus-config.yaml
+kubectl apply -f configmaps/grafana-config.yaml
+kubectl apply -f configmaps/grafana-dashboards.yaml
+kubectl apply -f configmaps/kong-config.yaml
+kubectl apply -f configmaps/nats-config.yaml
+kubectl apply -f configmaps/flink-config.yaml
+kubectl apply -f configmaps/ojp-config.yaml
+
+# 4. 部署基础设施组件
+kubectl apply -f infrastructure/redis.yaml
+kubectl apply -f infrastructure/prometheus.yaml
+kubectl apply -f infrastructure/grafana.yaml
+kubectl apply -f infrastructure/exporters.yaml
+
+# 5. 部署数据组件
+kubectl apply -f data/mysql.yaml
+kubectl apply -f data/starrocks.yaml
+
+# 6. 部署消息组件
+kubectl apply -f messaging/nats.yaml
+kubectl apply -f messaging/nats-dashboard.yaml
+
+# 7. 部署网关
+kubectl apply -f gateway/kong.yaml
+
+# 8. 部署流处理组件
+kubectl apply -f streaming/flink.yaml
+
+# 9. 部署业务应用
+kubectl apply -f applications/ojp-server.yaml
+kubectl apply -f applications/shopservice.yaml
+kubectl apply -f applications/ojp-ui.yaml
+
+echo "所有组件部署完成！"
+echo "等待所有Pod启动..."
+kubectl wait --for=condition=ready pod --all -n a8-turbo --timeout=300s
+
+echo "检查部署状态："
+kubectl get pods -n a8-turbo
+kubectl get services -n a8-turbo
+
+echo "访问地址："
+echo "Kong网关: http://localhost:30800"
+echo "Kong管理: http://localhost:30801"
+echo "Grafana: http://grafana.a8-turbo:3000"
+echo "Prometheus: http://prometheus.a8-turbo:9090"
+echo "Flink WebUI: http://flink-jobmanager.a8-turbo:8081"

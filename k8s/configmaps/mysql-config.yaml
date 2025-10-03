@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/component: database
+data:
+  my.cnf: |
+    [mysqld]
+    server-id=1
+    log-bin=mysql-bin
+    binlog-format=ROW
+    expire_logs_days=7
+    # user=smartcache
+    # password=smartcache
+    host=mysql
+    port=3306

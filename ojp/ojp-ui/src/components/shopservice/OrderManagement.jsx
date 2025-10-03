@@ -5,6 +5,7 @@ import {
   Modal,
   Form,
   Input,
+  InputNumber,
   Select,
   message,
   Space,
@@ -14,18 +15,24 @@ import {
   Statistic,
   Tag,
   Descriptions,
-  Typography
+  Typography,
+  Popconfirm,
+  Divider
 } from 'antd';
 import {
   ShoppingCartOutlined,
   PlusOutlined,
   EyeOutlined,
-  SearchOutlined
+  SearchOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import { orderApi, userApi, productApi } from '../../services/shopServiceApi';
 import '../shopservice/ShopService.css';
 
 const { Title } = Typography;
+const { Option } = Select;
 
 /**
  * 订单管理组件
@@ -135,7 +142,20 @@ const OrderManagement = () => {
   // 创建订单
   const createOrder = async (values) => {
     try {
-      await orderApi.createOrder(values)
+      // 转换数据格式以匹配后端期望的结构
+      const orderData = {
+        user: {
+          id: values.userId
+        },
+        orderItems: values.orderItems.map(item => ({
+          product: {
+            id: item.productId
+          },
+          quantity: item.quantity
+        }))
+      }
+      
+      await orderApi.createOrder(orderData)
       message.success('订单创建成功')
       closeModal()
       loadOrders(pagination.current - 1, pagination.pageSize)
@@ -259,31 +279,34 @@ const OrderManagement = () => {
   return (
     <div className="management-container">
       <div className="management-header">
-        <Title level={2}>订单管理</Title>
+        <Title level={3} style={{ margin: 0 }}>订单管理</Title>
         <div className="management-actions">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={openModal}
+            size="small"
           >
             新增订单
           </Button>
         </div>
       </div>
       
-      <Card>
+      <Card size="small">
 
         <Table
           columns={columns}
           dataSource={orders}
           rowKey="id"
           loading={loading}
+          size="small"
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+            size: 'small'
           }}
           onChange={handleTableChange}
         />
@@ -301,7 +324,7 @@ const OrderManagement = () => {
           form={form}
           layout="vertical"
           onFinish={createOrder}
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: '12px' }}
         >
           <Form.Item
             name="userId"
@@ -312,6 +335,7 @@ const OrderManagement = () => {
               placeholder="请选择用户"
               showSearch
               optionFilterProp="children"
+              size="small"
             >
               {users.map(user => (
                 <Option key={user.id} value={user.id}>
@@ -330,6 +354,7 @@ const OrderManagement = () => {
                     onClick={() => add({ productId: undefined, quantity: 1 })}
                     block
                     icon={<PlusOutlined />}
+                    size="small"
                   >
                     添加商品
                   </Button>
@@ -348,6 +373,7 @@ const OrderManagement = () => {
                             placeholder="请选择商品"
                             showSearch
                             optionFilterProp="children"
+                            size="small"
                           >
                             {products.map(product => (
                               <Option key={product.id} value={product.id}>
@@ -371,6 +397,7 @@ const OrderManagement = () => {
                             min={1}
                             placeholder="数量"
                             style={{ width: '100%' }}
+                            size="small"
                           />
                         </Form.Item>
                       </Col>
@@ -381,6 +408,7 @@ const OrderManagement = () => {
                           icon={<DeleteOutlined />}
                           onClick={() => remove(name)}
                           style={{ marginTop: 30 }}
+                          size="small"
                         >
                           删除
                         </Button>
@@ -394,10 +422,10 @@ const OrderManagement = () => {
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={closeModal}>
+              <Button onClick={closeModal} size="small">
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" size="small">
                 创建订单
               </Button>
             </Space>
@@ -411,7 +439,7 @@ const OrderManagement = () => {
         open={detailModalVisible}
         onCancel={closeDetailModal}
         footer={[
-          <Button key="close" onClick={closeDetailModal}>
+          <Button key="close" onClick={closeDetailModal} size="small">
             关闭
           </Button>
         ]}
@@ -419,7 +447,7 @@ const OrderManagement = () => {
       >
         {viewingOrder && (
           <div>
-            <Descriptions title="基本信息" bordered column={2}>
+            <Descriptions title="基本信息" bordered column={2} size="small">
               <Descriptions.Item label="订单ID">{viewingOrder.id}</Descriptions.Item>
               <Descriptions.Item label="用户">
                 {viewingOrder.user?.username} ({viewingOrder.user?.email})

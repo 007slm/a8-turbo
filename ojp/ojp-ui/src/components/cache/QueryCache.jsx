@@ -5,145 +5,68 @@ import {
   Button, 
   Space, 
   Tag, 
-  Modal, 
-  Form, 
-  Input, 
-  Select, 
+  Input,
   message,
   Tooltip,
   Typography,
   Alert,
   Drawer,
-  Descriptions,
-  Badge
+  Descriptions
 } from 'antd'
 import { 
   DatabaseOutlined,
-  ThunderboltOutlined,
-  PlusOutlined,
   EyeOutlined,
-  SettingOutlined,
-  ClockCircleOutlined,
+  ReloadOutlined,
   SearchOutlined,
-  TagsOutlined,
-  CodeOutlined,
-  ReloadOutlined
+  ThunderboltOutlined
 } from '@ant-design/icons'
-import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { useQuery } from 'react-query'
 import { cacheApi } from '../../services/api'
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Text } = Typography
 const { Search } = Input
-const { TextArea } = Input
-const { Option } = Select
 
 const QueryCache = () => {
   const [searchText, setSearchText] = useState('')
-  const [sortConfig, setSortConfig] = useState({ field: 'count', direction: 'desc' })
   const [selectedQuery, setSelectedQuery] = useState(null)
   const [showDetailDrawer, setShowDetailDrawer] = useState(false)
-  const [showRuleModal, setShowRuleModal] = useState(false)
-  const [ruleForm] = Form.useForm()
-  const queryClient = useQueryClient()
 
   // 获取查询列表
   const { data: queriesData, isLoading, refetch: refetchQueries } = useQuery(
-    ['queries', searchText, sortConfig],
-    () => cacheApi.getQueries({ search: searchText, ...sortConfig }),
+    'cacheQueries',
+    cacheApi.getQueries,
     {
-      // 禁用自动刷新，只在组件加载和手动刷新时获取数据
-      enabled: true,
+      refetchOnWindowFocus: false,
+      staleTime: 30000
     }
   )
 
-  // 获取表格列表（用于规则创建）
-  const { data: tablesData, refetch: refetchTables } = useQuery(
-    'tables',
-    cacheApi.getTables,
-    {
-      // 禁用自动刷新，只在组件加载和手动刷新时获取数据
-      enabled: true,
-    }
-  )
-
-  // 创建查询缓存规则
-  const createRuleMutation = useMutation(
-    (ruleData) => cacheApi.createQueryRule(ruleData.queryId, ruleData),
-    {
-      onSuccess: () => {
-        message.success('查询缓存规则创建成功')
-        queryClient.invalidateQueries('queries')
-        handleCancel()
-      },
-      onError: (error) => {
-        message.error('查询缓存规则创建失败: ' + error.message)
-      },
-    }
-  )
-
-  // 刷新所有数据
-  const handleRefreshAll = async () => {
-    try {
-      await Promise.all([
-        refetchQueries(),
-        refetchTables()
-      ])
-      message.success('数据刷新成功')
-    } catch (error) {
-      console.error('刷新数据失败:', error)
-      message.error('数据刷新失败')
-    }
-  }
-
-  // 处理按数据库分组的数据结构
+  // 处理按连接哈希分组的数据结构
   const processGroupedData = (groupedData) => {
     if (!groupedData) return []
     
     const flattenedData = []
-    Object.entries(groupedData).forEach(([databaseName, items]) => {
-      items.forEach(item => {
-        flattenedData.push({
-          ...item,
-          databaseName // 添加数据库名称字段
+    Object.entries(groupedData).forEach(([connHash, items]) => {
+      if (Array.isArray(items)) {
+        items.forEach(item => {
+          flattenedData.push({
+            ...item,
+            connHash // 添加连接哈希字段
+          })
         })
-      })
+      }
     })
     return flattenedData
   }
 
   const queries = processGroupedData(queriesData)
-  const tables = processGroupedData(tablesData)
 
-  // 处理创建缓存规则
-  const handleCreateRule = async (values) => {
-    try {
-      const ruleData = {
-        databaseName: selectedQuery?.databaseName,
-        name: `query_${selectedQuery?.queryId}_cache_rule`,
-        ttl: values.ttl,
-        ruleType: values.ruleType,
-        description: values.description,
-        status: 'ACTIVE'
-      }
-      
-      // 根据规则类型填充匹配条件
-      if (values.ruleType === 'queryIds' && selectedQuery?.queryId) {
-        ruleData.matchValue = [selectedQuery.queryId]
-      } else {
-        ruleData.matchValue = values.matchValue
-      }
-      
-      // 如果是针对特定查询创建规则
-      if (selectedQuery?.queryId) {
-        ruleData.queryId = selectedQuery.queryId
-      }
-      
-      await createRuleMutation.mutateAsync(ruleData)
-    } catch (error) {
-      console.error('Create rule failed:', error)
-      message.error('创建缓存规则失败: ' + error.message)
-    }
-  }
+  // 过滤查询数据
+  const filteredQueries = queries.filter(query => {
+    if (!searchText) return true
+    return query.sql?.toLowerCase().includes(searchText.toLowerCase()) ||
+           query.id?.toLowerCase().includes(searchText.toLowerCase())
+  })
 
   // 查看查询详情
   const viewQueryDetail = (query) => {
@@ -151,52 +74,43 @@ const QueryCache = () => {
     setShowDetailDrawer(true)
   }
 
-  // 为查询创建规则
-  const createRuleForQuery = (query) => {
-    setSelectedQuery(query)
-    setShowRuleModal(true)
-    ruleForm.setFieldsValue({
-      ruleType: 'queryIds',
-      matchValue: query.queryId
-    })
-  }
-
   // 处理搜索
   const handleSearch = (value) => {
     setSearchText(value)
   }
 
-  // 处理排序
-  const handleTableChange = (pagination, filters, sorter) => {
-    if (sorter.field) {
-      setSortConfig({
-        field: sorter.field,
-        direction: sorter.order === 'descend' ? 'desc' : 'asc'
-      })
-    }
-  }
-
   // 表格列定义
   const columns = [
     {
-      title: '数据库',
-      dataIndex: 'databaseName',
-      key: 'databaseName',
-      render: (text) => <Tag color="geekblue">{text}</Tag>,
+      title: '连接哈希',
+      dataIndex: 'connHash',
+      key: 'connHash',
+      width: 150,
+      render: (text) => (
+        <Tooltip title={text}>
+          <Tag color="geekblue" style={{ maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {text}
+          </Tag>
+        </Tooltip>
+      ),
     },
     {
       title: '查询ID',
-      dataIndex: 'queryId',
-      key: 'queryId',
-      render: (text) => <Text code>{text}</Text>,
+      dataIndex: 'id',
+      key: 'id',
+      width: 120,
+      render: (text) => <Text code>{text?.substring(0, 12)}...</Text>,
     },
     {
       title: 'SQL语句',
       dataIndex: 'sql',
       key: 'sql',
+      ellipsis: {
+        showTitle: false,
+      },
       render: (text) => (
         <Tooltip title={text}>
-          <Text ellipsis style={{ maxWidth: 200 }}>
+          <Text ellipsis style={{ maxWidth: 300 }}>
             {text}
           </Text>
         </Tooltip>
@@ -204,129 +118,132 @@ const QueryCache = () => {
     },
     {
       title: '涉及表格',
-      dataIndex: 'tables',
-      key: 'tables',
-      render: (tables) => (
-        <Space>
-          {tables?.map(table => (
-            <Tag key={table} color="blue">{table}</Tag>
-          ))}
-        </Space>
+      dataIndex: 'tableNames',
+      key: 'tableNames',
+      render: (tableNames) => {
+        if (!tableNames) return <Text type="secondary">-</Text>
+        const tables = tableNames.split(',').filter(t => t.trim())
+        return (
+          <Space wrap>
+            {tables.slice(0, 3).map(table => (
+              <Tag key={table} color="blue">{table.trim()}</Tag>
+            ))}
+            {tables.length > 3 && (
+              <Tag color="default">+{tables.length - 3}</Tag>
+            )}
+          </Space>
+        )
+      },
+    },
+    {
+      title: '执行时间',
+      dataIndex: 'executionTime',
+      key: 'executionTime',
+      width: 100,
+      sorter: (a, b) => (a.executionTime || 0) - (b.executionTime || 0),
+      render: (time) => (
+        <Text strong style={{ color: time > 1000 ? '#ff4d4f' : '#52c41a' }}>
+          {time}ms
+        </Text>
       ),
     },
     {
-      title: '执行次数',
-      dataIndex: 'count',
-      key: 'count',
-      sorter: true,
-      render: (text) => <Text strong>{text}</Text>,
-    },
-    {
-      title: '平均查询时间',
-      dataIndex: 'meanQueryTime',
-      key: 'meanQueryTime',
-      sorter: true,
-      render: (text) => (
-        <Space>
-          <ClockCircleOutlined />
-          <Text>{text}ms</Text>
-        </Space>
-      ),
-    },
-    {
-      title: '缓存状态',
-      dataIndex: 'isCached',
-      key: 'isCached',
-      render: (isCached, record) => {
-        if (isCached) {
-          return (
-            <Space>
-              <Badge status="success" />
-              <Text type="success">已缓存</Text>
-              <Text type="secondary">({record.currentTtl})</Text>
-            </Space>
-          )
-        } else {
-          return (
-            <Space>
-              <Badge status="default" />
-              <Text type="secondary">未缓存</Text>
-            </Space>
-          )
+      title: '查询类型',
+      dataIndex: 'queryType',
+      key: 'queryType',
+      width: 80,
+      render: (type) => {
+        const colorMap = {
+          'SELECT': 'green',
+          'INSERT': 'blue',
+          'UPDATE': 'orange',
+          'DELETE': 'red'
         }
+        return <Tag color={colorMap[type] || 'default'}>{type}</Tag>
+      },
+    },
+    {
+      title: '时间戳',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 150,
+      render: (timestamp) => {
+        if (!timestamp) return '-'
+        return new Date(parseInt(timestamp)).toLocaleString('zh-CN')
       },
     },
     {
       title: '操作',
       key: 'action',
+      width: 80,
       render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="查看详情">
-            <Button 
-              type="text" 
-              icon={<EyeOutlined />} 
-              size="small"
-              onClick={() => viewQueryDetail(record)}
-            />
-          </Tooltip>
-          
-          <Tooltip title="创建缓存规则">
-            <Button 
-              type="text" 
-              icon={<SettingOutlined />} 
-              size="small"
-              onClick={() => createRuleForQuery(record)}
-            />
-          </Tooltip>
-        </Space>
+        <Tooltip title="查看详情">
+          <Button 
+            type="text" 
+            icon={<EyeOutlined />} 
+            size="small"
+            onClick={() => viewQueryDetail(record)}
+          />
+        </Tooltip>
       ),
     },
   ]
 
   return (
     <div className="query-cache">
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2}>查询缓存管理</Title>
-        <Text type="secondary">监控查询性能并管理查询缓存策略</Text>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <Title level={3} style={{ margin: 0 }}>
+            <ThunderboltOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+            慢查询列表
+          </Title>
+        </div>
+        <Space>
+          <Button 
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={() => {
+              refetchQueries()
+              message.success('数据刷新成功')
+            }}
+            loading={isLoading}
+          >
+            刷新数据
+          </Button>
+        </Space>
       </div>
 
       {/* 搜索和操作 */}
-      <Card style={{ marginBottom: 24 }}>
+      <Card size="small" style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Search
             placeholder="搜索SQL语句或查询ID"
             allowClear
             enterButton={<SearchOutlined />}
-            size="large"
-            style={{ width: 400 }}
+            style={{ width: 300 }}
             onSearch={handleSearch}
+            onChange={(e) => setSearchText(e.target.value)}
           />
-          
-          <Space>
-            <Button 
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={handleRefreshAll}
-            >
-              刷新数据
-            </Button>
-          </Space>
         </div>
       </Card>
 
       {/* 查询列表 */}
-      <Card>
+      <Card size="small">
         <Table
           columns={columns}
-          dataSource={queries}
+          dataSource={filteredQueries}
           loading={isLoading}
-          rowKey="queryId"
-          onChange={handleTableChange}
+          rowKey="id"
           pagination={{
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+            defaultPageSize: 10,
+            pageSizeOptions: ['10', '20', '50']
           }}
+          scroll={{ x: 1000 }}
+          size="small"
+          bordered
         />
       </Card>
 
@@ -341,114 +258,107 @@ const QueryCache = () => {
         {selectedQuery && (
           <Descriptions column={1} bordered>
             <Descriptions.Item label="查询ID">
-              <Text code>{selectedQuery.queryId}</Text>
+              <Text code>{selectedQuery.id}</Text>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="连接哈希">
+              <Tag color="blue">{selectedQuery.connHash}</Tag>
             </Descriptions.Item>
             
             <Descriptions.Item label="SQL语句">
-              <Paragraph>
-                <Text code>{selectedQuery.sql}</Text>
-              </Paragraph>
+              <div style={{ 
+                background: '#f5f5f5', 
+                padding: '8px', 
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all'
+              }}>
+                {selectedQuery.sql}
+              </div>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="参数">
+              <Text code>{selectedQuery.parameters || '无'}</Text>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="执行时间">
+              <Text strong style={{ color: selectedQuery.executionTime > 1000 ? '#ff4d4f' : '#52c41a' }}>
+                {selectedQuery.executionTime}ms
+              </Text>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="查询类型">
+              <Tag color={
+                selectedQuery.queryType === 'SELECT' ? 'green' :
+                selectedQuery.queryType === 'INSERT' ? 'blue' :
+                selectedQuery.queryType === 'UPDATE' ? 'orange' :
+                selectedQuery.queryType === 'DELETE' ? 'red' : 'default'
+              }>
+                {selectedQuery.queryType}
+              </Tag>
             </Descriptions.Item>
             
             <Descriptions.Item label="涉及表格">
-              <Space>
-                {selectedQuery.tables?.map(table => (
-                  <Tag key={table} color="blue">{table}</Tag>
-                ))}
-              </Space>
+              <div>
+                {selectedQuery.tableNames ? (
+                  selectedQuery.tableNames.split(',').map(table => (
+                    <Tag key={table} color="blue" style={{ marginBottom: 4 }}>
+                      {table.trim()}
+                    </Tag>
+                  ))
+                ) : (
+                  <Text type="secondary">无</Text>
+                )}
+              </div>
             </Descriptions.Item>
             
-            <Descriptions.Item label="执行次数">
-              <Text strong>{selectedQuery.count}</Text>
+            <Descriptions.Item label="标准化SQL">
+              <div style={{ 
+                background: '#f5f5f5', 
+                padding: '8px', 
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                fontSize: '12px',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all'
+              }}>
+                {selectedQuery.normalizedSql || selectedQuery.sql}
+              </div>
             </Descriptions.Item>
             
-            <Descriptions.Item label="平均查询时间">
-              <Text>{selectedQuery.meanQueryTime}ms</Text>
+            <Descriptions.Item label="事务状态">
+              <Tag color={selectedQuery.inTransaction ? 'orange' : 'green'}>
+                {selectedQuery.inTransaction ? '事务中' : '非事务'}
+              </Tag>
             </Descriptions.Item>
             
-            <Descriptions.Item label="缓存状态">
-              {selectedQuery.isCached ? (
-                <Space>
-                  <Badge status="success" />
-                  <Text type="success">已缓存 ({selectedQuery.currentTtl})</Text>
-                </Space>
-              ) : (
-                <Space>
-                  <Badge status="default" />
-                  <Text type="secondary">未缓存</Text>
-                </Space>
-              )}
+            <Descriptions.Item label="执行状态">
+              <Tag color={selectedQuery.hasError ? 'red' : 'green'}>
+                {selectedQuery.hasError ? '执行失败' : '执行成功'}
+              </Tag>
             </Descriptions.Item>
             
-            {selectedQuery.description && (
-              <Descriptions.Item label="描述">
-                <Text>{selectedQuery.description}</Text>
-              </Descriptions.Item>
-            )}
+            <Descriptions.Item label="客户端UUID">
+              <Text code>{selectedQuery.clientUUID || '未知'}</Text>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="方法名称">
+              <Text>{selectedQuery.methodName || '未知'}</Text>
+            </Descriptions.Item>
+            
+            <Descriptions.Item label="执行时间">
+              <Text>
+                {selectedQuery.timestamp ? 
+                  new Date(parseInt(selectedQuery.timestamp)).toLocaleString('zh-CN') : 
+                  '未知'
+                }
+              </Text>
+            </Descriptions.Item>
           </Descriptions>
         )}
       </Drawer>
-
-      {/* 创建缓存规则模态框 */}
-      <Modal
-        title="为查询创建缓存规则"
-        open={showRuleModal}
-        onOk={() => ruleForm.submit()}
-        onCancel={() => {
-          setShowRuleModal(false)
-          setSelectedQuery(null)
-          ruleForm.resetFields()
-        }}
-        confirmLoading={createRuleMutation.isLoading}
-        width={500}
-      >
-        <Form
-          form={ruleForm}
-          layout="vertical"
-          onFinish={handleCreateRule}
-          initialValues={{
-            ruleType: 'queryIds',
-            ttl: '30m',
-          }}
-        >
-          <Form.Item
-            name="ruleType"
-            label="规则类型"
-            rules={[{ required: true, message: '请选择规则类型' }]}
-          >
-            <Select>
-              <Option value="queryIds">查询ID规则</Option>
-              <Option value="regex">正则表达式规则</Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="matchValue"
-            label="匹配值"
-            rules={[{ required: true, message: '请输入匹配值' }]}
-          >
-            <Input placeholder="请输入匹配值" />
-          </Form.Item>
-
-          <Form.Item
-            name="ttl"
-            label="TTL (生存时间)"
-            rules={[{ required: true, message: '请输入TTL' }]}
-          >
-            <Input placeholder="如：30m, 1h, 1d" />
-          </Form.Item>
-
-          <Form.Item
-            name="description"
-            label="描述"
-          >
-            <TextArea 
-              placeholder="请输入规则描述信息" 
-              rows={3}
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   )
 }

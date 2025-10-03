@@ -12,7 +12,6 @@ import {
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import CacheManagement from './components/CacheManagement'
-
 import Monitoring from './components/Monitoring'
 
 import MonitoringOverview from './components/MonitoringOverview'
@@ -35,7 +34,7 @@ function AppContent() {
     const path = location.pathname
     if (path === '/' || path === '/system-monitoring') return 'system-monitoring'
     if (path.startsWith('/monitoring')) return 'grafana-monitoring'
-    if (path === '/cache') return 'cache'
+    if (path === '/cache') return 'cache-management'
 
     if (path.startsWith('/shopservice')) {
       if (path.startsWith('/shopservice/users')) return 'shopservice-users'
@@ -92,6 +91,12 @@ function AppContent() {
       key: 'cache',
       icon: <DatabaseOutlined />,
       label: '缓存管理',
+      children: [
+        {
+          key: 'cache-management',
+          label: '缓存管理',
+        }
+      ]
     },
 
     {
@@ -125,7 +130,7 @@ function AppContent() {
     const routes = {
       'system-monitoring': '/',
       'monitoring-overview': '/monitoring',
-      'cache': '/cache',
+      'cache-management': '/cache',
 
       'shopservice-users': '/shopservice/users',
       'shopservice-products': '/shopservice/products',
@@ -242,8 +247,8 @@ function AppContent() {
             {/* 主要内容区域 */}
             <Content
               style={{
-                margin: '24px 16px',
-                padding: 24,
+                margin: '12px 8px',
+                padding: 12,
                 minHeight: 280,
                 background: colorBgContainer,
                 borderRadius: borderRadiusLG,

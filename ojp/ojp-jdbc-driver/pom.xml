@@ -20,6 +20,7 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <slf4j.version>2.0.17</slf4j.version>
+        <plexus-utils.version>4.0.2</plexus-utils.version>
     </properties>
 
     <dependencies>
@@ -28,6 +29,13 @@
             <groupId>org.openjdbcproxy</groupId>
             <artifactId>ojp-grpc-commons</artifactId>
             <version>0.0.8-alpha</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.17.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
@@ -81,6 +89,13 @@
             <artifactId>HikariCP</artifactId>
             <version>7.0.1</version>
             <scope>test</scope>
+        </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/org.codehaus.plexus/plexus-utils -->
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-utils</artifactId>
+            <version>${plexus-utils.version}</version>
         </dependency>
     </dependencies>
 

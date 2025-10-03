@@ -32,9 +32,9 @@ public class SessionManagerImpl implements SessionManager {
     }
 
     @Override
-    public SessionInfo createSession(String clientUUID, Connection connection) {
-        log.info("Create session for client uuid " + clientUUID);
-        Session session = new Session(connection, connectionHashMap.get(clientUUID), clientUUID);
+    public SessionInfo createSession(String clientUUID, Connection connection,boolean readOnly) {
+        log.info("Create session for client uuid {} readOnly: {}" , clientUUID,readOnly);
+        Session session = new Session(connection, connectionHashMap.get(clientUUID), clientUUID, readOnly);
         log.info("Session " + session.getSessionUUID() + " created for client uuid " + clientUUID);
         this.sessionMap.put(session.getSessionUUID(), session);
         return session.getSessionInfo();

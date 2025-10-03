@@ -1,19 +1,34 @@
-2025-07-28 01:44:25,528 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Real Path pipelineDefPath /opt/flink_jobs/mysql2nats2starrocks.yaml
-2025-07-28 01:44:25,528 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Using global config in FLINK_CDC_HOME: /opt/flink-cdc/bin/../conf/flink-cdc.yaml
-2025-07-28 01:44:25,694 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/lib/mysql-connector-java.jar
-2025-07-28 01:44:25,700 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/lib/mysql-connector-java.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-mysql-3.2.1.jar.jar
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - Print mysql connector configuration:
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - hostname = mysql
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - password = ******
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - tables = smartcache.\.*
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - port = 3306
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - server-time-zone = UTC
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - username = smartcache
-2025-07-28 01:44:25,704 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - server-id = 5400-5404
-2025-07-28 01:44:25,771 WARN  io.debezium.connector.mysql.MySqlConnection                  [] - Database configuration option 'serverTimezone' is set but is obsolete, please use 'connectionTimeZone' instead
-2025-07-28 01:44:25,809 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - Read list of available databases
-2025-07-28 01:44:25,934 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - 	 list of available databases are: [smartcache]
-2025-07-28 01:44:25,934 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - Read list of available tables in smartcache
-2025-07-28 01:44:25,941 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - 	 list of available tables are: [smartcache.table_name]
-2025-07-28 01:44:25,947 INFO  io.debezium.jdbc.JdbcConnection                              [] - Connection gracefully closed
-2025-07-28 01:44:26,045 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/lib/mysql-connector-java.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-mysql-3.2.1.jar.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-starrocks-3.2.1.jar.jar
+2025-10-01 05:46:09,727 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Real Path pipelineDefPath /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
+2025-10-01 05:46:09,730 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Using global config in FLINK_CDC_HOME: /opt/flink-cdc/conf/flink-cdc.yaml
+2025-10-01 05:46:09,764 INFO  org.apache.flink.core.fs.FileSystem                          [] - Hadoop is not in the classpath/dependencies. The extended set of supported File Systems via Hadoop is not available.
+2025-10-01 05:46:09,813 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Dynamic flink config items found: {}
+2025-10-01 05:46:09,865 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar
+2025-10-01 05:46:10,017 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-mysql-3.5.0.jar
+2025-10-01 05:46:10,025 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - Print mysql connector configuration:
+2025-10-01 05:46:10,025 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - hostname = mysql
+2025-10-01 05:46:10,025 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - password = ******
+2025-10-01 05:46:10,025 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - tables = shopdb.\.*
+2025-10-01 05:46:10,026 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - port = 3306
+2025-10-01 05:46:10,026 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - server-time-zone = UTC
+2025-10-01 05:46:10,026 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - username = root
+2025-10-01 05:46:10,026 INFO  org.apache.flink.cdc.connectors.mysql.utils.OptionUtils      [] - server-id = 5900-5904
+2025-10-01 05:46:10,138 WARN  io.debezium.connector.mysql.MySqlConnection                  [] - Database configuration option 'serverTimezone' is set but is obsolete, please use 'connectionTimeZone' instead
+2025-10-01 05:46:10,196 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - Read list of available databases
+2025-10-01 05:46:10,398 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - 	 list of available databases are: [shopdb, smartcache]
+2025-10-01 05:46:10,399 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - Read list of available tables in shopdb
+2025-10-01 05:46:10,404 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - 	 list of available tables are: [shopdb.order_items, shopdb.orders, shopdb.products, shopdb.reviews, shopdb.slm, shopdb.users]
+2025-10-01 05:46:10,404 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - Read list of available tables in smartcache
+2025-10-01 05:46:10,406 INFO  org.apache.flink.cdc.connectors.mysql.utils.MySqlSchemaUtils [] - 	 list of available tables are: [smartcache.customers, smartcache.orderdetails, smartcache.orders, smartcache.prepared_stmt_test, smartcache.products, smartcache.query_test, smartcache.test_table, smartcache.tx_test]
+2025-10-01 05:46:10,423 INFO  io.debezium.jdbc.JdbcConnection                              [] - Connection gracefully closed
+2025-10-01 05:46:10,446 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-mysql-3.5.0.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-starrocks-3.5.0.jar
+2025-10-01 05:46:10,671 WARN  io.debezium.connector.mysql.MySqlConnection                  [] - Database configuration option 'serverTimezone' is set but is obsolete, please use 'connectionTimeZone' instead
+2025-10-01 05:46:10,692 INFO  io.debezium.jdbc.JdbcConnection                              [] - Connection gracefully closed
+2025-10-01 05:46:11,234 INFO  com.starrocks.connector.flink.table.sink.SinkFunctionFactory [] - StarRocks supports transaction load
+2025-10-01 05:46:11,234 INFO  com.starrocks.connector.flink.table.sink.SinkFunctionFactory [] - Choose sink version V2 for at-least-once.
+2025-10-01 05:46:11,235 INFO  com.starrocks.connector.flink.table.sink.SinkFunctionFactory [] - Choose sink version V2
+2025-10-01 05:46:11,269 INFO  com.starrocks.connector.flink.manager.StarRocksQueryVisitor  [] - StarRocks version: [3.5.3-799f68c].
+2025-10-01 05:46:11,269 INFO  com.starrocks.connector.flink.table.sink.StarRocksSinkOptions [] - Enable transaction stream load
+2025-10-01 05:46:11,271 INFO  com.starrocks.data.load.stream.StarRocksVersion              [] - Successful to parse starrocks version 3.5.3-799f68c, StarRocksVersion{major=3, minor=5, patch=3}
+2025-10-01 05:46:11,277 INFO  org.apache.flink.cdc.composer.flink.FlinkEnvironmentUtils    [] - pipeline.jars is file:/opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-mysql-3.5.0.jar,file:/opt/flink-cdc/lib/flink-cdc-pipeline-connector-starrocks-3.5.0.jar,file:/opt/flink-cdc/lib/flink-cdc-dist-3.5.0.jar
+2025-10-01 05:46:11,608 INFO  org.apache.flink.client.program.rest.RestClusterClient       [] - Submitting job 'Sync MySQL Database to StarRocks' (d0183dab35e138aeb62320cec737ef89).
+2025-10-01 05:46:13,864 INFO  org.apache.flink.client.program.rest.RestClusterClient       [] - Successfully submitted job 'Sync MySQL Database to StarRocks' (d0183dab35e138aeb62320cec737ef89) to 'http://0.0.0.0:8081'.

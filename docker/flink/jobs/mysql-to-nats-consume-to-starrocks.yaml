@@ -1,59 +1,25 @@
-jobs:
-  - name: mysql-to-nats-producer
-    source:
-      type: mysql
-      hostname: mysql
-      port: 3306
-      username: smartcache
-      password: smartcache
-      tables: smartcache.\.*
-      server-id: 5400-5404
-      server-time-zone: UTC
+################################################################################
+# Description: Sync MySQL all tables to StarRocks
+################################################################################
+source:
+  type: mysql
+  hostname: mysql
+  port: 3306
+  username: root
+  password: a8
+  tables: shopdb.\.*
+  server-id: 5900-5904
+  server-time-zone: UTC
 
-    sink:
-      type: nats
-      name: NATS JetStream Producer
-      url: nats://nats:4222
-      subject: mysql-cdc-changes.{tableName}
-      stream: cdc-stream
-      create-stream: true
-      ack-policy: explicit
-      max-pending: 1000
-      headers:
-        tableName: "{tableName}"
-        operationType: "{operationType}"
-        timestamp: "{timestamp}"
-      deliver-policy: all
-      ack-wait: 30s
+sink:
+  type: starrocks
+  name: StarRocks Sink
+  jdbc-url: jdbc:mysql://starrocks:9030
+  load-url: starrocks:8080
+  username: root
+  password: ""
+  table.create.properties.replication_num: 1
 
-    pipeline:
-      name: MySQL to NATS Producer Pipeline
-      parallelism: 1
-      checkpoint:
-        interval: 1000
-
-  - name: nats-to-starrocks-consumer
-    source:
-      type: nats
-      name: NATS JetStream Consumer
-      url: nats://nats:4222
-      subject: mysql-cdc-changes.*
-      stream: cdc-stream
-      consumer-name: flink-cdc-consumer
-      deliver-policy: all
-
-    sink:
-      type: starrocks
-      name: StarRocks Sink
-      hostname: starrocks
-      port: 9030
-      username: root
-      password: ""
-      table.create.properties.replication_num: 1
-      sink.buffer-flush.max-rows: 1
-      sink.buffer-flush.interval: 0s
-
-    pipeline:
-      name: NATS to StarRocks Consumer Pipeline
-      parallelism: 1
-      checkpoint.interval: 1000
+pipeline:
+  name: Sync MySQL Database to StarRocks
+  parallelism: 2

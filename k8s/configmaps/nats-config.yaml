@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-config
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: nats
+    app.kubernetes.io/component: messaging
+data:
+  cdc-stream.json: |
+    {
+      "name": "cdc-stream",
+      "subjects": ["cdc.>"],
+      "retention": "limits",
+      "max_consumers": -1,
+      "max_msgs": 1000000,
+      "max_bytes": -1,
+      "max_age": 86400000000000,
+      "max_msg_size": -1,
+      "storage": "file",
+      "num_replicas": 1
+    }
+  
+  monitoring-stream.json: |
+    {
+      "name": "monitoring-stream",
+      "subjects": ["monitoring.>"],
+      "retention": "limits",
+      "max_consumers": -1,
+      "max_msgs": 100000,
+      "max_bytes": -1,
+      "max_age": 3600000000000,
+      "max_msg_size": -1,
+      "storage": "file",
+      "num_replicas": 1
+    }
+  
+  dashboard-config.json: |
+    {
+      "server": {
+        "name": "消息服务监控",
+        "url": "http://nats.a8-turbo:8222"
+      },
+      "hideServerInput": true
+    }
+  
+  init-nats.sh: |
+    #!/bin/bash
+    
+    echo "等待NATS服务启动..."
+    sleep 10
+    
+    echo "创建CDC流..."
+    nats stream add --config /etc/nats/cdc-stream.json
+    
+    echo "创建监控流..."
+    nats stream add --config /etc/nats/monitoring-stream.json
+    
+    echo "NATS初始化完成"

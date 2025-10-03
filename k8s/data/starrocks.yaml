@@ -1,0 +1,143 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: starrocks
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: starrocks
+    app.kubernetes.io/component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: starrocks
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: starrocks
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+      - name: starrocks-fe
+        image: starrocks/fe-ubuntu:latest
+        ports:
+        - containerPort: 8030
+          name: http
+        - containerPort: 9020
+          name: rpc
+        - containerPort: 9030
+          name: query
+        env:
+        - name: HOST_TYPE
+          value: "FQDN"
+        - name: FE_SERVERS
+          value: "1:starrocks.a8-turbo:9010"
+        volumeMounts:
+        - name: starrocks-fe-data
+          mountPath: /opt/starrocks/fe/meta
+        - name: starrocks-fe-log
+          mountPath: /opt/starrocks/fe/log
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/bootstrap
+            port: 8030
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/bootstrap
+            port: 8030
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+      - name: starrocks-be
+        image: starrocks/be-ubuntu:latest
+        ports:
+        - containerPort: 8040
+          name: be-http
+        - containerPort: 9060
+          name: be-rpc
+        - containerPort: 8060
+          name: heartbeat
+        env:
+        - name: HOST_TYPE
+          value: "FQDN"
+        - name: FE_SERVERS
+          value: "starrocks.a8-turbo:9010"
+        - name: BE_ADDR
+          value: "starrocks.a8-turbo:9060"
+        volumeMounts:
+        - name: starrocks-be-data
+          mountPath: /opt/starrocks/be/storage
+        - name: starrocks-be-log
+          mountPath: /opt/starrocks/be/log
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8040
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8040
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+      - name: starrocks-fe-data
+        persistentVolumeClaim:
+          claimName: starrocks-data-pvc
+      - name: starrocks-fe-log
+        emptyDir: {}
+      - name: starrocks-be-data
+        persistentVolumeClaim:
+          claimName: starrocks-data-pvc
+      - name: starrocks-be-log
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: starrocks
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: starrocks
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8030
+    targetPort: 8030
+    name: fe-http
+  - port: 9020
+    targetPort: 9020
+    name: fe-rpc
+  - port: 9030
+    targetPort: 9030
+    name: query
+  - port: 8040
+    targetPort: 8040
+    name: be-http
+  - port: 9060
+    targetPort: 9060
+    name: be-rpc
+  selector:
+    app.kubernetes.io/name: starrocks

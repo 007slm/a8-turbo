@@ -1,54 +1,47 @@
 package org.openjdbcproxy.cache.service;
 
-import org.openjdbcproxy.cache.entity.CacheDecision;
-import org.openjdbcproxy.cache.entity.Query;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.openjdbcproxy.cache.entity.CacheRule;
+import org.openjdbcproxy.cache.entity.SlowQuery;
+import org.openjdbcproxy.cache.repository.CacheRuleRepository;
+import org.openjdbcproxy.cache.repository.SlowQueryRepository;
+import org.openjdbcproxy.cache.util.JSqlParserUtil;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
 
 /**
- * 缓存决策服务接口
- * 根据传入的SQL语句和相关规则，决策是否需要走缓存
+ * 缓存决策服务实现类
  */
-public interface CacheDecisionService {
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class CacheDecisionService {
 
-    /**
-     * 根据查询信息决策是否使用缓存
-     * 
-     * @param datasourceName 数据源名称
-     * @param query 查询对象
-     * @return 缓存决策结果
-     */
-    CacheDecision makeDecision(String datasourceName, Query query);
+    private final CacheRuleRepository cacheRuleRepository;
 
-    /**
-     * 根据SQL语句决策是否使用缓存（简化版本）
-     * 
-     * @param datasourceName 数据源名称
-     * @param sql SQL语句
-     * @return 缓存决策结果
-     */
-    CacheDecision makeDecision(String datasourceName, String sql);
+    private final SlowQueryRepository queryRepository;
+    @SneakyThrows
+    public boolean makeDecision(String connHash, String sql) {
+        long startTime = System.currentTimeMillis();
 
-    /**
-     * 检查指定表是否有缓存规则
-     * 
-     * @param datasourceName 数据源名称
-     * @param tableName 表名
-     * @return 是否有缓存规则
-     */
-    boolean hasTableCacheRule(String datasourceName, String tableName);
+        String slowQueryId = JSqlParserUtil.generateSlowQueryId(connHash, sql);
+        SlowQuery query = queryRepository.findById(slowQueryId).orElse(null);
 
-    /**
-     * 获取查询的TTL（生存时间）
-     * 
-     * @param datasourceName 数据源名称
-     * @param query 查询对象
-     * @return TTL秒数，0表示不缓存
-     */
-    int getQueryTtl(String datasourceName, Query query);
+        boolean match = cacheRuleRepository.findAll().stream().anyMatch(rule -> {
+            return rule.matches( query);
+        });
 
-    /**
-     * 刷新缓存规则（从Redis重新加载）
-     * 
-     * @param datasourceName 数据源名称
-     */
-    void refreshCacheRules(String datasourceName);
+
+        // 记录决策统计
+        long decisionTime = System.currentTimeMillis() - startTime;
+
+        log.debug("缓存决策完成: sql={}, shouldCache={}, decisionTime={}ms",
+                sql, match, decisionTime);
+        return match;
+    }
+
 }

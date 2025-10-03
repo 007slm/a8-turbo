@@ -1,6 +1,6 @@
 global:
   scrape_interval:     15s # By default, scrape targets every 5 seconds.
-
+  
   # Attach these labels to any time series or alerts when communicating with
   # external systems (federation, remote storage, Alertmanager).
   external_labels:
@@ -8,7 +8,7 @@ global:
 
 # A scrape configuration containing exactly one endpoint to scrape:
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  # The job name is added as a label 'job=<job_name>' to any timeseries scraped from this config.
   - job_name: 'nats-exporter'
     static_configs:
       - targets: ['nats-exporter:7777']
@@ -57,5 +57,6 @@ scrape_configs:
 
   # OJP Server监控
   - job_name: 'ojp-server'
+    metrics_path: /api/actuator/prometheus
     static_configs:
-      - targets: ['ojp-server:9026']
+      - targets: ['ojp-server:8010']

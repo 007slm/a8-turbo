@@ -27,14 +27,11 @@ while true; do
     sleep 2
 done
 
-# 提交Flink CDC作业
-echo "提交Flink CDC作业..."
-cd /opt/flink-cdc
-./bin/flink-cdc.sh \
-    --jar /opt/flink-cdc/lib/mysql-connector-java.jar \
-    --properties-file /opt/flink_jobs/flink-conf.yaml \
-    --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
-
+# 提交ojp-sync作业
+echo "提交ojp-sync作业..."
+/opt/flink/bin/flink run -m jobmanager:8081 -c io.a8.sync.MySQLToStarRocksSync \
+  /opt/flink-cdc/lib/ojp-sync-1.0-SNAPSHOT.jar \
+  /opt/flink_jobs/sync-config.yaml
 
 if [ $? -eq 0 ]; then
     echo "Flink CDC作业提交成功"
@@ -42,5 +39,4 @@ else
     echo "错误: Flink CDC作业提交失败"
     exit 1
 fi
-
 echo "Flink CDC初始化完成"

@@ -1,0 +1,57 @@
+{
+  "name": "OJP Frontend Development",
+  "dockerComposeFile": [
+    "./docker-compose.yml"
+  ],
+  "service": "ojp-ui",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "jetbrains": {
+      "settings": {
+        "com.intellij:app:HttpConfigurable.use_proxy_pac": true,
+        "com.intellij:app:GeneralSettings.autoSaveIfInactive": true,
+        "com.intellij:app:GeneralSettings.inactiveTimeout": 10,
+        "org.jetbrains.plugins.github:app:GithubSettings.clone_git_using_ssh": true,
+        "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myShellPath": "C:\\Windows\\system32\\cmd.exe"
+      }
+    },
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-json",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "ms-vscode.vscode-eslint",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-css-peek",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "typescript.preferences.quoteStyle": "single",
+        "editor.formatOnSave": true,
+        "emmet.includeLanguages": {
+          "javascript": "javascriptreact"
+        },
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        }
+      }
+    }
+  },
+  "remoteUser": "ojp",
+  "features": {},
+  "mounts": [
+    "source=${localWorkspaceFolder}/ojp/ojp-ui,target=/workspace,type=bind,consistency=delegated"
+  ],
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "OJP UI (Vite)",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "echo 'Development environment ready'",
+  "waitFor": "onCreateCommand"
+}

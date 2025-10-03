@@ -6,11 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-@UtilityClass
 public class DatabaseUtils {
-
-
-    public DbName resolveDbName(String url) {
+    public static DbName resolveDbName(String url) {
         DbName dbName = DbName.UNMAPPED;
         if (url.toUpperCase().contains("H2:")) {
             dbName = DbName.H2;

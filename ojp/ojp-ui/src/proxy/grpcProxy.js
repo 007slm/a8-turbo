@@ -46,7 +46,7 @@ class GrpcProxy {
     try {
       console.log(`[GrpcProxy] 开始 gRPC 健康检查: ${host}:${port}`);
       
-      // 简单的连接测试来检查服务是否可用
+      // 连接检查来验证服务是否可用
       const client = this.getClient(host, port);
       
       return new Promise((resolve, reject) => {

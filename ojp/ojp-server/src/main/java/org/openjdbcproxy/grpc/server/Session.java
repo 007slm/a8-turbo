@@ -26,6 +26,10 @@ public class Session {
     private final String connectionHash;
     @Getter
     private final String clientUUID;
+
+    @Getter
+    private final boolean readOnly;
+
     @Getter
     private Connection connection;
     private Map<String, ResultSet> resultSetMap;
@@ -36,11 +40,12 @@ public class Session {
     private Map<String, Object> attrMap;
     private boolean closed;
 
-    public Session(Connection connection, String connectionHash, String clientUUID) {
+    public Session(Connection connection, String connectionHash, String clientUUID, boolean readOnly) {
         this.connection = connection;
         this.connectionHash = connectionHash;
         this.clientUUID = clientUUID;
         this.sessionUUID = UUID.randomUUID().toString();
+        this.readOnly = readOnly;
         this.closed = false;
         this.resultSetMap = new ConcurrentHashMap<>();
         this.statementMap = new ConcurrentHashMap<>();
@@ -56,6 +61,7 @@ public class Session {
                 .setConnHash(this.connectionHash)
                 .setClientUUID(this.clientUUID)
                 .setSessionUUID(this.sessionUUID)
+                .setReadOnly(this.readOnly)
                 .build();
     }
 

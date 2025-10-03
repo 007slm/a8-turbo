@@ -36,6 +36,7 @@ enum TransactionStatus {
 message TransactionInfo {
     string transactionUUID = 1;
     TransactionStatus transactionStatus = 2;
+
 }
 
 message SessionInfo {
@@ -45,6 +46,7 @@ message SessionInfo {
     string sessionUUID = 3;
     TransactionInfo transactionInfo = 4;
     SessionStatus sessionStatus = 5;
+    bool readOnly = 6;
 }
 
 enum ResultType {
@@ -201,6 +203,11 @@ message CallResourceResponse {
     bytes values = 3;
 }
 
+message SetReadOnlyRequest {
+    SessionInfo session = 1;
+    bool readOnly = 2;
+}
+
 message ResultSetFetchRequest {
     SessionInfo session = 1;
     string resultSetUUID = 2;
@@ -215,6 +222,7 @@ service StatementService {
     rpc createLob(stream LobDataBlock) returns (stream LobReference);
     rpc readLob(ReadLobRequest) returns (stream LobDataBlock);
     rpc terminateSession(SessionInfo) returns (SessionTerminationStatus);
+    rpc setReadOnly(SetReadOnlyRequest) returns (SessionInfo);
     rpc startTransaction(SessionInfo) returns (SessionInfo);
     rpc commitTransaction(SessionInfo) returns (SessionInfo);
     rpc rollbackTransaction(SessionInfo) returns (SessionInfo);

@@ -1,0 +1,47 @@
+{
+  "name": "OJP Backend Development",
+  "dockerComposeFile": [
+    "./docker-compose.yml"
+  ],
+  "service": "ojp-server",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "redhat.java",
+        "vscjava.vscode-java-debug",
+        "vscjava.vscode-java-test",
+        "vscjava.vscode-maven",
+        "vscjava.vscode-spring-boot",
+        "pivotal.vscode-spring-boot",
+        "ms-vscode.vscode-json"
+      ],
+      "settings": {
+        "java.jdt.ls.java.home": "/docker-java-home",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "java.configuration.updateBuildConfiguration": "interactive",
+        "spring-boot.ls.checkjvm": false
+      }
+    }
+  },
+  "remoteUser": "ojp",
+  "features": {
+    "git": "latest",
+    "github-cli": "latest"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolder}/ojp,target=/workspace,type=bind,consistency=delegated"
+  ],
+  "remoteEnv": {
+    "IDEA_VM_OPTIONS": "-Didea.filewatcher.disabled=false"
+  },
+  "forwardPorts": [8010],
+  "portsAttributes": {
+    "8010": {
+      "label": "OJP Server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "echo 'Development environment ready'",
+  "waitFor": "onCreateCommand"
+}

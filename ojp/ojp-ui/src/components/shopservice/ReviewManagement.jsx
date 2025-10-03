@@ -15,14 +15,18 @@ import {
   Statistic,
   Tag,
   Typography,
-  Select
+  Select,
+  Avatar,
+  Descriptions
 } from 'antd';
 import {
   StarOutlined,
   PlusOutlined,
   EyeOutlined,
   DeleteOutlined,
-  SearchOutlined
+  SearchOutlined,
+  UserOutlined,
+  ShoppingOutlined
 } from '@ant-design/icons';
 import { reviewApi, userApi, productApi } from '../../services/shopServiceApi';
 import '../shopservice/ShopService.css';
@@ -49,6 +53,7 @@ const ReviewManagement = () => {
     total: 0
   })
   const [form] = Form.useForm()
+  const [editingReview, setEditingReview] = useState(null)
 
   // 加载评价列表
   const loadReviews = async (page = 0, size = 10) => {
@@ -132,13 +137,60 @@ const ReviewManagement = () => {
   // 创建评价
   const createReview = async (values) => {
     try {
-      await reviewApi.createReview(values)
+      // 转换数据格式以匹配后端期望的结构
+      const reviewData = {
+        user: {
+          id: values.userId
+        },
+        product: {
+          id: values.productId
+        },
+        rating: values.rating,
+        comment: values.comment
+      }
+      
+      await reviewApi.createReview(reviewData)
       message.success('评价创建成功')
       closeModal()
       loadReviews(pagination.current - 1, pagination.pageSize)
     } catch (error) {
       console.error('创建评价失败:', error)
       message.error('创建评价失败')
+    }
+  }
+
+  // 更新评价
+  const updateReview = async (values) => {
+    try {
+      // 转换数据格式以匹配后端期望的结构
+      const reviewData = {
+        user: {
+          id: values.userId
+        },
+        product: {
+          id: values.productId
+        },
+        rating: values.rating,
+        comment: values.comment,
+        status: values.status
+      }
+      
+      await reviewApi.updateReview(editingReview.id, reviewData)
+      message.success('评价更新成功')
+      closeModal()
+      loadReviews(pagination.current - 1, pagination.pageSize)
+    } catch (error) {
+      console.error('更新评价失败:', error)
+      message.error('更新评价失败')
+    }
+  }
+
+  // 保存评价（创建或更新）
+  const saveReview = (values) => {
+    if (editingReview) {
+      updateReview(values)
+    } else {
+      createReview(values)
     }
   }
 
@@ -259,12 +311,13 @@ const ReviewManagement = () => {
   return (
     <div className="management-container">
       <div className="management-header">
-        <Title level={2}>评价管理</Title>
+        <Title level={3} style={{ margin: 0 }}>评价管理</Title>
         <div className="management-actions">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={openModal}
+            size="small"
           >
             新增评价
           </Button>
@@ -272,76 +325,83 @@ const ReviewManagement = () => {
       </div>
       
       {/* 统计卡片 */}
-      <Row gutter={16} className="stats-cards" style={{ marginBottom: '24px' }}>
+      <Row gutter={12} className="stats-cards" style={{ marginBottom: '12px' }}>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="总评价数"
               value={pagination.total}
               prefix={<StarOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="平均评分"
               value={reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : 0}
               prefix={<StarOutlined />}
               suffix="/ 5"
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="五星评价"
               value={reviews.filter(r => r.rating === 5).length}
               prefix={<StarOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="待处理评价"
               value={reviews.filter(r => r.status === 'pending').length}
               prefix={<StarOutlined />}
+              size="small"
             />
           </Card>
         </Col>
       </Row>
 
       {/* 搜索栏 */}
-      <div className="search-bar">
+      <div className="search-bar" style={{ marginBottom: '12px' }}>
         <Input.Search
           placeholder="搜索评价内容或用户"
           allowClear
           onSearch={handleSearch}
+          size="small"
         />
       </div>
 
-      <Card>
+      <Card size="small">
 
         <Table
           columns={columns}
           dataSource={reviews}
           rowKey="id"
           loading={loading}
+          size="small"
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+            size: 'small'
           }}
           onChange={handleTableChange}
         />
       </Card>
 
-      {/* 新增评价模态框 */}
+      {/* 新增/编辑评价模态框 */}
       <Modal
-        title="新增评价"
+        title={editingReview ? '编辑评价' : '新增评价'}
         open={modalVisible}
         onCancel={closeModal}
         footer={null}
@@ -350,18 +410,19 @@ const ReviewManagement = () => {
         <Form
           form={form}
           layout="vertical"
-          onFinish={createReview}
-          style={{ marginTop: '20px' }}
+          onFinish={saveReview}
+          style={{ marginTop: '12px' }}
         >
           <Form.Item
             name="userId"
-            label="选择用户"
+            label="用户"
             rules={[{ required: true, message: '请选择用户' }]}
           >
             <Select
               placeholder="请选择用户"
               showSearch
               optionFilterProp="children"
+              size="small"
             >
               {users.map(user => (
                 <Option key={user.id} value={user.id}>
@@ -373,17 +434,18 @@ const ReviewManagement = () => {
 
           <Form.Item
             name="productId"
-            label="选择商品"
+            label="商品"
             rules={[{ required: true, message: '请选择商品' }]}
           >
             <Select
               placeholder="请选择商品"
               showSearch
               optionFilterProp="children"
+              size="small"
             >
               {products.map(product => (
                 <Option key={product.id} value={product.id}>
-                  {product.name} (¥{product.price})
+                  {product.name}
                 </Option>
               ))}
             </Select>
@@ -394,29 +456,43 @@ const ReviewManagement = () => {
             label="评分"
             rules={[{ required: true, message: '请选择评分' }]}
           >
-            <Rate allowHalf />
+            <Rate />
           </Form.Item>
 
           <Form.Item
             name="comment"
             label="评价内容"
             rules={[
+              { required: true, message: '请输入评价内容' },
               { max: 500, message: '评价内容最多500个字符' },
             ]}
           >
             <TextArea
               rows={4}
-              placeholder="请输入评价内容（可选）"
+              placeholder="请输入评价内容"
+              size="small"
             />
+          </Form.Item>
+
+          <Form.Item
+            name="status"
+            label="状态"
+            rules={[{ required: true, message: '请选择状态' }]}
+          >
+            <Select placeholder="请选择状态" size="small">
+              <Option value="pending">待审核</Option>
+              <Option value="approved">已通过</Option>
+              <Option value="rejected">已拒绝</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={closeModal}>
+              <Button onClick={closeModal} size="small">
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
-                创建评价
+              <Button type="primary" htmlType="submit" size="small">
+                {editingReview ? '更新' : '创建'}
               </Button>
             </Space>
           </Form.Item>
@@ -429,59 +505,45 @@ const ReviewManagement = () => {
         open={detailModalVisible}
         onCancel={closeDetailModal}
         footer={[
-          <Button key="close" onClick={closeDetailModal}>
+          <Button key="close" onClick={closeDetailModal} size="small">
             关闭
           </Button>
         ]}
         width={600}
       >
         {viewingReview && (
-          <div style={{ padding: '20px 0' }}>
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Card size="small" title="基本信息">
-                  <Row gutter={[16, 8]}>
-                    <Col span={12}>
-                      <strong>评价ID:</strong> {viewingReview.id}
-                    </Col>
-                    <Col span={12}>
-                      <strong>用户:</strong> {viewingReview.user?.username}
-                    </Col>
-                    <Col span={12}>
-                      <strong>商品:</strong> {viewingReview.product?.name}
-                    </Col>
-                    <Col span={12}>
-                      <strong>商品价格:</strong> ¥{viewingReview.product?.price?.toFixed(2)}
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-              <Col span={24}>
-                <Card size="small" title="评价信息">
-                  <Row gutter={[16, 16]}>
-                    <Col span={24}>
-                      <strong>评分:</strong>
-                      <div style={{ marginTop: 8 }}>
-                        <Rate disabled value={viewingReview.rating} allowHalf />
-                        <Tag
-                          color={getRatingColor(viewingReview.rating)}
-                          style={{ marginLeft: 8 }}
-                        >
-                          {viewingReview.rating} 分
-                        </Tag>
-                      </div>
-                    </Col>
-                    <Col span={24}>
-                      <strong>评价内容:</strong>
-                      <div style={{ marginTop: 8, padding: '12px', backgroundColor: '#f5f5f5', borderRadius: '6px' }}>
-                        {viewingReview.comment || '用户未留下评价内容'}
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-            </Row>
-          </div>
+          <Descriptions bordered column={1} size="small">
+            <Descriptions.Item label="评价ID">{viewingReview.id}</Descriptions.Item>
+            <Descriptions.Item label="用户">
+              <Space>
+                <Avatar size="small" icon={<UserOutlined />} />
+                {viewingReview.user?.username || '未知用户'}
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="商品">
+              <Space>
+                <ShoppingOutlined />
+                {viewingReview.product?.name || '未知商品'}
+              </Space>
+            </Descriptions.Item>
+            <Descriptions.Item label="评分">
+              <Rate disabled defaultValue={viewingReview.rating} />
+              <span style={{ marginLeft: 8 }}>{viewingReview.rating} 分</span>
+            </Descriptions.Item>
+            <Descriptions.Item label="评价内容">
+              <Paragraph style={{ margin: 0 }}>
+                {viewingReview.comment || '无评价内容'}
+              </Paragraph>
+            </Descriptions.Item>
+            <Descriptions.Item label="状态">
+              <Tag color={viewingReview.status === 'approved' ? 'green' : viewingReview.status === 'rejected' ? 'red' : 'orange'}>
+                {viewingReview.status === 'approved' ? '已通过' : viewingReview.status === 'rejected' ? '已拒绝' : '待审核'}
+              </Tag>
+            </Descriptions.Item>
+            <Descriptions.Item label="创建时间">
+              {formatDate(viewingReview.createdAt)}
+            </Descriptions.Item>
+          </Descriptions>
         )}
       </Modal>
     </div>

@@ -1,0 +1,54 @@
+networks:
+  a8:
+    external: false
+
+services:
+
+
+  # Shop Service服务
+  shopservice:
+    build:
+      context: ./ojp
+      dockerfile: shopservice/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: fluxdb-shopservice:0.0.7-alpha
+    container_name: shopservice
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "8180:8180"
+    #   - "5005:5005"  # Java远程调试端口
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - MAVEN_CONFIG=/root/.m2
+      - MAVEN_OPTS=-Dmaven.repo.local=/root/.m2/repository
+    # 健壮化启动：移除硬依赖顺序，改为启动前等待依赖就绪
+    command: 
+      - sh
+      - -c
+      - |
+        set -e
+        echo "[shopservice] waiting for mysql:3306..."
+        for i in $$(seq 1 120); do
+          (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) && break || sleep 1
+        done
+        (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) || { echo "[shopservice] mysql not ready after 120s"; exit 1; }
+        echo "[shopservice] waiting for ojp-server:8010 health..."
+        for i in $$(seq 1 120); do
+          curl -sf http://ojp-server:8010/api/actuator/health >/dev/null && break || sleep 1
+        done
+        curl -sf http://ojp-server:8010/api/actuator/health >/dev/null || { echo "[shopservice] ojp-server not ready after 120s"; exit 1; }
+        exec java $$JAVA_OPTS -Dspring.config.location=file:/app/config/application.properties -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO -jar shopservice.jar
+    networks:
+      - a8
+      
+    volumes:
+      - ./logs/shopservice:/app/logs
+      - ./docker/ojp/shopservice/application.properties:/app/config/application.properties
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8280/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3

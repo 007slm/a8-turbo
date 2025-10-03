@@ -19,7 +19,9 @@ spring:
       write-dates-as-timestamps: false
   data:
     redis:
-      host: localhost
+      repositories:
+        enabled: true
+      host: redis
       port: 6379
       # password: your_password # 如果需要密码，请取消注释并设置
       timeout: 2000ms
@@ -28,6 +30,12 @@ spring:
           max-active: 8
           max-idle: 8
           min-idle: 0
+  # DevTools 配置 - 解决重启循环问题
+  devtools:
+    restart:
+      enabled: false  # 禁用自动重启
+    livereload:
+      enabled: false  # 禁用LiveReload
 
 # SpringDoc OpenAPI 配置
 springdoc:
@@ -79,9 +87,9 @@ ojp:
       # 智能缓存配置（直接在此处填写，无需环境变量）
       cache:
         starrocks:
-          url: "jdbc:mysql://localhost:9030"
+          url: "jdbc:mysql://starrocks:9030"
           username: "root"
-          password: "a8"
+          password: ""
   api:
     base-path: /api
     cache:
@@ -140,14 +148,9 @@ management:
     env:
       show-values: always
   metrics:
-    export:
-      prometheus:
-        enabled: true
     enable:
       hikaricp: true
     web:
       server:
         request:
-          autotime:
-            enabled: true
-            percentiles: 0.5,0.95,0.99
+          percentiles: 0.5,0.95,0.99

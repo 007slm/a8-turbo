@@ -208,12 +208,13 @@ const ProductManagement = () => {
   return (
     <div className="management-container">
       <div className="management-header">
-        <Title level={2}>商品管理</Title>
+        <Title level={3} style={{ margin: 0 }}>商品管理</Title>
         <div className="management-actions">
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => openModal()}
+            size="small"
           >
             新增商品
           </Button>
@@ -221,66 +222,73 @@ const ProductManagement = () => {
       </div>
       
       {/* 统计卡片 */}
-      <Row gutter={16} className="stats-cards" style={{ marginBottom: '24px' }}>
+      <Row gutter={12} className="stats-cards" style={{ marginBottom: '12px' }}>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="总商品数"
               value={pagination.total}
               prefix={<ShoppingOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="在售商品"
               value={products.filter(p => p.status === 'active').length}
               prefix={<ShoppingOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="库存不足"
               value={products.filter(p => p.stock < 10).length}
               prefix={<ShoppingOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={6}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="平均价格"
               value={products.length > 0 ? (products.reduce((sum, p) => sum + p.price, 0) / products.length).toFixed(2) : 0}
               prefix="¥"
+              size="small"
             />
           </Card>
         </Col>
       </Row>
 
       {/* 搜索栏 */}
-      <div className="search-bar">
+      <div className="search-bar" style={{ marginBottom: '12px' }}>
         <Input.Search
           placeholder="搜索商品名称或描述"
           allowClear
           onSearch={handleSearch}
+          size="small"
         />
       </div>
 
-      <Card className="table-card">
+      <Card className="table-card" size="small">
         <Table
           columns={columns}
           dataSource={products}
           rowKey="id"
           loading={loading}
+          size="small"
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+            size: 'small'
           }}
           onChange={handleTableChange}
         />
@@ -298,7 +306,7 @@ const ProductManagement = () => {
           form={form}
           layout="vertical"
           onFinish={saveProduct}
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: '12px' }}
         >
           <Form.Item
             name="name"
@@ -312,6 +320,7 @@ const ProductManagement = () => {
             <Input
               prefix={<ShoppingOutlined />}
               placeholder="请输入商品名称"
+              size="small"
             />
           </Form.Item>
 
@@ -325,6 +334,7 @@ const ProductManagement = () => {
             <TextArea
               rows={4}
               placeholder="请输入商品描述"
+              size="small"
             />
           </Form.Item>
 
@@ -345,15 +355,16 @@ const ProductManagement = () => {
               max={999999.99}
               formatter={value => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => value.replace(/¥\s?|(,*)/g, '')}
+              size="small"
             />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={closeModal}>
+              <Button onClick={closeModal} size="small">
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" size="small">
                 {editingProduct ? '更新' : '创建'}
               </Button>
             </Space>

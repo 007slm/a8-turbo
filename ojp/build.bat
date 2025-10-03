@@ -9,17 +9,27 @@ echo          OJP项目本地构建脚本
 echo ==============================================
 echo.
 
-:: 1. 检查Maven是否安装
-echo [步骤 1/9] 正在检查Maven安装状态...
+:: 1. 检查Maven或Maven Daemon是否安装
+echo [步骤 1/9] 正在检查Maven/Maven Daemon安装状态...
+call mvnd -v >nul 2>&1
+if %errorLevel% equ 0 (
+    echo Maven Daemon已安装，将使用mvnd加速构建
+    set MVN_CMD=mvnd
+    goto :after_maven_check
+)
+
 call mvn -v >nul 2>&1
 if %errorLevel% neq 0 (
     echo.
-    echo 错误: Maven未安装！请先安装Maven。
-    echo 提示: 确保"mvn"命令已添加到系统环境变量"Path"中。
+    echo 错误: Maven未安装！请先安装Maven或Maven Daemon。
+    echo 提示: 确保"mvn"或"mvnd"命令已添加到系统环境变量"Path"中。
     pause
     exit /b 1
 )
-echo Maven已安装。
+echo Maven已安装，将使用传统mvn命令
+set MVN_CMD=mvn
+
+:after_maven_check
 
 :: 2. 检查Java是否安装
 echo.
@@ -64,8 +74,8 @@ echo Docker Compose已安装。
 echo.
 echo [步骤 5/9] 显示环境信息...
 echo.
-echo ---------------- Maven版本 ----------------
-call mvn -v
+echo ---------------- Maven/Maven Daemon版本 ----------------
+call %MVN_CMD% -v
 echo.
 echo ---------------- Java版本 -----------------
 call java -version
@@ -87,16 +97,33 @@ echo.
 echo [步骤 7/9] 清理之前的构建并开始新构建...
 echo 这可能需要几分钟时间...
 echo.
-call mvn clean package -DskipTests -Dmaven.javadoc.skip=true
+call %MVN_CMD% clean package -DskipTests -Dmaven.javadoc.skip=true
 if %errorLevel% neq 0 (
     echo.
     echo 错误: 项目构建失败！请检查上述错误日志。
     pause
     exit /b 1
 )
+
+:: 构建shopservice模块
+echo.
+echo [步骤 7.1/9] 构建shopservice模块...
+echo.
+cd shopservice
+call %MVN_CMD% clean package -DskipTests
+if %errorLevel% neq 0 (
+    echo.
+    echo 错误: shopservice模块构建失败！请检查上述错误日志。
+    pause
+    exit /b 1
+)
+cd ..
+
 echo.
 echo Maven构建过程成功完成！
 echo.
+
+
 
 :: 验证JAR文件是否存在
 set "jarPath=ojp-server\target\ojp-server-0.0.8-alpha.jar"
@@ -196,5 +223,3 @@ echo OJP服务状态:
 call docker-compose -f docker-compose.yml ps
 echo.
 echo 构建和部署成功完成！
-echo 现在可以访问相关服务。
-pause

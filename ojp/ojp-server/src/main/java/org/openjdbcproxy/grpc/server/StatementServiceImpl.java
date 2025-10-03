@@ -26,6 +26,7 @@ import org.openjdbcproxy.grpc.server.resultset.ResultSetWrapper;
 import org.openjdbcproxy.grpc.server.statement.ParameterHandler;
 import org.openjdbcproxy.grpc.server.statement.StatementFactory;
 import org.openjdbcproxy.grpc.server.utils.*;
+import org.openjdbcproxy.grpc.server.utils.JdbcUrlUtil;
 import org.springframework.grpc.server.service.GrpcService;
 
 import java.io.ByteArrayInputStream;
@@ -76,7 +77,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     @Override
     public void connect(ConnectionDetails connectionDetails, StreamObserver<SessionInfo> responseObserver) {
-        String connHash = ConnectionHashGenerator.hashConnectionDetails(connectionDetails);
+        String connHash = JdbcUrlUtil.connHash(connectionDetails);
         log.info("connect connHash = " + connHash);
 
         HikariDataSource ds = this.datasourceMap.get(connHash);
@@ -810,6 +811,28 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
             sendSQLExceptionMetadata(new SQLException("Unable to rollback transaction: " + e.getMessage()), responseObserver);
+        }
+    }
+
+    @Override
+    public void setReadOnly(SetReadOnlyRequest request, StreamObserver<SessionInfo> responseObserver) {
+        SessionInfo sessionInfo = request.getSession();
+        log.info("Setting read only to {}", request.getReadOnly());
+        try {
+            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
+            
+            Connection conn = statementServiceInterceptContext.getCurrentConnection();
+            //conn.setReadOnly(request.getReadOnly());
+
+            SessionInfo.Builder sessionInfoBuilder = SessionInfoUtils.newBuilderFrom(sessionInfo);
+            sessionInfoBuilder.setReadOnly(request.getReadOnly());
+
+            responseObserver.onNext(sessionInfoBuilder.build());
+            responseObserver.onCompleted();
+        } catch (SQLException se) {
+            sendSQLExceptionMetadata(se, responseObserver);
+        } catch (Exception e) {
+            sendSQLExceptionMetadata(new SQLException("Unable to set read only: " + e.getMessage()), responseObserver);
         }
     }
 

@@ -871,7 +871,7 @@
                         "content": {
                             "*/*": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ApiResponseListString"
+                                    
                                 }
                             }
                         }
@@ -953,7 +953,7 @@
                         "content": {
                             "*/*": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ApiResponseListString"
+                                    
                                 }
                             }
                         }

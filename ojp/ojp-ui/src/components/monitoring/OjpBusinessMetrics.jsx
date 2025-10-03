@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Card, 
   Row, 
@@ -11,7 +11,8 @@ import {
   Divider,
   Empty,
   Tooltip,
-  Alert
+  Alert,
+  Button
 } from 'antd';
 import { 
   ThunderboltOutlined, 
@@ -21,13 +22,50 @@ import {
   CheckCircleOutlined,
   WarningOutlined,
   BarChartOutlined,
-  RocketOutlined
+  RocketOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
+import { monitoringApi, cacheApi } from '../../services/api';
 
 const { Title, Text } = Typography;
 
-const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
-  if (loading) {
+const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
+  const [loading, setLoading] = useState(false)
+  const [enhancedMetrics, setEnhancedMetrics] = useState(null)
+  const [performanceData, setPerformanceData] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  // 加载增强的性能数据
+  const loadEnhancedData = async () => {
+    setLoading(true)
+    try {
+      const [cacheStats, queryStats, overviewStats] = await Promise.all([
+        cacheApi.getQueries().catch(() => null),
+        cacheApi.getQueries().catch(() => null),
+        cacheApi.getQueries().catch(() => null)
+      ])
+      
+      setPerformanceData({ cacheStats, queryStats, overviewStats })
+    } catch (error) {
+      console.error('加载增强性能数据失败:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 刷新数据
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1)
+    loadEnhancedData()
+  }
+
+  useEffect(() => {
+    loadEnhancedData()
+  }, [refreshKey])
+
+  const isLoading = propLoading || loading
+
+  if (isLoading) {
     return (
       <Card loading={true}>
         <div style={{ textAlign: 'center', padding: '50px 0' }}>
@@ -39,7 +77,17 @@ const OjpBusinessMetrics = ({ businessMetrics, loading }) => {
 
   if (!businessMetrics || businessMetrics.length === 0) {
     return (
-      <Card>
+      <Card
+        extra={
+          <Button 
+            icon={<ReloadOutlined />} 
+            onClick={handleRefresh}
+            size="small"
+          >
+            刷新
+          </Button>
+        }
+      >
         <Empty 
           description="暂无OJP业务指标数据" 
           image={Empty.PRESENTED_IMAGE_SIMPLE}

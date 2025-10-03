@@ -1,0 +1,35 @@
+# 后端开发环境专用配置
+services:
+  # 后端开发服务配置 - 覆盖生产环境配置
+  ojp-server:
+    build:
+      context: ../..
+      dockerfile: .devcontainer/ojp-server/Dockerfile
+    container_name: ojp-server-dev
+    volumes:
+      - ../../ojp:/workspace:cached
+      - type: bind
+        source: ${USERPROFILE}/.m2/repository
+        target: /home/ojp/.m2/repository
+        consistency: cached
+    working_dir: /workspace/ojp-server
+    ports:
+      - "8010:8010"
+      - "5005:5005"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+      - MAVEN_OPTS=-Xmx1024m -Dmaven.repo.local=/home/ojp/.m2/repository
+      - MAVEN_CONFIG=/home/ojp/.m2
+    # 开发环境中不需要自动启动服务，开发者将通过IDE启动服务
+    # command: ["bash", "-lc", "for i in {1..120}; do curl -s --connect-timeout 2 telnet://mysql:3306 >/dev/null 2>&1 && break; echo 'waiting mysql...'; sleep 1; done; for i in {1..120}; do curl -s --connect-timeout 2 telnet://redis:6379 >/dev/null 2>&1 && break; echo 'waiting redis...'; sleep 1; done; cd ojp-server && mvn spring-boot:run -Dspring-boot.run.jvmArguments='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005' "]
+    # 使用以下命令保持容器运行，等待IDE连接
+    command: tail -f /dev/null
+    networks:
+      - a8
+
+networks:
+  a8:
+    external: true
+    name: a8-turbo_a8

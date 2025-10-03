@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: kong
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kong
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kong
+        app.kubernetes.io/component: gateway
+    spec:
+      containers:
+      - name: kong
+        image: kong:latest
+        ports:
+        - containerPort: 8000
+          name: proxy
+        - containerPort: 8443
+          name: proxy-ssl
+        - containerPort: 8001
+          name: admin
+        - containerPort: 8444
+          name: admin-ssl
+        env:
+        - name: KONG_DATABASE
+          value: "off"
+        - name: KONG_DECLARATIVE_CONFIG
+          value: "/opt/kong/kong.yml"
+        - name: KONG_PROXY_LISTEN
+          value: "0.0.0.0:8000, 0.0.0.0:8443 ssl"
+        - name: KONG_ADMIN_LISTEN
+          value: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+        - name: KONG_LOG_LEVEL
+          value: "notice"
+        - name: KONG_PREFIX
+          value: "/usr/local/kong"
+        - name: KONG_TRUSTED_IPS
+          value: "0.0.0.0/0"
+        volumeMounts:
+        - name: kong-config
+          mountPath: /etc/kong/kong.conf
+          subPath: kong.conf
+        - name: kong-declarative-config
+          mountPath: /opt/kong/kong.yml
+          subPath: kong.yml
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /status
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /status
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: kong-config
+        configMap:
+          name: kong-config
+      - name: kong-declarative-config
+        configMap:
+          name: kong-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: kong
+    app.kubernetes.io/component: gateway
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: proxy
+    nodePort: 30800
+  - port: 8443
+    targetPort: 8443
+    name: proxy-ssl
+    nodePort: 30843
+  - port: 8001
+    targetPort: 8001
+    name: admin
+    nodePort: 30801
+  - port: 8444
+    targetPort: 8444
+    name: admin-ssl
+    nodePort: 30844
+  selector:
+    app.kubernetes.io/name: kong
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-admin
+  namespace: a8-turbo
+  labels:
+    app.kubernetes.io/name: kong
+    app.kubernetes.io/component: gateway
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8001
+    targetPort: 8001
+    name: admin
+  - port: 8444
+    targetPort: 8444
+    name: admin-ssl
+  selector:
+    app.kubernetes.io/name: kong

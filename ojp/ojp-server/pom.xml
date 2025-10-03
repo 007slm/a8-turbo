@@ -4,6 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.openjdbcproxy</groupId>
     <artifactId>ojp-server</artifactId>
     <version>0.0.8-alpha</version>
 
@@ -29,7 +30,18 @@
         <dependency>
             <groupId>org.openjdbcproxy</groupId>
             <artifactId>ojp-grpc-commons</artifactId>
-            <version>0.0.8-alpha</version>
+        </dependency>
+
+        <!-- OJP Cache Module -->
+        <dependency>
+            <groupId>org.openjdbcproxy</groupId>
+            <artifactId>ojp-cache</artifactId>
+        </dependency>
+
+        <!-- OJP Cache Module -->
+        <dependency>
+            <groupId>org.openjdbcproxy</groupId>
+            <artifactId>ojp-server-common</artifactId>
         </dependency>
 
         <dependency>
@@ -73,11 +85,11 @@
         </dependency>
 
         <!-- StarRocks JDBC Driver -->
-<!--        <dependency>-->
-<!--            <groupId>com.starrocks</groupId>-->
-<!--            <artifactId>starrocks-jdbc</artifactId>-->
-<!--            <version>1.1.10</version>-->
-<!--        </dependency>-->
+        <!--        <dependency>-->
+        <!--            <groupId>com.starrocks</groupId>-->
+        <!--            <artifactId>starrocks-jdbc</artifactId>-->
+        <!--            <version>1.1.10</version>-->
+        <!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/com.zaxxer/HikariCP -->
         <dependency>
@@ -248,6 +260,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <version>${spring.boot.version}</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -280,12 +299,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- OJP Cache Module -->
-        <dependency>
-            <groupId>org.openjdbcproxy</groupId>
-            <artifactId>ojp-cache</artifactId>
-            <version>0.0.8-alpha</version>
-        </dependency>
+
 
         <!-- SpringDoc OpenAPI UI -->
         <dependency>
@@ -299,7 +313,7 @@
     <build>
         <plugins>
             <!-- Spring Boot Maven Plugin -->
-             <!-- Spring Boot Maven 插件 -->
+            <!-- Spring Boot Maven 插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -335,7 +349,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-           
+
         </plugins>
     </build>
 </project>

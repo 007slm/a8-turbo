@@ -2,18 +2,7 @@ package org.openjdbcproxy.grpc.client;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.CallResourceRequest;
-import com.openjdbcproxy.grpc.CallResourceResponse;
-import com.openjdbcproxy.grpc.ConnectionDetails;
-import com.openjdbcproxy.grpc.LobDataBlock;
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.OpResult;
-import com.openjdbcproxy.grpc.ReadLobRequest;
-import com.openjdbcproxy.grpc.ResultSetFetchRequest;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.SessionTerminationStatus;
-import com.openjdbcproxy.grpc.StatementRequest;
-import com.openjdbcproxy.grpc.StatementServiceGrpc;
+import com.openjdbcproxy.grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -463,6 +452,21 @@ public class StatementServiceGrpcClient implements StatementService {
             throw handle(e);
         } catch (Exception e) {
             throw new SQLException("Unable to rollback transaction: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public SessionInfo setReadOnly(SessionInfo session, boolean readOnly) throws SQLException {
+        try {
+            SetReadOnlyRequest request = SetReadOnlyRequest.newBuilder()
+                    .setSession(session)
+                    .setReadOnly(readOnly)
+                    .build();
+            return this.statemetServiceBlockingStub.setReadOnly(request);
+        } catch (StatusRuntimeException e) {
+            throw handle(e);
+        } catch (Exception e) {
+            throw new SQLException("Unable to set read only: " + e.getMessage(), e);
         }
     }
 

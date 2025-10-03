@@ -68,98 +68,21 @@ export const systemApi = {
 //   // 服务器管理功能已完全移除
 // }
 
-// 缓存管理相关接口
+// 缓存管理相关接口 - 严格按照后端实际提供的接口
 export const cacheApi = {
-  // 获取缓存概览统计
-  getOverviewStats: () => request('/cache/stats/overview'),
-  
-  // 获取缓存命中率统计
-  getCacheHitStats: (timeRange = '24h') => request(`/cache/stats/hit-rate?timeRange=${timeRange}`),
-  
-  // 获取查询性能统计
-  getQueryPerformanceStats: (timeRange = '24h') => request(`/cache/stats/query-performance?timeRange=${timeRange}`),
-  
-  // 获取热门表格统计
-  getTopTablesStats: () => request('/cache/stats/top-tables'),
-  
-  // 获取慢查询统计
-  getSlowQueriesStats: () => request('/cache/stats/slow-queries'),
-  
-  // 获取查询列表
-  getQueries: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/cache/queries/list?${queryString}`)
-  },
-  
-  // 获取特定查询的缓存规则
-  getQueryRules: (queryId) => request(`/cache/queries/${queryId}/rules`),
-  
-  // 为特定查询创建缓存规则
-  createQueryRule: (queryId, ruleData) => request(`/cache/queries/${queryId}/rules`, {
-    method: 'POST',
-    body: JSON.stringify(ruleData),
-  }),
-  
-  // 获取表格列表
-  getTables: (params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/cache/stats/tables/list?${queryString}`)
-  },
-  
-  // 获取特定表格的缓存规则
-  getTableRules: (tableName) => request(`/cache/tables/${tableName}/rules`),
-  
-  // 为特定表格创建缓存规则
-  createTableRule: (tableName, ruleData) => request(`/cache/tables/${tableName}/rules`, {
-    method: 'POST',
-    body: JSON.stringify(ruleData),
-  }),
-  
-  // 获取表格统计
-  getTableStats: (tableName) => request(`/cache/stats/tables/${tableName}/details`),
-  
-  // 获取缓存列表
-  getCaches: () => request('/caches'),
-  
-  // 获取缓存详情
-  getCache: (name) => request(`/caches/${name}`),
-  
-  // 清空缓存
-  clearCache: (name) => request(`/caches/${name}/clear`, {
-    method: 'POST',
-  }),
-  
-  // 获取缓存统计
-  getCacheStats: (name) => request(`/caches/${name}/stats`),
-  
-  // 获取缓存键
-  getCacheKeys: (name, params = {}) => {
-    const queryString = new URLSearchParams(params).toString()
-    return request(`/caches/${name}/keys?${queryString}`)
-  },
-  
-  // 获取缓存值
-  getCacheValue: (name, key) => request(`/caches/${name}/keys/${key}`),
-  
-  // 删除缓存键
-  deleteCacheKey: (name, key) => request(`/caches/${name}/keys/${key}`, {
-    method: 'DELETE',
-  }),
-  
-  // 设置缓存值
-  setCacheValue: (name, key, value) => request(`/caches/${name}/keys/${key}`, {
-    method: 'PUT',
-    body: JSON.stringify(value),
-  }),
+  // 获取查询列表 - 按数据库连接哈希分组
+  getQueries: () => request('/cache/queries/list'),
 }
 
-// 缓存规则管理相关接口
+// 性能监控相关接口 - 已移除，后端无对应接口
+// export const performanceApi = {
+//   // 所有性能监控接口已移除，因为后端不提供这些接口
+// }
+
+// 缓存规则管理相关接口 - 严格按照后端实际提供的接口
 export const ruleApi = {
   // 获取所有缓存规则
   getRules: () => request('/cache/rules/list'),
-  
-  // 根据ID获取缓存规则
-  getRule: (ruleId) => request(`/cache/rules/${ruleId}`),
   
   // 创建缓存规则
   createRule: (ruleData) => request('/cache/rules', {
@@ -168,35 +91,15 @@ export const ruleApi = {
   }),
   
   // 更新缓存规则
-  updateRule: (ruleId, ruleData) => request(`/cache/rules/${ruleId}`, {
-    method: 'PUT',
-    body: JSON.stringify(ruleData),
+  updateRule: (ruleId, ruleData) => request('/cache/rules', {
+    method: 'POST',
+    body: JSON.stringify({ ...ruleData, id: ruleId }),
   }),
   
   // 删除缓存规则
   deleteRule: (ruleId) => request(`/cache/rules/${ruleId}`, {
     method: 'DELETE',
   }),
-  
-  // 启用缓存规则
-  enableRule: (ruleId) => request(`/cache/rules/${ruleId}/enable`, {
-    method: 'POST',
-  }),
-  
-  // 禁用缓存规则
-  disableRule: (ruleId) => request(`/cache/rules/${ruleId}/disable`, {
-    method: 'POST',
-  }),
-  
-  // 验证规则
-  validateRules: () => request('/cache/rules/validate', {
-    method: 'POST',
-  }),
-  
-  // 提交规则
-  commitRules: () => request('/cache/rules/commit', {
-    method: 'POST',
-  })
 }
 
 // 确保响应数据是JSON对象的辅助函数
@@ -905,10 +808,7 @@ export const fetchSystemStatus = () => systemApi.getHealth()
 // 导出所有 API
 export default {
   system: systemApi,
-  // server: serverApi, // 已移除
   cache: cacheApi,
   rule: ruleApi,
   monitoring: monitoringApi,
-
-  // settings: settingsApi, // 已移除
 }

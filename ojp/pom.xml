@@ -14,17 +14,91 @@
 
     <modules>
         <module>ojp-grpc-commons</module>
+        <module>ojp-server-common</module>
         <module>ojp-jdbc-driver</module>
-        <module>ojp-server</module>
         <module>ojp-cache</module>
+        <module>ojp-server</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring.boot.version>3.3.3</spring.boot.version>
+        <commons.lang3.version>3.17.0</commons.lang3.version>
     </properties>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+        </pluginRepository>
+    </pluginRepositories>
 
     <dependencyManagement>
         <dependencies>
+            <!-- OJP Modules -->
+            <dependency>
+                <groupId>org.openjdbcproxy</groupId>
+                <artifactId>ojp-grpc-commons</artifactId>
+                <version>0.0.8-alpha</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjdbcproxy</groupId>
+                <artifactId>ojp-server-common</artifactId>
+                <version>0.0.8-alpha</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdbcproxy</groupId>
+                <artifactId>ojp-cache</artifactId>
+                <version>0.0.8-alpha</version>
+            </dependency>
+            
+            <!-- Spring Boot -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-web</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <version>${spring.boot.version}</version>
+            </dependency>
+            
+            <!-- Apache Commons -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-pool2</artifactId>
+                <version>2.12.0</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons.lang3.version}</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.17.2</version>
+            </dependency>
+            
             <!-- Fastjson for JSON processing -->
             <dependency>
                 <groupId>com.alibaba</groupId>
@@ -33,7 +107,5 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-
 
 </project>

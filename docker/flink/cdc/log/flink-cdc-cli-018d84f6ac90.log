@@ -1,2 +1,0 @@
-2025-07-26 16:57:43,413 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Real Path pipelineDefPath /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
-2025-07-26 16:57:43,414 INFO  org.apache.flink.cdc.cli.CliFrontend                         [] - Using global config in FLINK_CDC_HOME: /opt/flink-cdc/bin/../conf/flink-cdc.yaml

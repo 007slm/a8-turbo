@@ -1,19 +1,20 @@
-version: '3.8'
-
 services:
   kong:
     build:
       context: ./docker/kong
       dockerfile: Dockerfile
-    image: kong-gateway:latest
+    image: kong:latest
     container_name: kong
     ports:
       - "8000:8000"   # Proxy port
       - "8443:8443"   # Proxy SSL port
       - "8001:8001"   # Admin API
       - "8444:8444"   # Admin API SSL
+      - "8002:8002"   # Kong Manager
+      - "8445:8445"   # Kong Manager SSL
     networks:
       - a8
+      
     depends_on:
       - ojp-server
       - shopservice
@@ -22,30 +23,12 @@ services:
     volumes:
       - ./docker/kong/kong.yml:/opt/kong/kong.yml
       - ./docker/kong/kong.conf:/etc/kong/kong.conf
+    environment:
+      - KONG_ADMIN_GUI_URL=http://localhost:8002
+      - KONG_ADMIN_GUI_PORT=8002
     healthcheck:
       test: ["CMD", "kong", "health"]
       interval: 10s
       timeout: 10s
       retries: 10
     restart: on-failure
-
-  kong-dashboard:
-    image: pgbi/kong-dashboard:v3
-    container_name: kong-dashboard
-    ports:
-      - "8080:8080"
-    networks:
-      - a8
-    depends_on:
-      - kong
-    environment:
-      - KONG_ADMIN_URL=http://kong:8001
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-networks:
-  a8:
-    external: false

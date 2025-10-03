@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+
+console.log('111')
+
+
 import {
   Table,
   Button,
@@ -192,7 +196,7 @@ const UserManagement = () => {
   return (
     <div className="management-container">
       <div className="management-header">
-        <Title level={2}>用户管理</Title>
+        <Title level={3} style={{ margin: 0 }}>用户管理</Title>
         <div className="management-actions">
           <Button
             type="primary"
@@ -201,6 +205,7 @@ const UserManagement = () => {
               setEditingUser(null);
               setModalVisible(true);
             }}
+            size="small"
           >
             新增用户
           </Button>
@@ -208,27 +213,29 @@ const UserManagement = () => {
       </div>
       
       {/* 统计卡片 */}
-      <Row gutter={16} className="stats-cards" style={{ marginBottom: '24px' }}>
+      <Row gutter={12} className="stats-cards" style={{ marginBottom: '12px' }}>
         <Col span={8}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="总用户数"
               value={pagination.total}
               prefix={<UserOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={8}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="活跃用户"
               value={users.filter(u => u.status === 'active').length}
               prefix={<UserOutlined />}
+              size="small"
             />
           </Card>
         </Col>
         <Col span={8}>
-          <Card>
+          <Card size="small">
             <Statistic
               title="新注册用户"
               value={users.filter(u => {
@@ -237,33 +244,37 @@ const UserManagement = () => {
                 return today.toDateString() === userDate.toDateString();
               }).length}
               prefix={<UserOutlined />}
+              size="small"
             />
           </Card>
         </Col>
       </Row>
 
       {/* 搜索栏 */}
-      <div className="search-bar">
+      <div className="search-bar" style={{ marginBottom: '12px' }}>
         <Input.Search
           placeholder="搜索用户名或邮箱"
           allowClear
           onSearch={handleSearch}
+          size="small"
         />
       </div>
 
-      <Card>
+      <Card size="small">
 
         <Table
           columns={columns}
           dataSource={users}
           rowKey="id"
           loading={loading}
+          size="small"
           pagination={{
             ...pagination,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>
               `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+            size: 'small'
           }}
           onChange={handleTableChange}
         />
@@ -281,7 +292,7 @@ const UserManagement = () => {
           form={form}
           layout="vertical"
           onFinish={saveUser}
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: '12px' }}
         >
           <Form.Item
             name="username"
@@ -295,6 +306,7 @@ const UserManagement = () => {
             <Input
               prefix={<UserOutlined />}
               placeholder="请输入用户名"
+              size="small"
             />
           </Form.Item>
 
@@ -309,15 +321,16 @@ const UserManagement = () => {
             <Input
               prefix={<MailOutlined />}
               placeholder="请输入邮箱"
+              size="small"
             />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
             <Space>
-              <Button onClick={closeModal}>
+              <Button onClick={closeModal} size="small">
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" size="small">
                 {editingUser ? '更新' : '创建'}
               </Button>
             </Space>

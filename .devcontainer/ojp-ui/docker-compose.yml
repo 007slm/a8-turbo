@@ -1,0 +1,28 @@
+# 前端开发环境专用配置
+services:
+  # 前端开发服务配置 - 覆盖生产环境配置
+  ojp-ui:
+    build:
+      context: ../..
+      dockerfile: .devcontainer/ojp-ui/Dockerfile
+    container_name: ojp-ui-dev-container
+    volumes:
+      - ../../ojp/ojp-ui:/workspace:cached
+      - ../../docker/ojp/ui/vite.config.js:/workspace/vite.config.js
+    working_dir: /workspace
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://ojp-server:8010
+    # 开发环境中不需要自动启动服务，开发者将通过IDE启动服务
+    # command: ["bash", "-lc", "cd /workspace/ojp/ojp-ui && npm install && for i in {1..30}; do curl -s --connect-timeout 2 telnet://ojp-server:8010 >/dev/null 2>&1 && break; echo 'waiting ojp-server...'; sleep 1; done; npm run dev"]
+    # 使用以下命令保持容器运行，等待IDE连接
+    command: tail -f /dev/null
+    networks:
+      - a8
+
+networks:
+  a8:
+    external: true
+    name: a8-turbo_a8

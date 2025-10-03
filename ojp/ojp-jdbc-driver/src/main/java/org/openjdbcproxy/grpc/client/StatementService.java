@@ -54,5 +54,7 @@ public interface StatementService {
 
     SessionInfo rollbackTransaction(SessionInfo session) throws SQLException;
 
+    SessionInfo setReadOnly(SessionInfo session, boolean readOnly) throws SQLException;
+
     CallResourceResponse callResource(CallResourceRequest request) throws SQLException;
 }

@@ -24,95 +24,30 @@ const ServiceMonitoring = () => {
     );
   }
 
-  const handleOpenGrafana = () => {
-    const grafanaUrl = buildOpenGrafanaUrl(serviceKey);
-    window.open(grafanaUrl, '_blank');
-  };
-
-  const handleRefresh = () => {
-    window.location.reload();
-  };
 
   return (
-    <div>
-      {/* 服务信息头部 */}
-      <Card style={{ marginBottom: 8 }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: '24px' }}>{serviceConfig.icon}</span>
-              <div>
-                <h2 style={{ margin: 0 }}>{serviceConfig.name} 监控</h2>
-                <p style={{ margin: 0, color: '#666' }}>{serviceConfig.description}</p>
-              </div>
-            </div>
-          </Col>
-          <Col>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <Button 
-                icon={<ReloadOutlined />} 
-                onClick={handleRefresh}
-              >
-                刷新
-              </Button>
-              <Button 
-                icon={<ShareAltOutlined />} 
-                onClick={() => setShareModalVisible(true)}
-              >
-                分享
-              </Button>
-              <Button 
-                type="primary" 
-                icon={<LinkOutlined />} 
-                onClick={handleOpenGrafana}
-              >
-                打开 Grafana
-              </Button>
-            </div>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* 监控面板区域 */}
-      <div style={{ height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
-        <Card bodyStyle={{ padding: 0, height: '100%' }}>
-          <div style={{ padding: 0, height: '100%' }}>
-            <iframe
-              src={buildEmbedGrafanaUrl(serviceKey)}
-              className="grafana-iframe-fullsize"
-              title={`${serviceConfig.name} 监控面板`}
-            />
-          </div>
-        </Card>
-      </div>
-
-      {/* 提示信息 */}
-      <Alert
-        message="监控说明"
-        description={
-          <div>
-            <p>• 监控数据每30秒自动刷新</p>
-            <p>• 默认显示最近1小时的数据</p>
-            <p>• 点击"打开 Grafana"可以在新窗口中查看完整的监控面板</p>
-            <p>• 如果面板无法加载，请确保 Grafana 服务正在运行 (http://localhost:3000)</p>
-          </div>
-        }
-        type="info"
-        showIcon
-        style={{ marginTop: 16 }}
-      />
-
-      {/* 分享URL模态框 */}
-      <Modal
-        title="分享监控面板"
-        open={shareModalVisible}
-        onCancel={() => setShareModalVisible(false)}
-        footer={null}
-        width={600}
+      <section
+        style={{
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 24px 48px rgba(15, 23, 42, 0.12)',
+          background: '#0f172a0d'
+        }}
       >
-        <GrafanaShareUrl service={{ key: serviceKey, name: serviceConfig.name }} />
-      </Modal>
-    </div>
+        <iframe
+          title={`grafana-dashboard-${serviceKey}`}
+          src={buildEmbedGrafanaUrl(serviceKey)}
+          style={{
+            width: '100%',
+            minHeight: 'calc(100vh - 112px)',
+            border: 'none',
+            display: 'block',
+            backgroundColor: 'transparent'
+          }}
+          allowFullScreen
+          scrolling="auto"
+        />
+      </section>
   );
 };
 

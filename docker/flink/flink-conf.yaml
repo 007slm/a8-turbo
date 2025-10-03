@@ -1,0 +1,2 @@
+jobmanager.rpc.address: jobmanager
+jobmanager.rpc.port: 6123

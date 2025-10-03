@@ -62,3 +62,26 @@
 
 mklink /j e:\a8-turbo\ojp-server e:\ojp\ojp-server
 mklink /j e:\a8-turbo\ojp-grpc-commons e:\ojp\ojp-grpc-commons
+```
+
+```
+# 项目门户
+
+## 访问地址
+
+- 主门户: http://localhost:8000
+- Grafana: http://localhost:8000/grafana
+- Kong Admin API: http://localhost:8000/kong-admin
+- Kong Manager: http://localhost:8002
+- Prometheus: http://localhost:8000/prometheus
+- NATS Dashboard: http://localhost:8000/nats-dashboard
+- Redis Admin: http://localhost:8000/phpredisadmin
+
+## 服务端口
+
+- Kong Proxy: 8000
+- Kong SSL Proxy: 8443
+- Kong Admin API: 8001
+- Kong SSL Admin API: 8444
+- Kong Manager: 8002
+- Kong Manager SSL: 8445

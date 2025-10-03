@@ -148,12 +148,16 @@ public class Connection implements java.sql.Connection {
         log.debug("setReadOnly: {}", readOnly);
         if (!DbName.H2.equals(this.dbName)) {
             this.readOnly = readOnly;
+            this.session = this.statementService.setReadOnly(this.session, readOnly);
         }
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
         log.debug("isReadOnly called");
+        if (this.session != null) {
+            return this.session.getReadOnly();
+        }
         return this.readOnly;
     }
 

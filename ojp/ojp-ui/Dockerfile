@@ -1,6 +1,12 @@
 # 使用 Node.js 18 Alpine 镜像
 FROM node:18-alpine
 
+# 安装开发工具 (git, github-cli, bash)
+RUN apk add --no-cache bash git github-cli
+
+# 升级npm到与Node.js 18兼容的版本以支持lockfileVersion 3
+RUN npm install -g npm@10
+
 # 设置工作目录
 WORKDIR /app
 

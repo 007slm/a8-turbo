@@ -5,6 +5,16 @@ FROM eclipse-temurin:22-jre
 # 创建应用目录
 WORKDIR /app
 
+# 安装基本工具(curl, ping等)用于开发测试
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    telnet \
+    net-tools \
+    iputils-ping \
+    dnsutils \
+    && rm -rf /var/lib/apt/lists/*
+
 # 创建非root用户
 RUN groupadd -r shopservice && useradd -r -g shopservice shopservice
 

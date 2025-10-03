@@ -266,19 +266,20 @@ const Monitoring = () => {
 
   return (
     <div className="monitoring">
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2}>
+      <div style={{ marginBottom: 12 }}>
+        <Title level={3} style={{ margin: '12px 0' }}>
           <MonitorOutlined style={{ marginRight: 8 }} />
           系统监控
         </Title>
         <Text type="secondary">实时监控系统性能和资源使用情况</Text>
         
-        <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Button 
             type="primary" 
             icon={<ReloadOutlined />} 
             onClick={handleRefreshAll}
             loading={isLoading}
+            size="small"
           >
             刷新所有数据
           </Button>

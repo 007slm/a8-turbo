@@ -3,6 +3,7 @@ package org.openjdbcproxy.grpc.server.interceptor;
 import io.grpc.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openjdbcproxy.grpc.server.SessionManager;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
     private static final Context.Key<StatementServiceInterceptContext> grpcContextWithInterceptorContextKey =
             Context.key("statement.service.intercept.context");
 
+    private final SessionManager sessionManager;
 
     private final List<StatementServiceInterceptor> businessInterceptors;
     @SuppressWarnings("unchecked")
@@ -40,7 +42,8 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
         StatementServiceInterceptContext<ReqT, RespT> context = new StatementServiceInterceptContext<>(
                 methodName,
                 call,
-                headers
+                headers,
+                sessionManager
         );
 
         // 4. 包装响应处理器（处理后置逻辑）

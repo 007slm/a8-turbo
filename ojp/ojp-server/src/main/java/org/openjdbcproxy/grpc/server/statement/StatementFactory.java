@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server.statement;
 
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.constants.CommonConstants;
 import org.openjdbcproxy.grpc.server.SessionManager;

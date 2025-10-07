@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.*;
+import org.openjdbcproxy.grpc.*;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.grpc.stub.ServerCallStreamObserver;

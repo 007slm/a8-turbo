@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.utils;
 
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.StatementRequest;
 import org.openjdbcproxy.constants.CommonConstants;
 
 import java.sql.Statement;

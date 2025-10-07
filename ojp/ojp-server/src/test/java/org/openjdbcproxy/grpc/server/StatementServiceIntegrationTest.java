@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.*;
+import org.openjdbcproxy.grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class StatementServiceIntegrationTest {
 
     private ManagedChannel channel;
-    private com.openjdbcproxy.grpc.StatementServiceGrpc.StatementServiceBlockingStub blockingStub;
-    private com.openjdbcproxy.grpc.StatementServiceGrpc.StatementServiceStub asyncStub;
+    private org.openjdbcproxy.grpc.StatementServiceGrpc.StatementServiceBlockingStub blockingStub;
+    private org.openjdbcproxy.grpc.StatementServiceGrpc.StatementServiceStub asyncStub;
     
     private static final String TEST_DB_URL = "jdbc:mysql://localhost:3306/smartcache";
     private static final String TEST_USER = "root";
@@ -38,8 +38,8 @@ class StatementServiceIntegrationTest {
                 .usePlaintext()
                 .build();
                 
-        blockingStub = com.openjdbcproxy.grpc.StatementServiceGrpc.newBlockingStub(channel);
-        asyncStub = com.openjdbcproxy.grpc.StatementServiceGrpc.newStub(channel);
+        blockingStub = org.openjdbcproxy.grpc.StatementServiceGrpc.newBlockingStub(channel);
+        asyncStub = org.openjdbcproxy.grpc.StatementServiceGrpc.newStub(channel);
     }
 
     @AfterEach

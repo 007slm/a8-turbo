@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.statement;
 
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.grpc.dto.Parameter;
 import org.openjdbcproxy.grpc.server.SessionManager;

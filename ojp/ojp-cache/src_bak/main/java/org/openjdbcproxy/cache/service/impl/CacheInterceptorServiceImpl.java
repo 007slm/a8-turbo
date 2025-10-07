@@ -11,9 +11,9 @@ import org.openjdbcproxy.cache.service.CacheMetricsCollector;
 import org.openjdbcproxy.cache.service.CacheDataSourceProvider;
 import org.openjdbcproxy.cache.service.PerformanceMonitoringService;
 import org.openjdbcproxy.cache.util.ReadableKeyGenerator;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
-import com.openjdbcproxy.grpc.TransactionStatus;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.TransactionStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;

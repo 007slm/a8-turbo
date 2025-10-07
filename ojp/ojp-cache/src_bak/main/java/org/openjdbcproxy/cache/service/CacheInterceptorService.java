@@ -1,8 +1,8 @@
 package org.openjdbcproxy.cache.service;
 
 import org.openjdbcproxy.cache.entity.CacheDecision;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server.utils;
 
-import com.openjdbcproxy.grpc.CallType;
-import com.openjdbcproxy.grpc.TargetCall;
+import org.openjdbcproxy.grpc.CallType;
+import org.openjdbcproxy.grpc.TargetCall;
 
 import java.sql.SQLException;
 

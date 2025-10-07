@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.TransactionStatus;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.TransactionStatus;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +45,11 @@ public class SessionManagerImpl implements SessionManager {
         log.debug("Getting a connection for session {}", sessionInfo.getSessionUUID());
         Session session = this.sessionMap.get(sessionInfo.getSessionUUID());
         return session != null ? session.getConnection() : null;
+    }
+
+    @Override
+    public Session getSession(SessionInfo sessionInfo) {
+        return this.sessionMap.get(sessionInfo.getSessionUUID());
     }
 
     @Override

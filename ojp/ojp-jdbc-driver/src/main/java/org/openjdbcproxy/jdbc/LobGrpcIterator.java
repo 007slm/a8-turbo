@@ -1,7 +1,7 @@
 package org.openjdbcproxy.jdbc;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.openjdbcproxy.grpc.LobDataBlock;
+import org.openjdbcproxy.grpc.LobDataBlock;
 import lombok.Setter;
 
 import java.util.ArrayList;

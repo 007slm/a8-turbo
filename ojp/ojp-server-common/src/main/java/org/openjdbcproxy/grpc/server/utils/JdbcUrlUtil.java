@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.utils;
 
-import com.openjdbcproxy.grpc.ConnectionDetails;
+import org.openjdbcproxy.grpc.ConnectionDetails;
 
 public class JdbcUrlUtil {
 

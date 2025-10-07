@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.utils;
 
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
 
 /**
  * Utility class for creating SessionInfo builders.

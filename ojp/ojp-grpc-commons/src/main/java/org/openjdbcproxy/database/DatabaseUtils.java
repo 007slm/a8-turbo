@@ -1,6 +1,6 @@
 package org.openjdbcproxy.database;
 
-import com.openjdbcproxy.grpc.DbName;
+import org.openjdbcproxy.grpc.DbName;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 

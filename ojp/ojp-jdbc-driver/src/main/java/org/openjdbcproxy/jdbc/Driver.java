@@ -1,8 +1,8 @@
 package org.openjdbcproxy.jdbc;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.ConnectionDetails;
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.ConnectionDetails;
+import org.openjdbcproxy.grpc.SessionInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.database.DatabaseUtils;
 import org.openjdbcproxy.grpc.SerializationHandler;

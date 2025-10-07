@@ -1,6 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
+import io.grpc.Context;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,6 +33,10 @@ public class Session {
 
     @Getter
     private Connection connection;
+
+    @Getter
+    private Connection starrocksConnection;
+
     private Map<String, ResultSet> resultSetMap;
     private Map<String, Statement> statementMap;
     private Map<String, PreparedStatement> preparedStatementMap;
@@ -56,7 +61,7 @@ public class Session {
     }
 
     public SessionInfo getSessionInfo() {
-        log.debug("get session info -> " + this.connectionHash);
+        log.debug("get session info -> {}", this.connectionHash);
         return SessionInfo.newBuilder()
                 .setConnHash(this.connectionHash)
                 .setClientUUID(this.clientUUID)
@@ -122,6 +127,7 @@ public class Session {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getLob(String uuid) {
         this.notClosed();
         return (T) this.lobMap.get(uuid);
@@ -141,8 +147,11 @@ public class Session {
 
         //Closing the connection here means that the connection pool will close all resources associated with it and
         // reset the connection state before returning it to the pool.
+        Connection conn = (Connection) this.getAttr("cache.intercepted.conn");
+        if (conn != null){
+            conn.close();
+        }
         this.connection.close();
-
         //Clear session internal objects to free memory
         this.closed = true;
         this.lobMap = null;
@@ -157,3 +166,4 @@ public class Session {
         return this.lobMap.values();
     }
 }
+

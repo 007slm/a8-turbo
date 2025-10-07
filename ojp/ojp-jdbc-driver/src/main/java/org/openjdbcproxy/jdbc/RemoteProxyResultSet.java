@@ -1,13 +1,13 @@
 package org.openjdbcproxy.jdbc;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.CallResourceRequest;
-import com.openjdbcproxy.grpc.CallResourceResponse;
-import com.openjdbcproxy.grpc.CallType;
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.LobType;
-import com.openjdbcproxy.grpc.ResourceType;
-import com.openjdbcproxy.grpc.TargetCall;
+import org.openjdbcproxy.grpc.CallResourceRequest;
+import org.openjdbcproxy.grpc.CallResourceResponse;
+import org.openjdbcproxy.grpc.CallType;
+import org.openjdbcproxy.grpc.LobReference;
+import org.openjdbcproxy.grpc.LobType;
+import org.openjdbcproxy.grpc.ResourceType;
+import org.openjdbcproxy.grpc.TargetCall;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

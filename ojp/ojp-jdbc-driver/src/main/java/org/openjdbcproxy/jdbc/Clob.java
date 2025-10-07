@@ -1,7 +1,7 @@
 package org.openjdbcproxy.jdbc;
 
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.LobType;
+import org.openjdbcproxy.grpc.LobReference;
+import org.openjdbcproxy.grpc.LobType;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.grpc.client.StatementService;

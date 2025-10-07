@@ -1,7 +1,7 @@
 package org.openjdbcproxy.cache.interceptor;
 
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.cache.entity.SlowQuery;
 import org.openjdbcproxy.cache.repository.SlowQueryRepository;

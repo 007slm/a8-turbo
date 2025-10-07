@@ -1,8 +1,8 @@
 package org.openjdbcproxy.jdbc;
 
-import com.openjdbcproxy.grpc.LobDataBlock;
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.LobType;
+import org.openjdbcproxy.grpc.LobDataBlock;
+import org.openjdbcproxy.grpc.LobReference;
+import org.openjdbcproxy.grpc.LobType;
 
 import java.io.InputStream;
 import java.sql.SQLException;

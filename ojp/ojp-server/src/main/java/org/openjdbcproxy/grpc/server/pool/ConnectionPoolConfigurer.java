@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.pool;
 
-import com.openjdbcproxy.grpc.ConnectionDetails;
+import org.openjdbcproxy.grpc.ConnectionDetails;
 import com.zaxxer.hikari.HikariConfig;
 // Removed MicrometerMetricsTrackerFactory import - using direct setMetricRegistry instead
 import io.micrometer.core.instrument.MeterRegistry;

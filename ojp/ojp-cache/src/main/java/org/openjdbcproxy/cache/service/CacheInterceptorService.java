@@ -2,9 +2,9 @@ package org.openjdbcproxy.cache.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
-import com.openjdbcproxy.grpc.TransactionStatus;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.TransactionStatus;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;

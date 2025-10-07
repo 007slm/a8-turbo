@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.ConnectionDetails;
+import org.openjdbcproxy.grpc.ConnectionDetails;
 import com.zaxxer.hikari.HikariConfig;
 import org.junit.jupiter.api.Test;
 import org.openjdbcproxy.constants.CommonConstants;

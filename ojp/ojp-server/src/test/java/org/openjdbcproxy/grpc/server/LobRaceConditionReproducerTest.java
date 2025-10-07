@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server;
 
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import com.google.common.util.concurrent.SettableFuture;
-import com.openjdbcproxy.grpc.LobDataBlock;
+import org.openjdbcproxy.grpc.LobDataBlock;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

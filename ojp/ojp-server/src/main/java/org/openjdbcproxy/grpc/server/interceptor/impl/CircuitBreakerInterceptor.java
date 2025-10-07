@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server.interceptor.impl;
 
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.StatementRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

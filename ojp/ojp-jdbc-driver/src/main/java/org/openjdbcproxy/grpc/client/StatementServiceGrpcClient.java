@@ -2,7 +2,7 @@ package org.openjdbcproxy.grpc.client;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.*;
+import org.openjdbcproxy.grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -427,6 +427,7 @@ public class StatementServiceGrpcClient implements StatementService {
         try {
             return this.statemetServiceBlockingStub.startTransaction(session);
         } catch (StatusRuntimeException e) {
+            log.error("Error while starting a new transaction: " + e.getMessage(), e);
             throw handle(e);
         } catch (Exception e) {
             throw new SQLException("Unable to start a new transaction: " + e.getMessage(), e);

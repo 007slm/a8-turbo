@@ -3,9 +3,10 @@ package org.openjdbcproxy.grpc.server.interceptor;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.database.DatabaseUtils;
+import org.openjdbcproxy.grpc.server.Session;
 import org.openjdbcproxy.grpc.server.SessionManager;
 
-import com.openjdbcproxy.grpc.*;
+import org.openjdbcproxy.grpc.*;
 import io.grpc.Metadata;
 import io.grpc.ServerCall;
 import lombok.Getter;
@@ -36,7 +37,9 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     @Setter
     private Throwable error;
 
-
+    @Getter
+    @Setter
+    SessionManager sessionManager;
 
     // 当前请求关联的信息
     @Getter
@@ -46,6 +49,13 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     @Setter
     @Getter
     private SessionInfo currentSessionInfo;
+
+    public Session getCurrentSession() {
+        if (sessionManager == null || currentSessionInfo == null) {
+            return null;
+        }
+        return sessionManager.getSession(currentSessionInfo);
+    }
 
     @Setter
     private Connection currentConnection;
@@ -61,10 +71,11 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     // 自定义属性存储（用于拦截点间传递数据）
     private final Map<String, Object> attributes = new HashMap<>();
 
-    public StatementServiceInterceptContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers) {
+    public StatementServiceInterceptContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers,SessionManager sessionManager) {
         this.methodName = methodName;
         this.serverCall = serverCall;
         this.headers = headers;
+        this.sessionManager = sessionManager;
 
     }
 

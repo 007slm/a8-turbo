@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.client;
 
-import com.openjdbcproxy.grpc.SqlErrorResponse;
-import com.openjdbcproxy.grpc.SqlErrorType;
+import org.openjdbcproxy.grpc.SqlErrorResponse;
+import org.openjdbcproxy.grpc.SqlErrorType;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;

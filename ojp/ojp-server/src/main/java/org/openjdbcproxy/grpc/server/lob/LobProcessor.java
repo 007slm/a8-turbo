@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server.lob;
 
-import com.openjdbcproxy.grpc.DbName;
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.DbName;
+import org.openjdbcproxy.grpc.SessionInfo;
 import lombok.SneakyThrows;
 import org.openjdbcproxy.grpc.server.SessionManager;
 

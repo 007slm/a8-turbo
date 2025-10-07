@@ -1,7 +1,7 @@
 package org.openjdbcproxy.grpc.server;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.*;
+import org.openjdbcproxy.grpc.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;

@@ -3,7 +3,7 @@ package org.openjdbcproxy.cache.service;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

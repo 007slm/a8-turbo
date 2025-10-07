@@ -1,10 +1,12 @@
 package org.openjdbcproxy.cache.interceptor;
 
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.openjdbcproxy.cache.service.CacheInterceptorService;
+import org.openjdbcproxy.grpc.server.Session;
+import org.openjdbcproxy.grpc.server.interceptor.StatementServiceGrpcInterceptor;
 import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptContext;
 import org.openjdbcproxy.grpc.server.interceptor.StatementServiceInterceptor;
 import org.openjdbcproxy.grpc.server.utils.JdbcUrlUtil;
@@ -51,7 +53,7 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
     @Override
     public void postProcessExecuteQuery(StatementServiceInterceptContext<?, ?> context) {
         StatementRequest request = context.requestToStatementRequest();
-        
+        SessionInfo sessionInfo = request.getSession();
         // 计算执行时间
         long startTime = (long)context.getAttribute("cache.startTime");
         long executionTime = System.currentTimeMillis() - startTime;
@@ -60,18 +62,24 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
         
         // 使用缓存拦截器服务进行后处理
         cacheInterceptorService.postProcessQuery(request, executionTime, success);
-        
-        // 若使用了拦截连接，查询后关闭并复位
-        boolean intercepted = (boolean)context.getAttribute("cache.intercepted");
-        if (intercepted) {
-            Connection conn = context.getCurrentInterceptedConnection();
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception ignore) {}
-            }
-            context.setCurrentInterceptedConnection(null);
+
+        Session session = context.getSessionManager().getSession(sessionInfo);
+        Connection currentInterceptedConnection = context.getCurrentInterceptedConnection();
+        if(currentInterceptedConnection != null){
+            session.addAttr("cache.intercepted.conn",currentInterceptedConnection);
         }
+
+//        若使用了拦截连接，查询后关闭并复位
+//        boolean intercepted = (boolean)context.getAttribute("cache.intercepted");
+//        if (intercepted) {
+//            Connection conn = context.getCurrentInterceptedConnection();
+//            if (conn != null) {
+//                try {
+//                    conn.close();
+//                } catch (Exception ignore) {}
+//            }
+//            context.setCurrentInterceptedConnection(null);
+//        }
     }
 
 }

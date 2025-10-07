@@ -1,8 +1,8 @@
 package org.openjdbcproxy.cache.service;
 
 import lombok.extern.slf4j.Slf4j;
-import com.openjdbcproxy.grpc.SessionInfo;
-import com.openjdbcproxy.grpc.StatementRequest;
+import org.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.StatementRequest;
 import org.openjdbcproxy.cache.util.ReadableKeyGenerator;
 import org.springframework.stereotype.Component;
 

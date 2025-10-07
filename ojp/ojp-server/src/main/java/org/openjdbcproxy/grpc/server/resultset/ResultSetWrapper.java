@@ -1,9 +1,9 @@
 package org.openjdbcproxy.grpc.server.resultset;
 
 import com.google.protobuf.ByteString;
-import com.openjdbcproxy.grpc.OpResult;
-import com.openjdbcproxy.grpc.ResultType;
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.OpResult;
+import org.openjdbcproxy.grpc.ResultType;
+import org.openjdbcproxy.grpc.SessionInfo;
 import org.openjdbcproxy.grpc.dto.OpQueryResult;
 
 import java.util.List;

@@ -1,8 +1,8 @@
 package org.openjdbcproxy.jdbc;
 
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.LobType;
-import com.openjdbcproxy.grpc.OpResult;
+import org.openjdbcproxy.grpc.LobReference;
+import org.openjdbcproxy.grpc.LobType;
+import org.openjdbcproxy.grpc.OpResult;
 import io.grpc.StatusRuntimeException;
 import lombok.Getter;
 import lombok.SneakyThrows;

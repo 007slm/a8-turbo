@@ -1,12 +1,12 @@
 package org.openjdbcproxy.grpc.client;
 
-import com.openjdbcproxy.grpc.CallResourceRequest;
-import com.openjdbcproxy.grpc.CallResourceResponse;
-import com.openjdbcproxy.grpc.ConnectionDetails;
-import com.openjdbcproxy.grpc.LobDataBlock;
-import com.openjdbcproxy.grpc.LobReference;
-import com.openjdbcproxy.grpc.OpResult;
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.CallResourceRequest;
+import org.openjdbcproxy.grpc.CallResourceResponse;
+import org.openjdbcproxy.grpc.ConnectionDetails;
+import org.openjdbcproxy.grpc.LobDataBlock;
+import org.openjdbcproxy.grpc.LobReference;
+import org.openjdbcproxy.grpc.OpResult;
+import org.openjdbcproxy.grpc.SessionInfo;
 import org.openjdbcproxy.grpc.dto.Parameter;
 import org.openjdbcproxy.jdbc.Connection;
 

@@ -1,6 +1,6 @@
 package org.openjdbcproxy.grpc.server;
 
-import com.openjdbcproxy.grpc.SessionInfo;
+import org.openjdbcproxy.grpc.SessionInfo;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -17,6 +17,7 @@ public interface SessionManager {
     void registerClientUUID(String connectionHash, String clientUUID);
     SessionInfo createSession(String clientUUID, Connection connection,boolean readOnly);
     Connection getConnection(SessionInfo sessionInfo);
+    Session getSession(SessionInfo sessionInfo);
     String registerResultSet(SessionInfo sessionInfo, ResultSet rs);
     ResultSet getResultSet(SessionInfo sessionInfo, String uuid);
     String registerStatement(SessionInfo sessionInfo, Statement stmt);

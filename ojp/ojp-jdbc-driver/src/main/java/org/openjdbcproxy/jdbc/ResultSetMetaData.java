@@ -217,7 +217,16 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData {
                                 .build())
                         .build()
         );
-        CallResourceResponse response = this.statementService.callResource(reqBuilder.build());
+        CallResourceResponse response;
+        try {
+            response = this.statementService.callResource(reqBuilder.build());
+        } catch (SQLException e) {
+            log.error("Failed to retrieve metadata attribute '{}' for column {}: {}", attrName, column, e.getMessage(), e);
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("Failed to retrieve metadata attribute '{}' for column {} due to unexpected runtime error", attrName, column, e);
+            throw new SQLException("Failed to retrieve metadata attribute " + attrName + " for column " + column, e);
+        }
         if (this.resultSet !=null) {
             this.resultSet.getConnection().setSession(response.getSession());
         } else if (this.ps != null) {

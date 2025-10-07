@@ -198,3 +198,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/docker/flink/cdc/log/*

@@ -819,10 +819,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         SessionInfo sessionInfo = request.getSession();
         log.info("Setting read only to {}", request.getReadOnly());
         try {
-            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
-            
-            Connection conn = statementServiceInterceptContext.getCurrentConnection();
-            //conn.setReadOnly(request.getReadOnly());
+            String sessionUUID = sessionInfo.getSessionUUID();
+            if(StringUtils.isNotBlank(sessionUUID)){
+                StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
+
+                Connection conn = statementServiceInterceptContext.getCurrentConnection();
+                //conn.setReadOnly(request.getReadOnly());
+            }
 
             SessionInfo.Builder sessionInfoBuilder = SessionInfoUtils.newBuilderFrom(sessionInfo);
             sessionInfoBuilder.setReadOnly(request.getReadOnly());

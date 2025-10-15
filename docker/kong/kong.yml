@@ -74,6 +74,15 @@ services:
     strip_path: true
     preserve_host: true
 
+# - name: seatunnel-master
+#   url: http://seatunnel-master:8080
+#   routes:
+#   - name: seatunnel-master
+#     paths:
+#     - /seta
+#     strip_path: false
+#     preserve_host: true
+
 # Kong Admin API代理服务
 - name: kong-admin
   url: http://kong:8001

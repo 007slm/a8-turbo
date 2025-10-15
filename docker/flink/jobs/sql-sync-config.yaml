@@ -1,0 +1,35 @@
+# SQL to Java 转换后的默认配置
+source:
+  hostname: mysql
+  port: 3306
+  username: root
+  password: a8
+  database: shopdb
+  # tablePattern 留空表示同步整个库。如需限制表，请填写逗号分隔的完整表名，例如 "shopdb.users,shopdb.orders"
+  tablePattern: ""
+  serverId: "5401"
+  serverTimeZone: Asia/Shanghai
+  startupMode: initial
+  includeSchemaChanges: false
+
+sink:
+  jdbcUrl: jdbc:mysql://starrocks:9030
+  loadUrl: starrocks:8030
+  username: root
+  password: ""
+  database: shopdb
+  # sync_all_tables 是默认用于承载所有 CDC 事件的目标表，可按需替换成实际建好的 StarRocks 表名
+  table: sync_all_tables
+  bufferFlushMaxBytes: 1048576
+  bufferFlushIntervalMs: 5000
+  bufferFlushMaxRows: 1000
+
+pipeline:
+  name: mysql-to-starrocks-sql-job
+  parallelism: 1
+
+checkpoint:
+  interval: 60000
+  timeout: 600000
+  minPause: 10000
+  tolerableFailureNum: 3

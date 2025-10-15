@@ -122,8 +122,8 @@ services:
     # 移除对外暴露的端口，通过Kong网关访问（如需要）
     ports:
       - "9030:9030"
-    #   - "8030:8030"
-    #   - "8040:8040"
+      # - "8030:8030"
+      # - "8040:8040"
     #   - "8080:8080"
     tty: true
     privileged: true
@@ -135,55 +135,55 @@ services:
   ##
   ##  bash /opt/flink-cdc/bin/flink-cdc.sh /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml --jar /opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar
   ##
-  jobmanager:
-    image: flink:1.20.1-scala_2.12
-    hostname: jobmanager
-    container_name: jobmanager
-    # 保留Flink Web UI端口用于内部访问
-    #    ports:
-    #      - '8081:8081'
-    # 移除监控端口，通过Kong网关访问
-    # ports:
-    #   - '8081:8081'
-    #   - '9249:9249'
-    command: jobmanager
-    networks:
-      - a8
-      
-    volumes:
-      - ./docker/flink/cdc:/opt/flink-cdc
-      - ./docker/flink/jobs:/opt/flink_jobs
-      - ./docker/flink/lib:/opt/flink/lib/ext
-
-    environment:
-      FLINK_PROPERTIES: |-
-        jobmanager.rpc.address: jobmanager
-        execution.checkpointing.interval: 3000
-        metrics.reporters: prom
-        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
-        metrics.reporter.prom.port: 9249
-        
-  taskmanager:
-    image: flink:1.20.1-scala_2.12
-    hostname: taskmanager
-    container_name: taskmanager
-    command: taskmanager
-    # 移除监控端口，通过Kong网关访问
-    # ports:
-    #   - '9250:9250'
-    networks:
-      - a8
-      
-    volumes:
-      - ./docker/flink/lib:/opt/flink/lib/ext
-    environment:
-      FLINK_PROPERTIES: |-
-        jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 4
-        execution.checkpointing.interval: 3000
-        metrics.reporters: prom
-        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
-        metrics.reporter.prom.port: 9250
+#  jobmanager:
+#    image: flink:1.20.1-scala_2.12
+#    hostname: jobmanager
+#    container_name: jobmanager
+#    # 保留Flink Web UI端口用于内部访问
+#    #    ports:
+#    #      - '8081:8081'
+#    # 移除监控端口，通过Kong网关访问
+#    # ports:
+#    #   - '8081:8081'
+#    #   - '9249:9249'
+#    command: jobmanager
+#    networks:
+#      - a8
+#
+#    volumes:
+#      - ./docker/flink/cdc:/opt/flink-cdc
+#      - ./docker/flink/jobs:/opt/flink_jobs
+#      - ./docker/flink/lib:/opt/flink/lib/ext
+#
+#    environment:
+#      FLINK_PROPERTIES: |-
+#        jobmanager.rpc.address: jobmanager
+#        execution.checkpointing.interval: 3000
+#        metrics.reporters: prom
+#        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+#        metrics.reporter.prom.port: 9249
+#
+#  taskmanager:
+#    image: flink:1.20.1-scala_2.12
+#    hostname: taskmanager
+#    container_name: taskmanager
+#    command: taskmanager
+#    # 移除监控端口，通过Kong网关访问
+#    # ports:
+#    #   - '9250:9250'
+#    networks:
+#      - a8
+#
+#    volumes:
+#      - ./docker/flink/lib:/opt/flink/lib/ext
+#    environment:
+#      FLINK_PROPERTIES: |-
+#        jobmanager.rpc.address: jobmanager
+#        taskmanager.numberOfTaskSlots: 4
+#        execution.checkpointing.interval: 3000
+#        metrics.reporters: prom
+#        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+#        metrics.reporter.prom.port: 9250
 
 #  flink-cdc-init:
 #    image: flink:1.20.1-scala_2.12

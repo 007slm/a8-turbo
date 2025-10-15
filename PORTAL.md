@@ -33,6 +33,10 @@
 | StarRocks | 8030 | [http://localhost:8030](http://localhost:8030) | StarRocks HTTP服务器端口 |
 | StarRocks | 8040 | [http://localhost:8040](http://localhost:8040) | StarRocks Broker端口 |
 | StarRocks | 8080 | [http://localhost:8080](http://localhost:8080) | StarRocks FE HTTP端口 |
+| SeaTunnel Zeta Master (REST) | 8080 | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) | SeaTunnel Zeta 集群管理 REST 接口，可查询/管理作业 |
+| SeaTunnel Zeta Master (RPC) | 5801 | `seatunnel-master:5801` | SeaTunnel Zeta 集群 RPC 端口，供 worker 与 submitter 通信 |
+
+SeaTunnel 作业定义位于 `docker/seatunnel/jobs/`，默认启动脚本会通过 `seatunnel-submit` 容器以异步模式提交 `mysql_to_starrocks.conf` 作业，连接信息由 `docker/seatunnel/config/seatunnel.yaml` 提供。
 
 ### OJP服务
 
@@ -57,6 +61,7 @@
 2. [docker-compose-cdc-sync.yml](file:///E:/a8-turbo/docker-compose-cdc-sync.yml) - CDC数据同步相关服务
 3. [docker-compose-smart-cache.yml](file:///E:/a8-turbo/docker-compose-smart-cache.yml) - Redis Smart Cache演示环境
 4. [docker-compose-ojp.yml](file:///E:/a8-turbo/docker-compose-ojp.yml) - OJP服务配置文件
+5. [docker-compose-cdc-sync-zeta.yml](file:///E:/a8-turbo/docker-compose-cdc-sync-zeta.yml) - SeaTunnel Zeta 集群（master/worker/submitter）与 CDC 作业编排
 
 ## 常用操作命令
 

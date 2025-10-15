@@ -189,9 +189,13 @@
                                       tofile="${basedir}/../../docker/flink/cdc/lib/${project.artifactId}-${project.version}.jar"
                                       overwrite="true"/>
                                 <echo message="Copying sync-config.yaml to Docker Flink jobs directory"/>
-                                <copy file="${basedir}/sync-config.yaml" 
-                                      tofile="${basedir}/../../docker/flink/jobs/sync-config.yaml"
-                                      overwrite="true"/>
+<!--                                <copy file="${basedir}/sync-config.yaml" -->
+<!--                                      tofile="${basedir}/../../docker/flink/jobs/sync-config.yaml"-->
+<!--                                      overwrite="true"/>-->
+<!--                                <echo message="Copying sql-sync-config.yaml to Docker Flink jobs directory"/>-->
+<!--                                <copy file="${basedir}/sql-sync-config.yaml"-->
+<!--                                      tofile="${basedir}/../../docker/flink/jobs/sql-sync-config.yaml"-->
+<!--                                      overwrite="true"/>-->
                             </target>
                         </configuration>
                     </execution>

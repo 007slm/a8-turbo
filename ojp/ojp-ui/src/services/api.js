@@ -72,6 +72,13 @@ export const systemApi = {
 export const cacheApi = {
   // 获取查询列表 - 按数据库连接哈希分组
   getQueries: () => request('/cache/queries/list'),
+  // 获取表名列表 - 可按连接过滤
+  getTableNames: (connHash) => {
+    if (connHash) {
+      return request(`/cache/queries/tables/${encodeURIComponent(connHash)}`)
+    }
+    return request('/cache/queries/tables')
+  },
 }
 
 // 性能监控相关接口 - 已移除，后端无对应接口

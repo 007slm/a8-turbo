@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true, // 允许外部访问
+    host: '0.0.0.0',
     strictPort: true,
     headers: {
       'X-Frame-Options': 'SAMEORIGIN'

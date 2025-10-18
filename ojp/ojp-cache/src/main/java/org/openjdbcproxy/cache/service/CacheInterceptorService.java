@@ -23,7 +23,7 @@ public class CacheInterceptorService {
     private final CacheDataSourceProvider dataSourceProvider;
     private final PerformanceMonitoringService performanceMonitoringService;
 
-    public Connection preProcessQuery(StatementRequest request, SessionInfo sessionInfo) throws SQLException {
+    public Connection preProcessQuery(StatementRequest request, SessionInfo sessionInfo, Connection existingCacheConnection) throws SQLException {
         long startTime = System.currentTimeMillis();
         String connHash = sessionInfo.getConnHash();
 
@@ -38,7 +38,9 @@ public class CacheInterceptorService {
 
         if (useCache) {
             performanceMonitoringService.recordCacheHit(connHash, request.getSql(), startTime);
-            Connection cacheConnection = getCacheDataSourceConnection(sessionInfo);
+            Connection cacheConnection = existingCacheConnection != null
+                    ? existingCacheConnection
+                    : getCacheDataSourceConnection(sessionInfo);
             return cacheConnection;
         }else{
             performanceMonitoringService.recordCacheMiss(connHash, request.getSql(), startTime);

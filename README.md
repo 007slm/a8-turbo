@@ -1,23 +1,25 @@
-# 启动开发环境
-dev:
-    docker-compose --profile dev up -d
-
-# 启动生产环境
-prod:
-    docker-compose --profile prod up -d
+切换到 wsl开发环境 为了更好的使用codex 更好的使用mcp 同时利用idea的 远程开发 保持windows环境的干
+净   
 
 
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-wsl -- ip -4 addr show eth0 | Select-String -Pattern 'inet\s+(\d+\.\d+\.\d+\.\d+)' | ForEach-Object { $_.Matches.Groups[1].Value }
 
-172.29.139.111
+sdk install java 22.0.2-zulu
 
-"Subnet" : "172.18.0.0/16",
+sdk install mvnd
 
-route add 172.18.0.0 mask 255.255.255.0 172.29.139.111
-# 先删除旧的错误路由（如果存在）
-route delete 172.18.0.0
+# zsh 可能缓存了 PATH，刷新一下缓存
+rehash  # 或者：hash -r
 
-# 添加正确的路由（子网掩码对应 /16 网段）
-# 172.29.139.111 是你的 WSL2 IP
-route add 172.18.0.0 mask 255.255.0.0 172.29.139.111
+mvnd --version
+
+
+mvnd package install -DskipTests -Dmaven.javadoc.skip=true
+
+lingma 登录方案 
+JetBrains IDEs：打开 IDE 的设置页面，找到通义灵码设置，在未登录状态即可看到 AK/SK 登录入口，输入 AccessKey ID、AccessKey Secret 后，选择身份（未加入任何企业无需选择），然后单击登录即可；
+
+LTAI5tGUqE79BLKAsvG7QPe5
+lb9rrSzvgwAp5zZmOngvFvNseT4gff

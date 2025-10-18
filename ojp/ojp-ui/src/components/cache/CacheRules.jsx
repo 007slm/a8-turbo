@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Card,
   Table,
@@ -14,7 +14,6 @@ import {
   Tooltip,
   Popconfirm,
   Alert,
-  Spin,
   Drawer,
   Descriptions,
   Select
@@ -34,6 +33,16 @@ import { ruleApi, cacheApi } from '../../services/api'
 const { Title, Text } = Typography
 const { TextArea } = Input
 
+const RULE_TYPE_OPTIONS = [
+  { label: '按查询ID匹配', value: 'QUERY_IDS' },
+  { label: '表名任意匹配', value: 'TABLES_ANY' },
+]
+
+const RULE_TYPE_HELP = {
+  QUERY_IDS: '根据慢查询ID精确匹配。下方勾选需要命中的慢查询ID即可生成规则。',
+  TABLES_ANY: '当SQL涉及的表包含列表中的任意一个表名时命中规则，可通过输入表名并回车添加。',
+}
+
 const CacheRules = () => {
   const [showRuleModal, setShowRuleModal] = useState(false)
   const [editingRule, setEditingRule] = useState(null)
@@ -42,6 +51,20 @@ const CacheRules = () => {
   const [queryDetail, setQueryDetail] = useState(null) // 用于存储查询详情
   const [showQueryDetailDrawer, setShowQueryDetailDrawer] = useState(false) // 控制查询详情抽屉
   const queryClient = useQueryClient()
+  const ruleType = Form.useWatch('ruleType', ruleForm)
+  const selectedConnHash = Form.useWatch('connHash', ruleForm)
+  const effectiveConnHash = selectedConnHash || ruleForm.getFieldValue('connHash')
+  const currentRuleType = ruleType || ruleForm.getFieldValue('ruleType') || 'QUERY_IDS'
+  const ruleTypeHelpMessage = RULE_TYPE_HELP[currentRuleType] || RULE_TYPE_HELP.QUERY_IDS
+
+  const handleRuleTypeChange = (value) => {
+    if (value !== 'QUERY_IDS') {
+      setSelectedQueries([])
+    }
+    if (value !== 'TABLES_ANY') {
+      ruleForm.setFieldsValue({ tablesAny: [] })
+    }
+  }
 
   // 获取缓存规则列表
   const { data: rulesData, isLoading: rulesLoading, refetch: refetchRules } = useQuery(
@@ -58,6 +81,16 @@ const CacheRules = () => {
     'cacheQueries',
     cacheApi.getQueries,
     {
+      refetchOnWindowFocus: false,
+      staleTime: 30000
+    }
+  )
+
+  const { data: tableNamesData, isLoading: tableNamesLoading } = useQuery(
+    ['cacheTables', effectiveConnHash],
+    () => cacheApi.getTableNames(effectiveConnHash),
+    {
+      enabled: Boolean(effectiveConnHash),
       refetchOnWindowFocus: false,
       staleTime: 30000
     }
@@ -150,22 +183,82 @@ const CacheRules = () => {
   const rules = processRulesData(rulesData)
   const queries = processGroupedData(queriesData)
   const connHashOptions = getConnHashOptions()
+  const tableNameOptions = useMemo(() => {
+    const tablesFromApi = Array.isArray(tableNamesData) ? tableNamesData : []
+    const tables =
+      tablesFromApi.length > 0
+        ? tablesFromApi
+        : (() => {
+            if (!Array.isArray(queries)) {
+              return []
+            }
+            const unique = new Set()
+            queries.forEach(query => {
+              if (!query) return
+              if (effectiveConnHash && query.connHash !== effectiveConnHash) {
+                return
+              }
+              const names = (query.tableNames || '')
+                .split(',')
+                .map(name => name.trim())
+                .filter(Boolean)
+              names.forEach(name => unique.add(name))
+            })
+            return Array.from(unique)
+          })()
+
+    return tables.map(table => ({
+      label: table,
+      value: table,
+    }))
+  }, [tableNamesData, queries, effectiveConnHash])
+
+  useEffect(() => {
+    if (!editingRule) {
+      return
+    }
+    if (currentRuleType !== 'QUERY_IDS') {
+      return
+    }
+    const existingQueryIds = Array.isArray(editingRule.queryIds) && editingRule.queryIds.length > 0
+      ? editingRule.queryIds
+      : (Array.isArray(editingRule.slowQueryIds) ? editingRule.slowQueryIds : [])
+    if (existingQueryIds.length === 0) {
+      return
+    }
+    if (!Array.isArray(queries) || queries.length === 0) {
+      return
+    }
+    const matched = queries.filter(q => existingQueryIds.includes(q.id))
+    const matchedIds = matched.map(item => item.id).sort().join(',')
+    const currentIds = selectedQueries.map(item => item.id).sort().join(',')
+    if (matchedIds && matchedIds !== currentIds) {
+      setSelectedQueries(matched)
+    }
+  }, [editingRule, queries, currentRuleType, selectedQueries])
 
   // 显示创建/编辑模态框
   const showModal = (rule = null) => {
     setEditingRule(rule)
     if (rule) {
+      const existingQueryIds = Array.isArray(rule.queryIds)
+        ? rule.queryIds
+        : (Array.isArray(rule.slowQueryIds) ? rule.slowQueryIds : [])
+      const inferredRuleType = rule.ruleType
+        || (Array.isArray(rule.tablesAny) && rule.tablesAny.length > 0 ? 'TABLES_ANY'
+          : (existingQueryIds.length > 0 ? 'QUERY_IDS' : 'QUERY_IDS'))
       // 编辑模式：设置表单值
       ruleForm.setFieldsValue({
         name: rule.name,
         description: rule.description || '',
-        slowQueryIds: rule.slowQueryIds ? rule.slowQueryIds.join(',') : '',
         enabled: rule.enabled,
-        connHash: rule.connHash
+        connHash: rule.connHash,
+        ruleType: inferredRuleType,
+        tablesAny: Array.isArray(rule.tablesAny) ? rule.tablesAny : [],
       })
       // 设置选中的查询
-      if (rule.slowQueryIds) {
-        const selected = queries.filter(q => rule.slowQueryIds.includes(q.id))
+      if (inferredRuleType === 'QUERY_IDS' && existingQueryIds.length > 0) {
+        const selected = queries.filter(q => existingQueryIds.includes(q.id))
         setSelectedQueries(selected)
       } else {
         setSelectedQueries([])
@@ -175,7 +268,9 @@ const CacheRules = () => {
       ruleForm.resetFields()
       ruleForm.setFieldsValue({
         enabled: true,
-        connHash: connHashOptions.length > 0 ? connHashOptions[0].value : ''
+        connHash: connHashOptions.length > 0 ? connHashOptions[0].value : '',
+        ruleType: 'QUERY_IDS',
+        tablesAny: [],
       })
       setSelectedQueries([])
     }
@@ -195,13 +290,55 @@ const CacheRules = () => {
     try {
       const values = await ruleForm.validateFields()
 
-      // 构建规则数据，严格按照后端API文档的数据结构
+      const {
+        name,
+        description,
+        enabled,
+        connHash,
+        ruleType: currentRuleType,
+        tablesAny = [],
+      } = values
+
+      const normalizeStringArray = (list) => {
+        if (!Array.isArray(list)) return []
+        return list
+          .map(item => (typeof item === 'string' ? item.trim() : ''))
+          .filter(item => item.length > 0)
+      }
+
+      const selectedIds = selectedQueries.map(q => q.id)
+
       const ruleData = {
-        name: values.name,
-        description: values.description || '',
-        slowQueryIds: selectedQueries.map(q => q.id),
-        enabled: values.enabled,
-        connHash: values.connHash
+        name,
+        description: description || '',
+        enabled,
+        connHash,
+        ruleType: currentRuleType,
+        tablesAll: [],
+        tablesAny: [],
+        queryIds: [],
+        slowQueryIds: [],
+      }
+
+      if (currentRuleType === 'QUERY_IDS' && selectedIds.length === 0) {
+        message.warning('请选择至少一个慢查询ID来创建规则')
+        return
+      }
+
+      switch (currentRuleType) {
+        case 'TABLES_ANY':
+          ruleData.tablesAny = normalizeStringArray(tablesAny)
+          if (ruleData.tablesAny.length === 0) {
+            message.warning('请至少添加一个需要任意匹配的表名')
+            return
+          }
+          break
+        case 'QUERY_IDS':
+          ruleData.queryIds = selectedIds
+          ruleData.slowQueryIds = selectedIds // 兼容旧版后端字段
+          break
+        default:
+          break
       }
 
       if (editingRule) {
@@ -290,6 +427,22 @@ const CacheRules = () => {
       render: (text) => <Text strong>{text}</Text>,
     },
     {
+      title: '规则类型',
+      dataIndex: 'ruleType',
+      key: 'ruleType',
+      width: 140,
+      render: (_, record) => {
+        const inferredType = record.ruleType
+          || (Array.isArray(record.tablesAny) && record.tablesAny.length > 0 ? 'TABLES_ANY' : 'QUERY_IDS')
+        const option = RULE_TYPE_OPTIONS.find(item => item.value === inferredType)
+        return (
+          <Tag color="purple">
+            {option ? option.label : inferredType}
+          </Tag>
+        )
+      },
+    },
+    {
       title: '连接哈希',
       dataIndex: 'connHash',
       key: 'connHash',
@@ -303,25 +456,55 @@ const CacheRules = () => {
       ),
     },
     {
-      title: '关联查询ID',
-      dataIndex: 'slowQueryIds',
-      key: 'slowQueryIds',
-      render: (slowQueryIds) => (
-        <div>
-          {slowQueryIds && slowQueryIds.length > 0 ? (
-            slowQueryIds.slice(0, 3).map(id => (
-              <Tag key={id} color="green" style={{ marginBottom: 2 }}>
-                {id.substring(0, 8)}...
-              </Tag>
-            ))
-          ) : (
-            <Text type="secondary">无</Text>
-          )}
-          {slowQueryIds && slowQueryIds.length > 3 && (
-            <Tag color="default">+{slowQueryIds.length - 3}</Tag>
-          )}
-        </div>
-      ),
+      title: '匹配条件',
+      key: 'conditions',
+      render: (_, record) => {
+        const inferredType = record.ruleType
+          || (Array.isArray(record.tablesAny) && record.tablesAny.length > 0 ? 'TABLES_ANY' : 'QUERY_IDS')
+
+        if (inferredType === 'QUERY_IDS') {
+          const queryIds = Array.isArray(record.queryIds) && record.queryIds.length > 0
+            ? record.queryIds
+            : (Array.isArray(record.slowQueryIds) ? record.slowQueryIds : [])
+          if (queryIds.length === 0) {
+            return <Text type="secondary">无</Text>
+          }
+          return (
+            <div>
+              {queryIds.slice(0, 3).map(id => (
+                <Tag key={id} color="green" style={{ marginBottom: 2 }}>
+                  {id.substring(0, 8)}...
+                </Tag>
+              ))}
+              {queryIds.length > 3 && (
+                <Tag color="default">+{queryIds.length - 3}</Tag>
+              )}
+            </div>
+          )
+        }
+
+        if (inferredType === 'TABLES_ANY') {
+          const tables = Array.isArray(record.tablesAny) ? record.tablesAny : []
+          if (tables.length === 0) {
+            return <Text type="secondary">未配置表</Text>
+          }
+          return (
+            <div>
+              {tables.map(table => (
+                <Tag
+                  key={table}
+                  color="cyan"
+                  style={{ marginBottom: 2 }}
+                >
+                  {table}
+                </Tag>
+              ))}
+            </div>
+          )
+        }
+
+        return <Text type="secondary">无</Text>
+      },
     },
     {
       title: '状态',
@@ -452,7 +635,9 @@ const CacheRules = () => {
           layout="vertical"
           onFinish={handleSubmit}
           initialValues={{
-            enabled: true
+            enabled: true,
+            ruleType: 'QUERY_IDS',
+            tablesAny: [],
           }}
         >
           <Form.Item
@@ -476,40 +661,88 @@ const CacheRules = () => {
           </Form.Item>
 
           <Form.Item
-            label="关联查询ID"
-            tooltip="从慢查询列表中选择要缓存的查询"
-            required={false}
+            name="ruleType"
+            label="规则类型"
+            rules={[{ required: true, message: '请选择规则类型' }]}
+            tooltip="决定规则匹配方式"
           >
-            <Table
-              rowSelection={{
-                type: 'checkbox',
-                selectedRowKeys: selectedQueries.map(q => q.id),
-                onChange: (selectedRowKeys, selectedRows) => {
-                  setSelectedQueries(selectedRows)
-                },
-                getCheckboxProps: (record) => ({
-                  disabled: false,
-                }),
-              }}
-              columns={queryColumns}
-              dataSource={queries}
-              loading={queriesLoading}
-              rowKey="id"
-              pagination={{
-                pageSize: 5,
-                size: 'small',
-                showSizeChanger: false,
-              }}
-              size="small"
-              scroll={{ y: 240 }}
-              bordered
+            <Select
+              placeholder="请选择规则类型"
+              options={RULE_TYPE_OPTIONS}
+              onChange={handleRuleTypeChange}
             />
-            <div style={{ marginTop: 8 }}>
-              <Text type="secondary">
-                已选择 {selectedQueries.length} 个查询
-              </Text>
-            </div>
           </Form.Item>
+
+          <Alert
+            style={{ marginBottom: 16 }}
+            message="匹配说明"
+            description={ruleTypeHelpMessage}
+            type="info"
+            showIcon
+          />
+
+          {currentRuleType === 'TABLES_ANY' && (
+            <Form.Item
+              name="tablesAny"
+              label="匹配表（任意命中）"
+              tooltip="查询涉及的表只需包含列表中的任意一个即可"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (currentRuleType === 'TABLES_ANY' && (!value || value.length === 0)) {
+                      return Promise.reject(new Error('请至少添加一个表名'))
+                    }
+                    return Promise.resolve()
+                  },
+                },
+              ]}
+            >
+              <Select
+                mode="tags"
+                allowClear
+                placeholder="输入表名后回车添加，例如 orders"
+                options={tableNameOptions}
+                loading={tableNamesLoading}
+              />
+            </Form.Item>
+          )}
+
+          {currentRuleType === 'QUERY_IDS' && (
+            <Form.Item
+              label="关联查询ID"
+              tooltip="从慢查询列表中选择要缓存的查询"
+            >
+              <Table
+                rowSelection={{
+                  type: 'checkbox',
+                  selectedRowKeys: selectedQueries.map(q => q.id),
+                  onChange: (selectedRowKeys, selectedRows) => {
+                    setSelectedQueries(selectedRows)
+                  },
+                  getCheckboxProps: () => ({
+                    disabled: false,
+                  }),
+                }}
+                columns={queryColumns}
+                dataSource={queries}
+                loading={queriesLoading}
+                rowKey="id"
+                pagination={{
+                  pageSize: 5,
+                  size: 'small',
+                  showSizeChanger: false,
+                }}
+                size="small"
+                scroll={{ y: 240 }}
+                bordered
+              />
+              <div style={{ marginTop: 8 }}>
+                <Text type="secondary">
+                  已选择 {selectedQueries.length} 个查询
+                </Text>
+              </div>
+            </Form.Item>
+          )}
 
           <Form.Item
             name="enabled"

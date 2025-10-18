@@ -40,10 +40,21 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
         long startTime = System.currentTimeMillis();
         context.setAttribute("cache.startTime", startTime);
         context.setAttribute("cache.intercepted", false);
-        Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session);
+
+        Session sessionContext = context.getSessionManager().getSession(session);
+        Connection existingCacheConn = null;
+        if (sessionContext != null) {
+            existingCacheConn = (Connection) sessionContext.getAttr("cache.intercepted.conn");
+        }
+
+        Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session, existingCacheConn);
         if (cacheConn != null) {
             context.setCurrentInterceptedConnection(cacheConn);
             context.setAttribute("cache.intercepted", true);
+            if (sessionContext != null && existingCacheConn == null) {
+                sessionContext.addAttr("cache.intercepted.conn", cacheConn);
+            }
+            log.info("缓存命中");
         }
     }
 
@@ -63,11 +74,8 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
         // 使用缓存拦截器服务进行后处理
         cacheInterceptorService.postProcessQuery(request, executionTime, success);
 
-        Session session = context.getSessionManager().getSession(sessionInfo);
-        Connection currentInterceptedConnection = context.getCurrentInterceptedConnection();
-        if(currentInterceptedConnection != null){
-            session.addAttr("cache.intercepted.conn",currentInterceptedConnection);
-        }
+        // 清理上下文中的缓存连接引用，由Session生命周期统一管理连接释放
+        context.setCurrentInterceptedConnection(null);
 
 //        若使用了拦截连接，查询后关闭并复位
 //        boolean intercepted = (boolean)context.getAttribute("cache.intercepted");

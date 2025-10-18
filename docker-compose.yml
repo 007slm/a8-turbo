@@ -63,7 +63,6 @@ services:
       - ./docker/grafana/config/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
       - ./docker/grafana/config/datasources:/etc/grafana/provisioning/datasources
       - ./docker/grafana/config/dashboards:/var/lib/grafana/dashboards
-      - ./docker/grafana/data:/var/lib/grafana
 
   redis:
     image: redis-server-with-cache-cli

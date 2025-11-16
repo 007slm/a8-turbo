@@ -10,6 +10,7 @@
 | Prometheus | 9090 | [http://localhost:9090](http://localhost:9090) | 监控和告警工具，收集和存储时间序列数据 |
 | NATS Dashboard | 8000 | [http://localhost:8000](http://localhost:8000) | NATS 消息系统的可视化监控面板 |
 | Flink Dashboard | 8081 | [http://localhost:8081](http://localhost:8081) | Apache Flink 流处理框架的管理控制台 |
+| SeaTunnel Zeta Master | 8080 | [http://localhost:8080](http://localhost:8080) | SeaTunnel Zeta 集群管理 REST 控制台（Swagger: `/swagger-ui/index.html`） |
 
 ### 数据库与存储服务
 
@@ -53,6 +54,16 @@ SeaTunnel 作业定义位于 `docker/seatunnel/jobs/`，默认启动脚本会通
 |---------|------|---------|------|
 | Smart Cache Demo | 8070 | [http://localhost:8070](http://localhost:8070) | Redis Smart Cache演示应用 |
 
+### ShopService 演示接口
+
+| 功能 | 入口 | 描述 |
+|------|------|------|
+| 管理后台入口 | [http://localhost:5173/#/shopservice/users](http://localhost:5173/#/shopservice/users) | React 门户中的 ShopService 管理界面 |
+| Chinook SQL 实验台 | [http://localhost:5173/#/shopservice/chinook](http://localhost:5173/#/shopservice/chinook) | 预置多组复杂查询模板，点击按钮即可运行并校验 OJP |
+| REST: GET /shop/chinook/tables | `/shop/chinook/tables` | 通过 Kong 代理访问表结构（默认代理前缀 `/shop`） |
+| REST: GET /shop/chinook/sample-queries | `/shop/chinook/sample-queries` | 查询预置示例 SQL |
+| REST: POST /shop/chinook/query | `/shop/chinook/query` | 执行 SELECT/WITH 查询，返回行数据与列元信息 |
+
 ## 项目结构说明
 
 本项目包含多个 Docker Compose 配置文件：
@@ -80,7 +91,8 @@ mklink /j e:\a8-turbo\ojp-grpc-commons e:\ojp\ojp-grpc-commons
 - Kong Manager: http://localhost:8002
 - Prometheus: http://localhost:8000/prometheus
 - NATS Dashboard: http://localhost:8000/nats-dashboard
-- Redis Admin: http://localhost:8000/phpredisadmin
+- Redis Admin: http://localhost:8000/phpredmin
+- SeaTunnel Zeta Master: http://localhost:8080/swagger-ui/index.html
 
 ## 服务端口
 

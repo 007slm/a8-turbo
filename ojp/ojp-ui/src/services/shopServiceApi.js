@@ -180,3 +180,19 @@ export const statsApi = {
   getOrderStats: () => 
     request('/stats/orders'),
 }
+
+// Chinook SQL 实验 API
+export const chinookApi = {
+  // 获取 Chinook 元数据（表及列）
+  getTables: () => request('/chinook/tables'),
+
+  // 获取预设查询
+  getSampleQueries: () => request('/chinook/sample-queries'),
+
+  // 执行自定义 SQL 查询
+  runQuery: ({ sql, maxRows }) =>
+    request('/chinook/query', {
+      method: 'POST',
+      body: JSON.stringify({ sql, maxRows }),
+    }),
+}

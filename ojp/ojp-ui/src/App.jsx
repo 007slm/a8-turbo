@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, theme, ConfigProvider, App as AntdApp } from 'antd'
 import {
   DashboardOutlined,
@@ -11,13 +11,15 @@ import {
   ShopOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
-import CacheManagement from './components/CacheManagement'
 import Monitoring from './components/Monitoring'
 
 import MonitoringOverview from './components/MonitoringOverview'
 import ServiceMonitoring from './components/ServiceMonitoring'
 import ShopService from './components/shopservice/ShopService'
 import { getAllServices } from './config/monitoringConfig'
+import CacheRuleEditor from './components/cache/CacheRuleEditor'
+import CacheRules from './components/cache/CacheRules'
+import QueryCache from './components/cache/QueryCache'
 
 import { fetchSystemStatus } from './services/api'
 import './App.css'
@@ -34,13 +36,15 @@ function AppContent() {
     const path = location.pathname
     if (path === '/' || path === '/system-monitoring') return 'system-monitoring'
     if (path.startsWith('/monitoring')) return 'grafana-monitoring'
-    if (path === '/cache') return 'cache-management'
+    if (path === '/cache' || path.startsWith('/cache/rules')) return 'cache-rules'
+    if (path.startsWith('/cache/queries')) return 'cache-queries'
 
     if (path.startsWith('/shopservice')) {
       if (path.startsWith('/shopservice/users')) return 'shopservice-users'
       if (path.startsWith('/shopservice/products')) return 'shopservice-products'
       if (path.startsWith('/shopservice/orders')) return 'shopservice-orders'
       if (path.startsWith('/shopservice/reviews')) return 'shopservice-reviews'
+      if (path.startsWith('/shopservice/chinook')) return 'shopservice-chinook'
       return 'shopservice-users'
     }
 
@@ -56,7 +60,7 @@ function AppContent() {
   } = theme.useToken()
 
   // 获取系统状态
-  const { data: systemStatus, isLoading: statusLoading } = useQuery(
+  const { data: systemStatus, isLoading: statusLoading, isError, error } = useQuery(
     'systemStatus',
     fetchSystemStatus,
     {
@@ -64,6 +68,16 @@ function AppContent() {
       refetchIntervalInBackground: true,
     }
   )
+
+  // 判断系统是否正常运行
+  const isSystemUp = () => {
+    if (statusLoading) return null;
+    if (isError) return false;
+    if (!systemStatus) return false;
+    
+    // 检查状态字段是否为 UP
+    return systemStatus.status === 'UP';
+  }
 
   // 菜单项配置
   const menuItems = [
@@ -93,8 +107,12 @@ function AppContent() {
       label: '缓存管理',
       children: [
         {
-          key: 'cache-management',
-          label: '缓存管理',
+          key: 'cache-rules',
+          label: '缓存规则',
+        },
+        {
+          key: 'cache-queries',
+          label: '慢查询列表',
         }
       ]
     },
@@ -119,23 +137,46 @@ function AppContent() {
         {
           key: 'shopservice-reviews',
           label: '评价管理',
+        },
+        {
+          key: 'shopservice-chinook',
+          label: 'Chinook SQL 实验台',
         }
       ]
     },
 
   ]
 
+  const findMenuLabel = (items, key) => {
+    for (const item of items) {
+      if (item.key === key) {
+        return item.label
+      }
+      if (item.children) {
+        const childLabel = findMenuLabel(item.children, key)
+        if (childLabel) {
+          return childLabel
+        }
+      }
+    }
+    return null
+  }
+
+  const currentMenuLabel = findMenuLabel(menuItems, selectedKey)
+
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
     const routes = {
       'system-monitoring': '/',
       'monitoring-overview': '/monitoring',
-      'cache-management': '/cache',
+      'cache-rules': '/cache/rules',
+      'cache-queries': '/cache/queries',
 
       'shopservice-users': '/shopservice/users',
       'shopservice-products': '/shopservice/products',
       'shopservice-orders': '/shopservice/orders',
       'shopservice-reviews': '/shopservice/reviews',
+      'shopservice-chinook': '/shopservice/chinook',
 
     }
     
@@ -214,7 +255,7 @@ function AppContent() {
                 </button>
                 
                 <div className="breadcrumb">
-                  {menuItems.find(item => item.key === selectedKey)?.label}
+                  {currentMenuLabel || '系统监控'}
                 </div>
               </div>
 
@@ -223,7 +264,7 @@ function AppContent() {
                 <div className="status-indicator">
                   {statusLoading ? (
                     <span>检查中...</span>
-                  ) : systemStatus?.status === 'UP' ? (
+                  ) : isSystemUp() ? (
                     <span className="status-connected">系统正常</span>
                   ) : (
                     <span className="status-disconnected">系统异常</span>
@@ -260,7 +301,11 @@ function AppContent() {
                 <Route path="/system-monitoring" element={<Monitoring />} />
                 <Route path="/monitoring" element={<MonitoringOverview />} />
                 <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
-                <Route path="/cache" element={<CacheManagement />} />
+                <Route path="/cache" element={<CacheRules />} />
+                <Route path="/cache/rules" element={<CacheRules />} />
+                <Route path="/cache/queries" element={<QueryCache />} />
+                <Route path="/cache/rules/new" element={<CacheRuleEditor />} />
+                <Route path="/cache/rules/:ruleId/edit" element={<CacheRuleEditor />} />
 
                 <Route path="/shopservice" element={<ShopService />} />
                 <Route path="/shopservice/*" element={<ShopService />} />

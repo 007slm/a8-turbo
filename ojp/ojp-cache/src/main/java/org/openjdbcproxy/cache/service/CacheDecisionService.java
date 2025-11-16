@@ -30,7 +30,9 @@ public class CacheDecisionService {
 
         String slowQueryId = JSqlParserUtil.generateSlowQueryId(connHash, sql);
         SlowQuery query = queryRepository.findById(slowQueryId).orElse(null);
-
+        if (query == null){
+            return false;
+        }
         boolean match = cacheRuleRepository.findAll().stream().anyMatch(rule -> {
             return rule.matches( query);
         });
@@ -39,7 +41,7 @@ public class CacheDecisionService {
         // 记录决策统计
         long decisionTime = System.currentTimeMillis() - startTime;
 
-        log.debug("缓存决策完成: sql={}, shouldCache={}, decisionTime={}ms",
+        log.info("缓存决策完成: sql={}, shouldCache={}, decisionTime={}ms",
                 sql, match, decisionTime);
         return match;
     }

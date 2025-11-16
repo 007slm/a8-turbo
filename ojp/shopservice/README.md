@@ -15,6 +15,7 @@ This project demonstrates a multi-entity, relational domain model with CRUD oper
 - **Product Review System** – Users can review products with ratings and comments.
 - **RESTful API** – All features exposed via REST endpoints.
 - **Integration Tests** – Each controller has comprehensive integration tests using MockMvc and H2 in-memory DB.
+- **Chinook SQL Playground** – Dedicated dataset and read-only SQL API for exercising complex queries through OJP.
 
 ---
 
@@ -81,6 +82,9 @@ The API will be available at [http://localhost:8080/](http://localhost:8080/).
 |            | `/orders/{orderId}/items/{itemId}` | GET, PUT, DELETE |
 | Reviews    | `/reviews`               | GET, POST           |
 |            | `/reviews/{id}`          | GET, PUT, DELETE    |
+| Chinook    | `/chinook/tables`        | GET (table metadata)|
+|            | `/chinook/sample-queries`| GET (sample SQL)    |
+|            | `/chinook/query`         | POST (execute SQL)  |
 
 All endpoints accept and return JSON.
 
@@ -99,3 +103,18 @@ Integration tests are provided for all controllers.
 - Integration tests use H2 in-memory database with test-specific properties (`src/test/resources/application-test.properties`).
 - If you want to run only unit tests, use `mvn test` (not recommended for this project, as all tests are integration tests).
 
+---
+
+## Chinook SQL Playground
+
+The service bundles the [Chinook sample database](https://github.com/lerocha/chinook-database) to validate OJP against more complex, analytical SQL workloads.
+
+- Data is provisioned automatically via `docker/mysql/initdb.d/20-chinook.sql` when the MySQL container is created.
+- Runtime access goes through the OJP proxy using the same driver (`jdbc:ojp[ojp-server:8010]_mysql://mysql:3306/Chinook`).
+- A dedicated REST surface is exposed under `/chinook`:
+  - `GET /chinook/tables` – table/column metadata derived from `information_schema`.
+  - `GET /chinook/sample-queries` – curated sample SQL statements to load in the UI.
+  - `POST /chinook/query` – execute ad-hoc `SELECT`/`WITH` statements (read-only, max 200 rows).
+- The React portal contains a *Chinook SQL 实验台* with prebuilt complex query templates—execute with a single click and inspect results/schema without typing SQL manually.
+
+Existing MySQL containers need to be recreated (or the script re-applied manually) to load the new dataset.

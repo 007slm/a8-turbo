@@ -18,8 +18,6 @@ mvnd --version
 
 mvnd package install -DskipTests -Dmaven.javadoc.skip=true
 
-lingma 登录方案 
-JetBrains IDEs：打开 IDE 的设置页面，找到通义灵码设置，在未登录状态即可看到 AK/SK 登录入口，输入 AccessKey ID、AccessKey Secret 后，选择身份（未加入任何企业无需选择），然后单击登录即可；
 
-LTAI5tGUqE79BLKAsvG7QPe5
-lb9rrSzvgwAp5zZmOngvFvNseT4gff
+mvn  
+

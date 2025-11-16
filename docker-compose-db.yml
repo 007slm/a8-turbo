@@ -1,0 +1,204 @@
+services:
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    container_name: mysql
+    networks:
+      - a8
+    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_ROOT_PASSWORD=a8
+      #      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_USER=smartcache
+      - MYSQL_PASSWORD=smartcache
+      - MYSQL_DATABASE=smartcache
+      # cd /opt/flink-cdc  ./bin/flink-cdc.sh --jar /opt/flink-cdc/lib/mysql-connector-java.jar --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
+
+
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    command:
+      - "--mysqld.username=smartcache:smartcache"
+      - "--mysqld.address=mysql:3306"
+    environment:
+      - DATA_SOURCE_NAME=smartcache:smartcache@tcp(mysql:3306)/smartcache
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "9104:9104"
+    networks:
+      - a8
+      
+    depends_on:
+      - mysql
+
+  # nats:
+  #   image: nats:latest
+  #   hostname: nats
+  #   container_name: nats
+  #   # 保留NATS核心端口用于内部通信
+  #   #    ports:
+  #   #      - "4222:4222"
+  #   # 移除监控端口，通过Kong网关访问
+  #   # ports:
+  #   #   - "4222:4222"
+  #   #   - "8222:8222"   # Monitoring endpoint
+  #   command:
+  #     - "-js"
+  #     - "-sd"
+  #     - "/jetstream/data"
+  #     - "--debug"
+  #     - "--http_port=8222"
+  #   volumes:
+  #     - ./docker/nats/data/jetstream:/jetstream/data
+  #     - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
+  #     - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
+  #     - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+  #   networks:
+  #     - a8
+      
+
+  # nats-exporter:
+  #   image: natsio/prometheus-nats-exporter:latest
+  #   container_name: nats-exporter
+  #   command: "-varz http://nats:8222"
+  #   # 移除对外暴露的端口，通过Kong网关访问
+  #   # ports:
+  #   #   - "7777:7777"
+  #   networks:
+  #     - a8
+      
+  #   depends_on:
+  #     - nats
+
+#  nats-init:
+#    image: natsio/nats-box:latest
+#    container_name: nats-init
+#    command: ["/bin/sh", "/usr/local/bin/init-nats.sh"]
+#    volumes:
+#      - ./docker/nats/init-nats.sh:/usr/local/bin/init-nats.sh
+#      - ./docker/nats/cdc-stream.json:/etc/nats/cdc-stream.json
+#      - ./docker/nats/monitoring-stream.json:/etc/nats/monitoring-stream.json
+#    depends_on:
+#      - nats
+#    networks:
+#      - a8
+#    restart: on-failure
+
+  # nats-dashboard:
+  #   image: mdawar/nats-dashboard:latest
+  #   container_name: nats-dashboard
+  #   hostname: nats-dashboard
+  #   # 移除对外暴露的端口，通过Kong网关访问
+  #   # ports:
+  #   #   - "8000:80"
+  #   volumes:
+  #     - ./docker/nats/dashboard/config.json:/srv/config.json
+  #   depends_on:
+  #     - nats
+  #   networks:
+  #     - a8
+      
+
+#  debezium:
+#    image: quay.io/debezium/server:latest
+#    ports:
+#      - "8083:8083"  # 暴露 Debezium UI 端口
+#    volumes:
+#      - ./docker/debezium/config:/debezium/config
+#    depends_on:
+#      - mysql
+#      - nats
+
+  starrocks:
+    image: starrocks/allin1-ubuntu
+    container_name: starrocks
+    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    ports:
+      - "9030:9030"
+      # - "8030:8030"
+      # - "8040:8040"
+    #   - "8080:8080"
+    tty: true
+    privileged: true
+    networks:
+      - a8
+      
+
+
+  ##
+  ##  bash /opt/flink-cdc/bin/flink-cdc.sh /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml --jar /opt/flink-cdc/connector/mysql-connector-java-8.0.27.jar
+  ##
+#  jobmanager:
+#    image: flink:1.20.1-scala_2.12
+#    hostname: jobmanager
+#    container_name: jobmanager
+#    # 保留Flink Web UI端口用于内部访问
+#    #    ports:
+#    #      - '8081:8081'
+#    # 移除监控端口，通过Kong网关访问
+#    # ports:
+#    #   - '8081:8081'
+#    #   - '9249:9249'
+#    command: jobmanager
+#    networks:
+#      - a8
+#
+#    volumes:
+#      - ./docker/flink/cdc:/opt/flink-cdc
+#      - ./docker/flink/jobs:/opt/flink_jobs
+#      - ./docker/flink/lib:/opt/flink/lib/ext
+#
+#    environment:
+#      FLINK_PROPERTIES: |-
+#        jobmanager.rpc.address: jobmanager
+#        execution.checkpointing.interval: 3000
+#        metrics.reporters: prom
+#        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+#        metrics.reporter.prom.port: 9249
+#
+#  taskmanager:
+#    image: flink:1.20.1-scala_2.12
+#    hostname: taskmanager
+#    container_name: taskmanager
+#    command: taskmanager
+#    # 移除监控端口，通过Kong网关访问
+#    # ports:
+#    #   - '9250:9250'
+#    networks:
+#      - a8
+#
+#    volumes:
+#      - ./docker/flink/lib:/opt/flink/lib/ext
+#    environment:
+#      FLINK_PROPERTIES: |-
+#        jobmanager.rpc.address: jobmanager
+#        taskmanager.numberOfTaskSlots: 4
+#        execution.checkpointing.interval: 3000
+#        metrics.reporters: prom
+#        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+#        metrics.reporter.prom.port: 9250
+
+#  flink-cdc-init:
+#    image: flink:1.20.1-scala_2.12
+#    container_name: flink-cdc-init
+#    environment:
+#      - FLINK_HOME=/opt/flink
+#      - JOBMANAGER_ADDRESS=jobmanager:8081
+#    command: ["bash", "-c", "sleep 3; /opt/flink-init/flink-cdc-init.sh"]
+#    networks:
+#      - a8
+#    volumes:
+#      - ./docker/flink/init:/opt/flink-init
+#      - ./docker/flink/cdc:/opt/flink-cdc
+#      - ./docker/flink/jobs:/opt/flink_jobs
+#      - ./docker/flink/lib:/opt/flink/lib/ext
+#    depends_on:
+#      - jobmanager
+#      - taskmanager
+#    restart: on-failure

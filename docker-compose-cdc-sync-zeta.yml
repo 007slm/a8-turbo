@@ -12,9 +12,11 @@ services:
     ports:
       - "5801:5801"
       - "8080:8080"
+#    volumes:
+#      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
     networks:
       - a8
-      
+
 
   seatunnel-worker1:
     image: apache/seatunnel
@@ -26,29 +28,7 @@ services:
       " 
     depends_on:
       - seatunnel-master
-    networks:
-      - a8
-
-  # Auto-submit default job to the Zeta master once it is up
-  seatunnel-submit:
-    image: apache/seatunnel
-    depends_on:
-      - seatunnel-master
-    environment:
-      - ST_DOCKER_MEMBER_LIST=seatunnel-master:5801
-      - JOB_NAME=mysql-to-starrocks
-      - JOB_ID=2
-    volumes:
-      - ./docker/seatunnel/jobs:/config:ro
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Waiting master to be ready...';
-      sleep 10;
-      echo '取消之前的job:mysql_to_sr_default';
-      /opt/seatunnel/bin/seatunnel.sh -can 2 || true;
-      echo '提交新的job:mysql-to-starrocks - 2';
-      /opt/seatunnel/bin/seatunnel.sh --async -n mysql-to-starrocks --set-job-id 2 -c /config/mysql_to_starrocks.conf
-      "
-    restart: "no"
+#    volumes:
+#      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
     networks:
       - a8

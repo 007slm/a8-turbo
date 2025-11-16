@@ -210,7 +210,6 @@ public class SqlParser {
                 .map(this::cleanTableName)
                 .filter(name -> !name.isEmpty())
                 .distinct()
-                .map(String::toLowerCase)
                 // 处理schema前缀，只保留表名部分
                 .map(tableName -> {
                     // 如果表名包含schema（以点号分隔），只取最后一部分

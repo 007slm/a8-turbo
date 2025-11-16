@@ -4,6 +4,7 @@ import UserManagement from './UserManagement';
 import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
 import ReviewManagement from './ReviewManagement';
+import ChinookQueryConsole from './chinook/ChinookQueryConsole';
 import './ShopService.css';
 
 /**
@@ -22,6 +23,7 @@ const ShopService = () => {
     if (path.includes('/shopservice/products')) return 'products'
     if (path.includes('/shopservice/orders')) return 'orders'
     if (path.includes('/shopservice/reviews')) return 'reviews'
+    if (path.includes('/shopservice/chinook')) return 'chinook'
     // 默认返回用户管理页面
     return 'users'
   }
@@ -39,6 +41,8 @@ const ShopService = () => {
         return <OrderManagement />
       case 'reviews':
         return <ReviewManagement />
+      case 'chinook':
+        return <ChinookQueryConsole />
       // 移除总览页面渲染逻辑
       default:
         // 默认返回用户管理页面

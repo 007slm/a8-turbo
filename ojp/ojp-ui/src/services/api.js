@@ -33,34 +33,48 @@ const request = async (endpoint, options = {}) => {
   }
 }
 
+// 确保响应数据是JSON对象的辅助函数
+const ensureJson = (data) => {
+  if (!data) return null;
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      console.warn('Failed to parse response as JSON:', e);
+      return null;
+    }
+  }
+  return data;
+}
+
 // 系统状态相关接口
 export const systemApi = {
   // 获取系统健康状态
-  getHealth: () => request('/actuator/health'),
+  getHealth: () => request('/actuator/health').then(ensureJson),
   
   // 获取系统信息
-  getInfo: () => request('/actuator/info'),
+  getInfo: () => request('/actuator/info').then(ensureJson),
   
   // 获取系统指标
-  getMetrics: () => request('/actuator/metrics'),
+  getMetrics: () => request('/actuator/metrics').then(ensureJson),
   
   // 获取特定指标
-  getMetric: (metricName) => request(`/actuator/metrics/${metricName}`),
+  getMetric: (metricName) => request(`/actuator/metrics/${metricName}`).then(ensureJson),
   
   // 获取环境信息
-  getEnvironment: () => request('/actuator/env'),
+  getEnvironment: () => request('/actuator/env').then(ensureJson),
   
   // 获取配置属性
-  getConfigProps: () => request('/actuator/configprops'),
+  getConfigProps: () => request('/actuator/configprops').then(ensureJson),
   
   // 获取 Bean 信息
-  getBeans: () => request('/actuator/beans'),
+  getBeans: () => request('/actuator/beans').then(ensureJson),
   
   // 获取线程转储
-  getThreadDump: () => request('/actuator/threaddump'),
+  getThreadDump: () => request('/actuator/threaddump').then(ensureJson),
   
   // 获取堆转储
-  getHeapDump: () => request('/actuator/heapdump'),
+  getHeapDump: () => request('/actuator/heapdump').then(ensureJson),
 }
 
 // 服务器管理相关接口 - 已移除
@@ -72,6 +86,22 @@ export const systemApi = {
 export const cacheApi = {
   // 获取查询列表 - 按数据库连接哈希分组
   getQueries: () => request('/cache/queries/list'),
+  // 分页获取慢查询
+  getSlowQueries: ({ page = 1, size = 20, connHash, keyword, minExecutionTime, queryType, table }) => {
+    const params = new URLSearchParams()
+    params.set('page', page)
+    params.set('size', size)
+    if (connHash) params.set('connHash', connHash)
+    if (keyword) params.set('keyword', keyword)
+    if (minExecutionTime) params.set('minExecutionTime', minExecutionTime)
+    if (queryType) params.set('queryType', queryType)
+    if (table) params.set('table', table)
+    return request(`/cache/queries?${params.toString()}`)
+  },
+  // 获取慢查询详情
+  getSlowQueryDetail: (queryId) => request(`/cache/queries/${encodeURIComponent(queryId)}`),
+  // 获取筛选项
+  getSlowQueryFilters: () => request('/cache/queries/filters'),
   // 获取表名列表 - 可按连接过滤
   getTableNames: (connHash) => {
     if (connHash) {
@@ -107,20 +137,6 @@ export const ruleApi = {
   deleteRule: (ruleId) => request(`/cache/rules/${ruleId}`, {
     method: 'DELETE',
   }),
-}
-
-// 确保响应数据是JSON对象的辅助函数
-const ensureJson = (data) => {
-  if (!data) return null;
-  if (typeof data === 'string') {
-    try {
-      return JSON.parse(data);
-    } catch (e) {
-      console.warn('Failed to parse response as JSON:', e);
-      return null;
-    }
-  }
-  return data;
 }
 
 // 监控相关接口 - 直接调用 Spring Boot Actuator
@@ -798,16 +814,10 @@ export const monitoringApi = {
   },
 }
 
-
-
-
-
 // 系统设置相关接口 - 已移除
 // export const settingsApi = {
 //   // 系统设置功能已完全移除
 // }
-
-
 
 // 兼容性函数 - 为了保持向后兼容
 export const fetchSystemStatus = () => systemApi.getHealth()
@@ -818,4 +828,20 @@ export default {
   cache: cacheApi,
   rule: ruleApi,
   monitoring: monitoringApi,
+}
+
+function getStatusDescription(code) {
+  const descriptions = {
+    200: '成功',
+    201: '已创建',
+    204: '无内容',
+    400: '错误请求',
+    401: '未授权',
+    403: '禁止访问',
+    404: '未找到',
+    500: '服务器错误',
+    502: '网关错误',
+    503: '服务不可用'
+  };
+  return descriptions[code] || '其他';
 }

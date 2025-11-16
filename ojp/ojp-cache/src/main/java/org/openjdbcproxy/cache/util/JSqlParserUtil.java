@@ -50,15 +50,17 @@ public class JSqlParserUtil {
         TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
         List<String> tableList = tablesNamesFinder.getTableList(statement);
 
-        Set<String> tableNames = new HashSet<>();
+        Map<String, String> casePreserved = new LinkedHashMap<>();
         for (String tableName : tableList) {
             // 处理schema.table格式，只保留表名
             String cleanTableName = extractTableName(tableName);
             if (StringUtils.hasText(cleanTableName)) {
-                tableNames.add(cleanTableName.toLowerCase());
+                String key = cleanTableName.toLowerCase();
+                casePreserved.putIfAbsent(key, cleanTableName);
             }
         }
-        return tableNames;
+        // 返回保留原始大小写的唯一表名集合
+        return new LinkedHashSet<>(casePreserved.values());
     }
     
     /**

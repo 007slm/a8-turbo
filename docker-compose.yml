@@ -4,7 +4,7 @@ networks:
 
 
 include:
-  - ./docker-compose-cdc-sync.yml
+  - ./docker-compose-db.yml
   - ./docker-compose-cdc-sync-zeta.yml
   - ./docker-compose-kong.yml
 #  - ./docker-compose-ojp.yml

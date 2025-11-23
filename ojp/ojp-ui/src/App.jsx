@@ -8,7 +8,9 @@ import {
   BellOutlined,
   QuestionCircleOutlined,
 
-  ShopOutlined
+  ShopOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import Monitoring from './components/Monitoring'
@@ -163,6 +165,7 @@ function AppContent() {
   }
 
   const currentMenuLabel = findMenuLabel(menuItems, selectedKey)
+  const toggleIcon = collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
 
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
@@ -193,7 +196,30 @@ function AppContent() {
 
 
   return (
-    <ConfigProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1677ff',
+          colorBgLayout: '#f4f7fb',
+          colorBgContainer: '#ffffff',
+          borderRadiusLG: 12,
+          fontFamily: 'Inter, -apple-system, system-ui, "Segoe UI", Arial, sans-serif',
+        },
+        components: {
+          Card: {
+            paddingLG: 20,
+            headerHeight: 54,
+          },
+          Table: {
+            headerBg: '#f7f9fc',
+            borderColor: '#e6ebf1',
+          },
+          Button: {
+            controlHeight: 40,
+          },
+        },
+      }}
+    >
       <AntdApp>
         <Layout style={{ minHeight: '100vh' }}>
           {/* 侧边栏 */}
@@ -229,29 +255,21 @@ function AppContent() {
             <Header
               style={{
                 padding: '0 24px',
-                background: colorBgContainer,
+                background: 'rgba(255,255,255,0.9)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                boxShadow: '0 6px 18px rgba(15,23,42,0.08)',
+                backdropFilter: 'blur(8px)',
                 zIndex: 1000,
               }}
             >
               <div className="header-left">
                 <button
-                  type="text"
-                  icon={collapsed ? '☰' : '✕'}
+                  className="header-action-btn"
                   onClick={() => setCollapsed(!collapsed)}
-                  style={{
-                    fontSize: '16px',
-                    width: 64,
-                    height: 64,
-                    border: 'none',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                  }}
                 >
-                  {collapsed ? '☰' : '✕'}
+                  {toggleIcon}
                 </button>
                 
                 <div className="breadcrumb">

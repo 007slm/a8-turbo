@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.openjdbcproxy.cache.model.SeatunnelJobView;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.time.LocalDateTime;
@@ -40,6 +42,10 @@ public class CacheRule {
     private LocalDateTime updatedAt = LocalDateTime.now();
     @Builder.Default
     private Map<String, String> seatunnelJobIds = new HashMap<>();
+    @Transient
+    @Builder.Default
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private List<SeatunnelJobView> seatunnelJobs = new ArrayList<>();
 
 
     // 检查查询是否匹配此规则

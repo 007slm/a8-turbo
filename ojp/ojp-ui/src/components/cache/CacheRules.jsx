@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
+  Alert,
   Button,
   Card,
+  Drawer,
+  List,
   Popconfirm,
   Space,
   Table,
@@ -27,12 +30,29 @@ const truncate = (value = '', length = 24) => {
   return value.length > length ? `${value.slice(0, length)}…` : value
 }
 
+const renderJobStatusTag = (status) => {
+  switch (status) {
+    case 'running':
+      return <Tag color="green">运行中</Tag>
+    case 'missing':
+      return <Tag color="red">已丢失/未运行</Tag>
+    case 'invalid-connection':
+      return <Tag color="orange">连接异常</Tag>
+    case 'disabled':
+      return <Tag color="default">Seatunnel 未启用</Tag>
+    default:
+      return <Tag color="default">待生成</Tag>
+  }
+}
+
 const CacheRules = () => {
   const navigate = useNavigate()
+  const [activeRule, setActiveRule] = useState(null)
 
   const {
     data: rules = [],
     isLoading,
+    isFetching,
     refetch,
   } = useQuery('cacheRules', ruleApi.getRules, {
     refetchOnWindowFocus: false,
@@ -56,6 +76,18 @@ const CacheRules = () => {
     navigate(`/cache/rules/${rule.id}/edit`, {
       state: { rule },
     })
+  }
+
+  const jobDetails = activeRule?.seatunnelJobs || []
+
+  const refreshActiveRule = async () => {
+    const result = await refetch()
+    if (result?.data && activeRule?.id) {
+      const fresh = result.data.find((item) => item.id === activeRule.id)
+      if (fresh) {
+        setActiveRule(fresh)
+      }
+    }
   }
 
   const columns = [
@@ -143,6 +175,29 @@ const CacheRules = () => {
       ),
     },
     {
+      title: 'Seatunnel 作业',
+      key: 'seatunnel',
+      width: 240,
+      render: (_, record) => {
+        const jobIds = record.seatunnelJobIds || {}
+        const jobCount = Object.keys(jobIds).length
+        const tagColor = jobCount > 0 ? 'blue' : 'default'
+        return (
+          <Space size={8}>
+            <Tag color={tagColor}>
+              {jobCount > 0 ? `已生成 ${jobCount} 个` : '未生成'}
+            </Tag>
+            <Button
+              size="small"
+              onClick={() => setActiveRule(record)}
+            >
+              查看
+            </Button>
+          </Space>
+        )
+      },
+    },
+    {
       title: '更新时间',
       dataIndex: 'updatedAt',
       key: 'updatedAt',
@@ -179,10 +234,13 @@ const CacheRules = () => {
   ]
 
   return (
-    <Card
-      title="缓存规则列表"
-      extra={
-        <Space>
+    <>
+      <div className="page-header-bar panel-ghost">
+        <div className="page-header-title">
+          <Text>缓存规则列表</Text>
+          <span className="pill">Seatunnel 作业可视化</span>
+        </div>
+        <div className="page-actions">
           <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
             刷新
           </Button>
@@ -193,20 +251,104 @@ const CacheRules = () => {
           >
             创建缓存规则
           </Button>
-        </Space>
-      }
-    >
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={rules}
-        loading={isLoading}
-        pagination={{
-          pageSize: 10,
-          showSizeChanger: false,
-        }}
-      />
-    </Card>
+        </div>
+      </div>
+      <Card className="section-card">
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={rules}
+          loading={isLoading}
+          bordered
+          size="middle"
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: false,
+          }}
+        />
+      </Card>
+
+      <Drawer
+        title={activeRule ? `Seatunnel 作业详情 - ${activeRule.name || activeRule.id}` : 'Seatunnel 作业详情'}
+        width={520}
+        open={Boolean(activeRule)}
+        onClose={() => setActiveRule(null)}
+        destroyOnClose
+        extra={
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={refreshActiveRule}
+            disabled={!activeRule}
+            loading={isFetching}
+          >
+            刷新
+          </Button>
+        }
+      >
+        {activeRule ? (
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <Alert
+              type="info"
+              showIcon
+              message={
+                <>
+                  <span>规则：{activeRule.name}</span>
+                  <br />
+                  <span>连接：{activeRule.connHash || '未指定'}</span>
+                </>
+              }
+            />
+            <List
+              dataSource={jobDetails}
+              loading={isFetching}
+              locale={{
+                emptyText: '暂无作业信息',
+              }}
+              renderItem={(item) => (
+                <List.Item style={{ paddingLeft: 0, paddingRight: 0 }}>
+                  <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                    <Space size={8} align="center" wrap>
+                      <Text strong>
+                        {item?.table || item?.normalizedTable || '未知表'}
+                      </Text>
+                      {renderJobStatusTag(item?.status)}
+                    </Space>
+                    <Space size={8} wrap>
+                      {item?.jobName ? (
+                        <Tag color="blue">Job: {item.jobName}</Tag>
+                      ) : (
+                        <Tag>未生成 Job 名称</Tag>
+                      )}
+                      {item?.jobId ? (
+                        <Tag color="purple">记录ID: {item.jobId}</Tag>
+                      ) : (
+                        <Tag color="default">无记录ID</Tag>
+                      )}
+                      {item?.liveJobId ? (
+                        <Tag color="green">运行ID: {item.liveJobId}</Tag>
+                      ) : null}
+                    </Space>
+                    {item?.status === 'invalid-connection' ? (
+                      <Text type="secondary">无法解析连接信息，无法生成作业名称</Text>
+                    ) : null}
+                    {item?.status === 'disabled' ? (
+                      <Text type="secondary">Seatunnel 未启用，未创建作业</Text>
+                    ) : null}
+                    {item?.status === 'missing' ? (
+                      <Text type="secondary">
+                        本地记录存在 jobId，但 Seatunnel 未返回该作业，请检查作业状态
+                      </Text>
+                    ) : null}
+                  </Space>
+                </List.Item>
+              )}
+            />
+          </Space>
+        ) : (
+          <Text type="secondary">选择规则后查看 Seatunnel 作业详情</Text>
+        )}
+      </Drawer>
+    </>
   )
 }
 

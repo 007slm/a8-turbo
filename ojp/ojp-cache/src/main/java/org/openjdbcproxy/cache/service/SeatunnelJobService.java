@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.cache.config.SeatunnelJobProperties;
 import org.openjdbcproxy.cache.entity.CacheRule;
 import org.openjdbcproxy.cache.entity.SlowQuery;
+import org.openjdbcproxy.cache.model.SeatunnelJobView;
 import org.openjdbcproxy.cache.repository.SlowQueryRepository;
 import org.openjdbcproxy.grpc.server.utils.JdbcUrlUtil;
 import org.springframework.http.MediaType;
@@ -116,6 +117,37 @@ public class SeatunnelJobService {
         }
 
         return resultingJobIds;
+    }
+
+    /**
+     * Describe Seatunnel jobs for a given rule so the UI can render status.
+     */
+    public List<SeatunnelJobView> describeRuleJobs(CacheRule rule) {
+        Map<String, String> tables = new LinkedHashMap<>(resolveTables(rule));
+        Map<String, String> storedJobIds = Optional.ofNullable(rule.getSeatunnelJobIds()).orElse(Collections.emptyMap());
+        storedJobIds.forEach(tables::putIfAbsent);
+
+        Map<String, String> runningJobsByName = properties.isEnabled() ? listJobsByName() : Collections.emptyMap();
+        Optional<MysqlEndpoint> endpoint = parseEndpoint(rule.getConnHash());
+        String database = endpoint.map(MysqlEndpoint::database).orElse(null);
+        boolean hasEndpoint = endpoint.isPresent();
+
+        List<SeatunnelJobView> result = new ArrayList<>();
+        for (Map.Entry<String, String> entry : tables.entrySet()) {
+            String normalisedTable = entry.getKey();
+            String actualTable = entry.getValue();
+            String jobName = database != null ? buildJobName(rule.getId(), database, actualTable) : null;
+            String liveJobId = jobName == null ? null : runningJobsByName.get(jobName);
+            String storedJobId = storedJobIds.get(normalisedTable);
+            String status = deriveStatus(properties.isEnabled(), hasEndpoint, storedJobId, liveJobId);
+            result.add(new SeatunnelJobView(actualTable, normalisedTable, jobName, storedJobId, liveJobId, status));
+        }
+
+        if (result.isEmpty() && !properties.isEnabled()) {
+            result.add(new SeatunnelJobView(null, null, null, null, null, "disabled"));
+        }
+
+        return result;
     }
 
     private Map<String, String> resolveTables(@Nullable CacheRule rule) {
@@ -239,6 +271,16 @@ public class SeatunnelJobService {
 
     private Optional<String> findExistingJob(String jobName) {
         try {
+            Map<String, String> jobs = listJobsByName();
+            return Optional.ofNullable(jobs.get(jobName));
+        } catch (Exception ex) {
+            log.debug("查询 Seatunnel 已有作业失败，忽略重复检测: {}", ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private Map<String, String> listJobsByName() {
+        try {
             Object response = restClient()
                     .get()
                     .uri(uriBuilder -> uriBuilder
@@ -246,42 +288,53 @@ public class SeatunnelJobService {
                             .build())
                     .retrieve()
                     .body(Object.class);
-            return extractJobIdByName(response, jobName);
+            Map<String, String> jobs = new HashMap<>();
+            collectJobsByName(response, jobs);
+            return jobs;
         } catch (Exception ex) {
-            log.debug("查询 Seatunnel 已有作业失败，忽略重复检测: {}", ex.getMessage());
-            return Optional.empty();
+            log.debug("查询 Seatunnel 作业列表失败，忽略状态同步: {}", ex.getMessage());
+            return Collections.emptyMap();
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Optional<String> extractJobIdByName(Object payload, String jobName) {
+    private void collectJobsByName(Object payload, Map<String, String> accumulator) {
         if (payload == null) {
-            return Optional.empty();
+            return;
         }
         if (payload instanceof Map<?, ?> map) {
             Object jobs = map.get("jobs");
             if (jobs instanceof Iterable<?> iterable) {
                 for (Object item : iterable) {
-                    Optional<String> found = extractJobIdByName(item, jobName);
-                    if (found.isPresent()) {
-                        return found;
-                    }
+                    collectJobsByName(item, accumulator);
                 }
             }
             Object nameValue = map.get("jobName");
-            if (jobName.equals(nameValue)) {
-                Object id = map.get("jobId");
-                return Optional.ofNullable(id == null ? null : String.valueOf(id));
+            Object idValue = map.get("jobId");
+            if (nameValue != null && idValue != null) {
+                accumulator.put(String.valueOf(nameValue), String.valueOf(idValue));
             }
         } else if (payload instanceof Iterable<?> iterable) {
             for (Object item : iterable) {
-                Optional<String> found = extractJobIdByName(item, jobName);
-                if (found.isPresent()) {
-                    return found;
-                }
+                collectJobsByName(item, accumulator);
             }
         }
-        return Optional.empty();
+    }
+
+    private String deriveStatus(boolean enabled, boolean hasEndpoint, String jobId, String liveJobId) {
+        if (!enabled) {
+            return "disabled";
+        }
+        if (!hasEndpoint) {
+            return "invalid-connection";
+        }
+        if (StringUtils.isNotBlank(liveJobId)) {
+            return "running";
+        }
+        if (StringUtils.isNotBlank(jobId)) {
+            return "missing";
+        }
+        return "pending";
     }
 
     private String buildJobRequest(String jobName,
@@ -457,4 +510,5 @@ public class SeatunnelJobService {
     private record MysqlEndpoint(String host, int port, String database, String username, String password,
                                  String jdbcUrl, String baseJdbcUrl) {
     }
+
 }

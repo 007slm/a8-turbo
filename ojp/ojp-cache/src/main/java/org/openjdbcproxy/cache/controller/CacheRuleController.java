@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.cache.entity.CacheRule;
+import org.openjdbcproxy.cache.model.SeatunnelJobView;
 import org.openjdbcproxy.cache.repository.CacheRuleRepository;
 import org.openjdbcproxy.cache.service.SeatunnelJobService;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,8 +45,12 @@ public class CacheRuleController {
     public List<CacheRule> getRuleList() {
         log.info("获取缓存规则列表（按数据库分组）");
         List<CacheRule> rules = cacheRuleRepository.findAll();
+        List<CacheRule> enriched = new ArrayList<>(rules.size());
+        for (CacheRule rule : rules) {
+            enriched.add(enrichRuleWithJobs(rule));
+        }
         log.info("成功获取缓存规则列表，数据库数量: {}", rules.size());
-        return rules;
+        return enriched;
     }
 
 
@@ -68,7 +74,7 @@ public class CacheRuleController {
             persistedRule = cacheRuleRepository.save(persistedRule);
         }
 
-        return persistedRule;
+        return enrichRuleWithJobs(persistedRule);
     }
 
     @PutMapping("/{ruleId}")
@@ -88,7 +94,7 @@ public class CacheRuleController {
             persistedRule = cacheRuleRepository.save(persistedRule);
         }
 
-        return persistedRule;
+        return enrichRuleWithJobs(persistedRule);
     }
 
 
@@ -106,6 +112,15 @@ public class CacheRuleController {
             }
         });
         cacheRuleRepository.deleteById(ruleId);
+    }
+
+    private CacheRule enrichRuleWithJobs(CacheRule rule) {
+        if (rule == null) {
+            return null;
+        }
+        List<SeatunnelJobView> jobs = seatunnelJobService.describeRuleJobs(rule);
+        rule.setSeatunnelJobs(jobs);
+        return rule;
     }
 
     private void updateRedisIndexes(CacheRule latest, CacheRule previous) {

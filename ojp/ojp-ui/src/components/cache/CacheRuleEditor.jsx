@@ -446,33 +446,36 @@ const CacheRuleEditor = () => {
           size={16}
           style={{ width: '100%' }}
         >
-          <Space align="center" size={12}>
-            <Title level={3} style={{ margin: 0 }}>
-              {ruleHeading}
-            </Title>
-            <Badge
-              status={isEditing ? 'processing' : 'default'}
-              text={isEditing ? '编辑模式' : '创建模式'}
-            />
-          </Space>
+          <div className="page-header-bar panel-ghost">
+            <div className="page-header-title">
+              <Title level={3} style={{ margin: 0 }}>
+                {ruleHeading}
+              </Title>
+              <Badge
+                status={isEditing ? 'processing' : 'default'}
+                text={isEditing ? '编辑模式' : '创建模式'}
+              />
+              <span className="pill">{isQueryRule ? '慢查询匹配' : '表名匹配'}</span>
+            </div>
+            <div className="page-actions">
+              <Button onClick={handleCancel}>
+                返回
+              </Button>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                loading={isSaving}
+                onClick={handleSubmitRule}
+              >
+                保存规则
+              </Button>
+            </div>
+          </div>
 
           <Card 
+            className="section-card"
             title="缓存规则配置"
-            extra={
-              <Space>
-                <Button onClick={handleCancel}>
-                  返回
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<SaveOutlined />}
-                  loading={isSaving}
-                  onClick={handleSubmitRule}
-                >
-                  保存规则
-                </Button>
-              </Space>
-            }
+            extra={<Tag color="blue">{watchedConnHash || editingRule?.connHash ? '目标连接已选' : '请选择连接'}</Tag>}
           >
             <Space direction="vertical" size={16} style={{ width: '100%' }}>
               <Form
@@ -777,6 +780,7 @@ const CacheRuleEditor = () => {
         open={Boolean(queryDetailId)}
         onClose={() => setQueryDetailId(null)}
         destroyOnClose
+        styles={{ body: { background: '#f7f9fc' } }}
       >
         <Spin spinning={queryDetailLoading}>
           {detailRecord?.id ? (

@@ -1,47 +1,48 @@
-import React from 'react';
-import { Card, List, Statistic, Divider, Tag, Space, Typography, Empty, Spin } from 'antd';
-import { BarChartOutlined } from '@ant-design/icons';
+import React from 'react'
+import { List, Statistic, Divider, Tag, Space, Typography, Empty, Spin } from 'antd'
+import { BarChartOutlined } from '@ant-design/icons'
+import { MagicCard } from '../magicui'
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph } = Typography
 
 const MetricDetails = ({ metricDetails, loading }) => {
   if (loading) {
     return (
-      <Card title="指标详情" size="small">
+      <MagicCard title="指标详情" description="选中指标后展示详细测量值" icon={<BarChartOutlined />} size="small">
         <Spin />
-      </Card>
-    );
+      </MagicCard>
+    )
   }
-  
+
   if (!metricDetails) {
     return (
-      <Card title="指标详情" size="small">
-        <Empty description="请选择一个指标查看详情" />
-      </Card>
-    );
+      <MagicCard title="指标详情" description="请选择一个指标查看详情" icon={<BarChartOutlined />} size="small">
+        <Empty description="等待选择指标" />
+      </MagicCard>
+    )
   }
-  
-  const { name, description, baseUnit, measurements, availableTags } = metricDetails;
-  
+
+  const { name, description, baseUnit, measurements, availableTags } = metricDetails
+
   return (
-    <Card title={name} size="small">
+    <MagicCard title={name} description={baseUnit ? `单位：${baseUnit}` : '指标详情'} icon={<BarChartOutlined />} size="small">
       {description && (
         <>
           <Paragraph>{description}</Paragraph>
           <Divider />
         </>
       )}
-      
+
       <div style={{ marginBottom: 16 }}>
         <Text strong>测量值</Text>
       </div>
-      
+
       <List
         size="small"
         dataSource={measurements || []}
-        renderItem={item => (
+        renderItem={(item) => (
           <List.Item>
-            <Statistic 
+            <Statistic
               title={item.statistic}
               value={item.value}
               precision={2}
@@ -52,21 +53,23 @@ const MetricDetails = ({ metricDetails, loading }) => {
         )}
         locale={{ emptyText: '无测量值数据' }}
       />
-      
+
       {availableTags && availableTags.length > 0 && (
         <>
           <Divider>可用标签</Divider>
           <List
             size="small"
             dataSource={availableTags}
-            renderItem={tag => (
+            renderItem={(tag) => (
               <List.Item>
                 <div style={{ width: '100%' }}>
                   <Text strong>{tag.tag}: </Text>
                   <div style={{ marginTop: 8 }}>
                     <Space wrap>
                       {tag.values.map((value, i) => (
-                        <Tag key={i} color="blue">{value}</Tag>
+                        <Tag key={i} color="blue">
+                          {value}
+                        </Tag>
                       ))}
                     </Space>
                   </div>
@@ -77,8 +80,8 @@ const MetricDetails = ({ metricDetails, loading }) => {
           />
         </>
       )}
-    </Card>
-  );
-};
+    </MagicCard>
+  )
+}
 
-export default MetricDetails;
+export default MetricDetails

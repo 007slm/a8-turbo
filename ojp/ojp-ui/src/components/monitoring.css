@@ -63,27 +63,6 @@
   margin-bottom: 24px;
 }
 
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.status-connected {
-  color: #52c41a;
-  background-color: #f6ffed;
-  border: 1px solid #b7eb8f;
-}
-
-.status-disconnected {
-  color: #ff4d4f;
-  background-color: #fff2f0;
-  border: 1px solid #ffb3b3;
-}
-
 .help-section {
   margin-top: 24px;
 }

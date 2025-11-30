@@ -25,6 +25,8 @@ import QueryCache from './components/cache/QueryCache'
 
 import { fetchSystemStatus } from './services/api'
 import './App.css'
+import './components/magicui/styles.css'
+import { StatusPill } from './components/magicui'
 
 const { Header, Sider, Content } = Layout
 
@@ -281,11 +283,11 @@ function AppContent() {
                 {/* 系统状态指示器 */}
                 <div className="status-indicator">
                   {statusLoading ? (
-                    <span>检查中...</span>
+                    <StatusPill label="状态检查中" status="default" />
                   ) : isSystemUp() ? (
-                    <span className="status-connected">系统正常</span>
+                    <StatusPill label="系统正常" status="success" />
                   ) : (
-                    <span className="status-disconnected">系统异常</span>
+                    <StatusPill label="系统异常" status="danger" />
                   )}
                 </div>
 

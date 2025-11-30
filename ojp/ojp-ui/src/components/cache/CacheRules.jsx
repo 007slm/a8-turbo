@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Button,
-  Card,
   Drawer,
+  Input,
   List,
   Popconfirm,
+  Segmented,
   Space,
+  Switch,
   Table,
   Tag,
   Tooltip,
@@ -18,10 +20,14 @@ import {
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { ruleApi } from '../../services/api'
+import { MagicCard, StatusPill } from '../magicui'
 
 const { Text } = Typography
 
@@ -48,6 +54,14 @@ const renderJobStatusTag = (status) => {
 const CacheRules = () => {
   const navigate = useNavigate()
   const [activeRule, setActiveRule] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [onlyEnabled, setOnlyEnabled] = useState(false)
+  const tableContainerRef = useRef(null)
+  const [tableHeights, setTableHeights] = useState({
+    wrapper: 520,
+    body: 380,
+  })
 
   const {
     data: rules = [],
@@ -90,18 +104,97 @@ const CacheRules = () => {
     }
   }
 
+  const deriveRuleType = (record) =>
+    record.ruleType ||
+    (Array.isArray(record.tables) && record.tables.length > 0
+      ? 'TABLES_ANY'
+      : 'QUERY_IDS')
+
+  const filteredRules = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase()
+    return rules.filter((rule) => {
+      const currentType = deriveRuleType(rule)
+      const matchesType =
+        typeFilter === 'all' ||
+        (typeFilter === 'tables' && currentType === 'TABLES_ANY') ||
+        (typeFilter === 'queries' && currentType !== 'TABLES_ANY')
+      const matchesEnabled = !onlyEnabled || rule.enabled
+      const searchTargets = [
+        rule.name,
+        rule.connHash,
+        ...(rule.tables || []),
+        ...(rule.queryIds || []),
+        ...(rule.slowQueryIds || []),
+      ]
+      const matchesSearch =
+        !keyword ||
+        searchTargets.some((target) =>
+          (target || '').toString().toLowerCase().includes(keyword),
+        )
+      return matchesType && matchesEnabled && matchesSearch
+    })
+  }, [rules, searchTerm, typeFilter, onlyEnabled])
+
+  const totalRules = rules.length
+  const enabledRules = rules.filter((rule) => rule.enabled).length
+  const tableRuleCount = rules.filter((rule) => deriveRuleType(rule) === 'TABLES_ANY').length
+  const queryRuleCount = totalRules - tableRuleCount
+  const seatunnelSynced = rules.filter((rule) => Object.keys(rule.seatunnelJobIds || {}).length > 0).length
+  const updateTableHeight = useCallback(() => {
+    if (!tableContainerRef.current || typeof window === 'undefined') return
+    requestAnimationFrame(() => {
+      const container = tableContainerRef.current
+      const rect = container.getBoundingClientRect()
+      const available = window.innerHeight - rect.top - 8
+      const wrapper = Math.max(available, 320)
+      const headerEl = container.querySelector('.ant-table-thead')
+      const paginationEl = container.querySelector('.ant-table-pagination') || container.querySelector('.ant-pagination')
+      const headerHeight = headerEl?.getBoundingClientRect().height ?? 54
+      const paginationHeight = paginationEl?.getBoundingClientRect().height ?? 0
+      const body = Math.max(wrapper - headerHeight - paginationHeight - 24, 200)
+      setTableHeights({ wrapper, body })
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    updateTableHeight()
+    const handleResize = () => updateTableHeight()
+    window.addEventListener('resize', handleResize)
+    let observer
+    if (typeof ResizeObserver !== 'undefined' && tableContainerRef.current) {
+      observer = new ResizeObserver(() => updateTableHeight())
+      observer.observe(tableContainerRef.current)
+    }
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      observer?.disconnect()
+    }
+  }, [updateTableHeight])
+
+  useEffect(() => {
+    updateTableHeight()
+  }, [filteredRules.length, searchTerm, typeFilter, onlyEnabled, updateTableHeight])
+
   const columns = [
     {
       title: '规则名称',
       dataIndex: 'name',
       key: 'name',
-      render: (name) => <Text strong>{name}</Text>,
+      width: 260,
+      ellipsis: true,
+      fixed: 'left',
+      render: (name) => (
+        <Text strong title={name}>
+          {name}
+        </Text>
+      ),
     },
     {
       title: '类型',
       dataIndex: 'ruleType',
       key: 'ruleType',
       width: 140,
+      fixed: 'left',
       render: (_, record) => {
         const type =
           record.ruleType ||
@@ -119,6 +212,7 @@ const CacheRules = () => {
       title: '连接哈希',
       dataIndex: 'connHash',
       key: 'connHash',
+      width: 220,
       render: (connHash) =>
         connHash ? (
           <Tooltip title={connHash}>
@@ -131,6 +225,7 @@ const CacheRules = () => {
     {
       title: '条件',
       key: 'conditions',
+      width: 280,
       render: (_, record) => {
         const type =
           record.ruleType ||
@@ -208,6 +303,7 @@ const CacheRules = () => {
       title: '操作',
       key: 'action',
       width: 180,
+      fixed: 'right',
       render: (_, record) => (
         <Space size={8}>
           <Button
@@ -233,40 +329,108 @@ const CacheRules = () => {
     },
   ]
 
+  const toolbar = (
+    <div className="cache-rules-toolbar">
+      <Input
+        placeholder="搜索规则、连接、表名或慢查询"
+        prefix={<SearchOutlined />}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        allowClear
+        size="large"
+        style={{ flex: 1, minWidth: 260 }}
+      />
+      <Segmented
+        value={typeFilter}
+        onChange={setTypeFilter}
+        size="large"
+        options={[
+          { label: '全部规则', value: 'all' },
+          { label: '表名匹配', value: 'tables' },
+          { label: '慢查询匹配', value: 'queries' },
+        ]}
+      />
+      <Space align="center" size={8}>
+        <Switch checked={onlyEnabled} onChange={setOnlyEnabled} />
+        <Text type="secondary">仅查看启用</Text>
+      </Space>
+    </div>
+  )
+
   return (
     <>
-      <div className="page-header-bar panel-ghost">
-        <div className="page-header-title">
-          <Text>缓存规则列表</Text>
-          <span className="pill">Seatunnel 作业可视化</span>
-        </div>
-        <div className="page-actions">
-          <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
-            刷新
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreateRule}
+      <div className="cache-page">
+        <MagicCard
+          title="缓存规则中心"
+          description="Seatunnel 覆盖、启用率及类型分布一目了然"
+          icon={<DatabaseOutlined />}
+          className="cache-table-card"
+          extra={
+            <Space size={12} wrap>
+              <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching}>
+                刷新
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateRule}>
+                创建缓存规则
+              </Button>
+            </Space>
+          }
+        >
+          <div className="cache-stat-grid">
+            <div className="cache-stat-card">
+              <div className="cache-stat-label">Seatunnel 映射</div>
+              <div className="cache-stat-value">{seatunnelSynced}</div>
+              <div className="cache-stat-meta">
+                {totalRules ? `覆盖 ${Math.round((seatunnelSynced / (totalRules || 1)) * 100)}% 的规则` : '尚无映射'}
+              </div>
+            </div>
+            <div className="cache-stat-card">
+              <div className="cache-stat-label">规则总数</div>
+              <div className="cache-stat-value">{totalRules}</div>
+              <div className="cache-stat-meta">全部记录</div>
+            </div>
+            <div className="cache-stat-card">
+              <div className="cache-stat-label">启用中</div>
+              <div className="cache-stat-value">{enabledRules}</div>
+              <div className="cache-stat-meta">
+                占比 {totalRules ? Math.round((enabledRules / (totalRules || 1)) * 100) : 0}%
+              </div>
+            </div>
+            <div className="cache-stat-card">
+              <div className="cache-stat-label">表名匹配</div>
+              <div className="cache-stat-value">{tableRuleCount}</div>
+              <div className="cache-stat-meta">Tables Any</div>
+            </div>
+            <div className="cache-stat-card">
+              <div className="cache-stat-label">慢查询规则</div>
+              <div className="cache-stat-value">{queryRuleCount}</div>
+              <div className="cache-stat-meta">Query IDs</div>
+            </div>
+          </div>
+
+          {toolbar}
+          <div
+            className="cache-table-wrapper"
+            ref={tableContainerRef}
+            style={{ height: tableHeights.wrapper }}
           >
-            创建缓存规则
-          </Button>
-        </div>
+            <Table
+              rowKey="id"
+              columns={columns}
+              dataSource={filteredRules}
+              loading={isLoading}
+              bordered
+              size="large"
+              scroll={{ x: 1400, y: tableHeights.body }}
+              style={{ height: '100%' }}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: false,
+              }}
+            />
+          </div>
+        </MagicCard>
       </div>
-      <Card className="section-card">
-        <Table
-          rowKey="id"
-          columns={columns}
-          dataSource={rules}
-          loading={isLoading}
-          bordered
-          size="middle"
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: false,
-          }}
-        />
-      </Card>
 
       <Drawer
         title={activeRule ? `Seatunnel 作业详情 - ${activeRule.name || activeRule.id}` : 'Seatunnel 作业详情'}

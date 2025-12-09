@@ -15891,6 +15891,7 @@ CREATE TABLE orders
     id         BIGINT AUTO_INCREMENT NOT NULL,
     order_date datetime              NULL,
     user_id    BIGINT                NULL,
+    Total      DECIMAL(10,2)         NULL,
     CONSTRAINT `PRIMARY` PRIMARY KEY (id)
 );
 

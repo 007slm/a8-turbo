@@ -34,7 +34,7 @@ function AppContent() {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  
+
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
     const path = location.pathname
@@ -54,7 +54,7 @@ function AppContent() {
 
     return 'system-monitoring'
   }
-  
+
   const selectedKey = getSelectedKey()
   const services = getAllServices()
 
@@ -78,7 +78,7 @@ function AppContent() {
     if (statusLoading) return null;
     if (isError) return false;
     if (!systemStatus) return false;
-    
+
     // 检查状态字段是否为 UP
     return systemStatus.status === 'UP';
   }
@@ -184,14 +184,14 @@ function AppContent() {
       'shopservice-chinook': '/shopservice/chinook',
 
     }
-    
+
     // 处理服务监控路由
     if (key.startsWith('monitoring-') && key !== 'monitoring-overview') {
       const serviceKey = key.replace('monitoring-', '')
       navigate(`/monitoring/${serviceKey}`)
       return
     }
-    
+
     navigate(routes[key] || '/')
   }
 
@@ -225,9 +225,9 @@ function AppContent() {
       <AntdApp>
         <Layout style={{ minHeight: '100vh' }}>
           {/* 侧边栏 */}
-          <Sider 
-            trigger={null} 
-            collapsible 
+          <Sider
+            trigger={null}
+            collapsible
             collapsed={collapsed}
             style={{
               background: colorBgContainer,
@@ -236,10 +236,10 @@ function AppContent() {
           >
             <div className="logo-container">
               <div className="logo">
-                {collapsed ? 'OJP' : 'OJP Server'}
+                {collapsed ? 'A8' : 'A8 Platform'}
               </div>
             </div>
-            
+
             <Menu
               mode="inline"
               selectedKeys={[selectedKey]}
@@ -273,7 +273,7 @@ function AppContent() {
                 >
                   {toggleIcon}
                 </button>
-                
+
                 <div className="breadcrumb">
                   {currentMenuLabel || '系统监控'}
                 </div>
@@ -313,7 +313,9 @@ function AppContent() {
                 minHeight: 280,
                 background: colorBgContainer,
                 borderRadius: borderRadiusLG,
-                overflow: 'auto',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <Routes>

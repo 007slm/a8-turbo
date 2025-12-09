@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
-import { 
-  Card, 
-  Table, 
-  Button, 
-  Space, 
-  Tag, 
+import React, { useState, useRef, useEffect } from 'react'
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
   Input,
   message,
   Tooltip,
@@ -13,7 +13,7 @@ import {
   Drawer,
   Descriptions
 } from 'antd'
-import { 
+import {
   DatabaseOutlined,
   EyeOutlined,
   ReloadOutlined,
@@ -30,6 +30,23 @@ const QueryCache = () => {
   const [searchText, setSearchText] = useState('')
   const [selectedQuery, setSelectedQuery] = useState(null)
   const [showDetailDrawer, setShowDetailDrawer] = useState(false)
+  const tableContainerRef = useRef(null)
+  const [scrollY, setScrollY] = useState(500)
+
+  // Dynamic Scroll Height Calculation
+  useEffect(() => {
+    if (!tableContainerRef.current) return
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        // Calculate available height: Container Height - Header (~55px) - Pagination (~48px)
+        const newHeight = entry.contentRect.height - 103 // 55 (header) + 48 (pagination)
+        // Ensure a reasonable minimum
+        setScrollY(Math.max(newHeight, 300))
+      }
+    })
+    resizeObserver.observe(tableContainerRef.current)
+    return () => resizeObserver.disconnect()
+  }, [])
 
   // 获取查询列表
   const { data: queriesData, isLoading, refetch: refetchQueries } = useQuery(
@@ -44,7 +61,7 @@ const QueryCache = () => {
   // 处理按连接哈希分组的数据结构
   const processGroupedData = (groupedData) => {
     if (!groupedData) return []
-    
+
     const flattenedData = []
     Object.entries(groupedData).forEach(([connHash, items]) => {
       if (Array.isArray(items)) {
@@ -65,7 +82,7 @@ const QueryCache = () => {
   const filteredQueries = queries.filter(query => {
     if (!searchText) return true
     return query.sql?.toLowerCase().includes(searchText.toLowerCase()) ||
-           query.id?.toLowerCase().includes(searchText.toLowerCase())
+      query.id?.toLowerCase().includes(searchText.toLowerCase())
   })
 
   // 查看查询详情
@@ -136,18 +153,6 @@ const QueryCache = () => {
       },
     },
     {
-      title: '执行时间',
-      dataIndex: 'executionTime',
-      key: 'executionTime',
-      width: 100,
-      sorter: (a, b) => (a.executionTime || 0) - (b.executionTime || 0),
-      render: (time) => (
-        <Text strong style={{ color: time > 1000 ? '#ff4d4f' : '#52c41a' }}>
-          {time}ms
-        </Text>
-      ),
-    },
-    {
       title: '查询类型',
       dataIndex: 'queryType',
       key: 'queryType',
@@ -173,14 +178,28 @@ const QueryCache = () => {
       },
     },
     {
+      title: '执行时间',
+      dataIndex: 'executionTime',
+      key: 'executionTime',
+      width: 100,
+      fixed: 'right',
+      sorter: (a, b) => (a.executionTime || 0) - (b.executionTime || 0),
+      render: (time) => (
+        <Text strong style={{ color: time > 1000 ? '#ff4d4f' : '#52c41a' }}>
+          {time}ms
+        </Text>
+      ),
+    },
+    {
       title: '操作',
       key: 'action',
       width: 80,
+      fixed: 'right',
       render: (_, record) => (
         <Tooltip title="查看详情">
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
             size="small"
             onClick={() => viewQueryDetail(record)}
           />
@@ -190,8 +209,13 @@ const QueryCache = () => {
   ]
 
   return (
-    <div className="query-cache">
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="query-cache" style={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <div>
           <Title level={3} style={{ margin: 0 }}>
             <ThunderboltOutlined style={{ marginRight: 8, color: '#1890ff' }} />
@@ -199,7 +223,7 @@ const QueryCache = () => {
           </Title>
         </div>
         <Space>
-          <Button 
+          <Button
             type="primary"
             icon={<ReloadOutlined />}
             onClick={() => {
@@ -214,7 +238,7 @@ const QueryCache = () => {
       </div>
 
       {/* 搜索和操作 */}
-      <Card size="small" style={{ marginBottom: 16 }}>
+      <Card size="small" style={{ marginBottom: 16, flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Search
             placeholder="搜索SQL语句或查询ID"
@@ -228,23 +252,33 @@ const QueryCache = () => {
       </Card>
 
       {/* 查询列表 */}
-      <Card size="small">
-        <Table
-          columns={columns}
-          dataSource={filteredQueries}
-          loading={isLoading}
-          rowKey="id"
-          pagination={{
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-            defaultPageSize: 10,
-            pageSizeOptions: ['10', '20', '50']
-          }}
-          scroll={{ x: 1000 }}
-          size="small"
-          bordered
-        />
+      <Card
+        size="small"
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+        bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: 12 }}
+      >
+        <div
+          ref={tableContainerRef}
+          className="cache-table-wrapper"
+          style={{ flex: 1, minHeight: 0 }}
+        >
+          <Table
+            columns={columns}
+            dataSource={filteredQueries}
+            loading={isLoading}
+            rowKey="id"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+              defaultPageSize: 20,
+              pageSizeOptions: ['10', '20', '50']
+            }}
+            scroll={{ x: 'max-content', y: scrollY }}
+            size="small"
+            bordered
+          />
+        </div>
       </Card>
 
       {/* 查询详情抽屉 */}
@@ -260,15 +294,15 @@ const QueryCache = () => {
             <Descriptions.Item label="查询ID">
               <Text code>{selectedQuery.id}</Text>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="连接哈希">
               <Tag color="blue">{selectedQuery.connHash}</Tag>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="SQL语句">
-              <div style={{ 
-                background: '#f5f5f5', 
-                padding: '8px', 
+              <div style={{
+                background: '#f5f5f5',
+                padding: '8px',
                 borderRadius: '4px',
                 fontFamily: 'monospace',
                 fontSize: '12px',
@@ -278,28 +312,28 @@ const QueryCache = () => {
                 {selectedQuery.sql}
               </div>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="参数">
               <Text code>{selectedQuery.parameters || '无'}</Text>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="执行时间">
               <Text strong style={{ color: selectedQuery.executionTime > 1000 ? '#ff4d4f' : '#52c41a' }}>
                 {selectedQuery.executionTime}ms
               </Text>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="查询类型">
               <Tag color={
                 selectedQuery.queryType === 'SELECT' ? 'green' :
-                selectedQuery.queryType === 'INSERT' ? 'blue' :
-                selectedQuery.queryType === 'UPDATE' ? 'orange' :
-                selectedQuery.queryType === 'DELETE' ? 'red' : 'default'
+                  selectedQuery.queryType === 'INSERT' ? 'blue' :
+                    selectedQuery.queryType === 'UPDATE' ? 'orange' :
+                      selectedQuery.queryType === 'DELETE' ? 'red' : 'default'
               }>
                 {selectedQuery.queryType}
               </Tag>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="涉及表格">
               <div>
                 {selectedQuery.tableNames ? (
@@ -313,11 +347,11 @@ const QueryCache = () => {
                 )}
               </div>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="标准化SQL">
-              <div style={{ 
-                background: '#f5f5f5', 
-                padding: '8px', 
+              <div style={{
+                background: '#f5f5f5',
+                padding: '8px',
                 borderRadius: '4px',
                 fontFamily: 'monospace',
                 fontSize: '12px',
@@ -327,31 +361,31 @@ const QueryCache = () => {
                 {selectedQuery.normalizedSql || selectedQuery.sql}
               </div>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="事务状态">
               <Tag color={selectedQuery.inTransaction ? 'orange' : 'green'}>
                 {selectedQuery.inTransaction ? '事务中' : '非事务'}
               </Tag>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="执行状态">
               <Tag color={selectedQuery.hasError ? 'red' : 'green'}>
                 {selectedQuery.hasError ? '执行失败' : '执行成功'}
               </Tag>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="客户端UUID">
               <Text code>{selectedQuery.clientUUID || '未知'}</Text>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="方法名称">
               <Text>{selectedQuery.methodName || '未知'}</Text>
             </Descriptions.Item>
-            
+
             <Descriptions.Item label="执行时间">
               <Text>
-                {selectedQuery.timestamp ? 
-                  new Date(parseInt(selectedQuery.timestamp)).toLocaleString('zh-CN') : 
+                {selectedQuery.timestamp ?
+                  new Date(parseInt(selectedQuery.timestamp)).toLocaleString('zh-CN') :
                   '未知'
                 }
               </Text>

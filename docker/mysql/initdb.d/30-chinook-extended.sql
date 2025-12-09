@@ -451,6 +451,33 @@ WHERE @order_item_need > 0
 ORDER BY idx
 LIMIT 100000;
 
+-- Update totals for new orders to match order items
+UPDATE orders AS o
+SET Total = (
+    SELECT ROUND(SUM(oi.quantity * p.price), 2)
+    FROM order_items AS oi 
+    JOIN products AS p ON oi.product_id = p.id
+    WHERE oi.order_id = o.id
+)
+WHERE o.id >= @first_new_order;
+
+SET @order_item_total := (SELECT COUNT(*) FROM order_items);
+SET @order_item_remaining := GREATEST(@target_order_items - @order_item_total, 0);
+
+UPDATE orders AS o
+SET Total = (
+    SELECT ROUND(SUM(oi.quantity * p.price), 2)
+    FROM order_items AS oi 
+    JOIN products AS p ON oi.product_id = p.id
+    WHERE oi.order_id = o.id
+)
+WHERE EXISTS (
+    SELECT 1
+    FROM order_items AS oi
+    WHERE oi.order_id = o.id
+      AND oi.id > @order_item_id - @order_item_remaining
+);
+
 -- Expand Reviews
 SET @review_need := GREATEST(@target_dim - (SELECT COUNT(*) FROM reviews), 0);
 SET @review_id := (SELECT IFNULL(MAX(id), 0) FROM reviews);

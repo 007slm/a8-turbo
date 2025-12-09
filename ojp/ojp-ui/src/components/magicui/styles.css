@@ -204,9 +204,33 @@
   color: #b91c1c;
 }
 
-.magic-status-pill-subtle {
-  background: rgba(255, 255, 255, 0.18);
+.magic-status-pill.magic-status-pill-subtle {
+  background: rgba(255, 255, 255, 0.12);
   color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.magic-status-pill.status-default.magic-status-pill-subtle {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.magic-status-pill.status-success.magic-status-pill-subtle {
+  background: rgba(74, 222, 128, 0.2);
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.magic-status-pill.status-warning.magic-status-pill-subtle {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.magic-status-pill.status-danger.magic-status-pill-subtle {
+  background: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.3);
 }
 
 .magic-status-pill .pill-icon {

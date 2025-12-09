@@ -272,9 +272,9 @@ const Monitoring = () => {
         <Space direction="vertical" size={16}>
           <StatusPill label={`状态 · ${heroStatusLabel}`} status={heroStatus} subtle />
           <div>
-            <h1 className="monitoring-hero-title">OJP Observability 控制塔</h1>
+            <h1 className="monitoring-hero-title">A8 Turbo 监控控制塔</h1>
             <p className="monitoring-hero-subtitle">
-              统一调度 JVM、缓存、HTTP 与业务指标，快速定位异常、联动排障，让门户体验像 MagicUI 一样精致。
+              统一调度 JVM、缓存、HTTP 与业务指标，快速定位异常、联动排障。
             </p>
           </div>
           <div className="monitoring-hero-footer">
@@ -394,7 +394,7 @@ const Monitoring = () => {
               </MagicCard>
             </TabPane>
 
-            <TabPane tab="OJP业务指标" key="business">
+            <TabPane tab="A8 业务指标" key="business">
               <OjpBusinessMetrics businessMetrics={businessMetrics} loading={businessLoading} />
             </TabPane>
 

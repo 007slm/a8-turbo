@@ -441,11 +441,7 @@ const CacheRuleEditor = () => {
   return (
     <>
       <Spin spinning={initialLoading}>
-        <Space
-          direction="vertical"
-          size={16}
-          style={{ width: '100%' }}
-        >
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingBottom: 20 }}>
           <div className="page-header-bar panel-ghost">
             <div className="page-header-title">
               <Title level={3} style={{ margin: 0 }}>
@@ -472,57 +468,69 @@ const CacheRuleEditor = () => {
             </div>
           </div>
 
-          <Card 
+          <Card
             className="section-card"
             title="缓存规则配置"
             extra={<Tag color="blue">{watchedConnHash || editingRule?.connHash ? '目标连接已选' : '请选择连接'}</Tag>}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+            bodyStyle={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
           >
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Space direction="vertical" size={16} style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
               <Form
                 layout="vertical"
                 form={ruleForm}
                 disabled={isSaving}
               >
-                <Form.Item
-                  label="规则名称"
-                  name="name"
-                  rules={[{ required: true, message: '请输入规则名称' }]}
-                >
-                  <Input placeholder="例如：查询缓存规则 A" />
-                </Form.Item>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                  <Form.Item
+                    label="规则名称"
+                    name="name"
+                    rules={[{ required: true, message: '请输入规则名称' }]}
+                  >
+                    <Input placeholder="例如：查询缓存规则 A" />
+                  </Form.Item>
+                  <Form.Item
+                    label="连接哈希"
+                    name="connHash"
+                    rules={[{ required: true, message: '请选择目标连接' }]}
+                  >
+                    <Select
+                      placeholder="选择连接"
+                      options={connectionOptions}
+                      allowClear
+                      showSearch
+                      optionFilterProp="label"
+                    />
+                  </Form.Item>
+                </div>
 
                 <Form.Item
                   label="规则描述"
                   name="description"
                 >
                   <TextArea
-                    rows={3}
+                    rows={2}
                     placeholder="可选：记录规则用途与背景"
                     maxLength={200}
                     showCount
                   />
                 </Form.Item>
 
-                <Form.Item
-                  label="连接哈希"
-                  name="connHash"
-                  rules={[{ required: true, message: '请选择目标连接' }]}
-                >
-                  <Select
-                    placeholder="选择连接"
-                    options={connectionOptions}
-                    allowClear
-                    showSearch
-                    optionFilterProp="label"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  label="规则类型"
-                  name="ruleType"
-                >
-                  <Select options={ruleTypeOptions} />
-                </Form.Item>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                  <Form.Item
+                    label="规则类型"
+                    name="ruleType"
+                  >
+                    <Select options={ruleTypeOptions} />
+                  </Form.Item>
+                  <Form.Item
+                    label="启用状态"
+                    name="enabled"
+                    valuePropName="checked"
+                  >
+                    <Switch checkedChildren="启用" unCheckedChildren="禁用" />
+                  </Form.Item>
+                </div>
 
                 {currentRuleType === RULE_TYPE.TABLES_ANY ? (
                   <Form.Item
@@ -547,18 +555,10 @@ const CacheRuleEditor = () => {
                     />
                   </Form.Item>
                 ) : null}
-
-                <Form.Item
-                  label="启用状态"
-                  name="enabled"
-                  valuePropName="checked"
-                >
-                  <Switch checkedChildren="启用" unCheckedChildren="禁用" />
-                </Form.Item>
               </Form>
 
               {isQueryRule ? (
-                <>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, marginTop: 16, borderTop: '1px solid #f0f0f0', paddingTop: 16 }}>
                   <div>
                     <Space size={8}>
                       <FilterOutlined />
@@ -586,17 +586,6 @@ const CacheRuleEditor = () => {
                       </Space>
                     </div>
                     <div style={{ clear: 'both', marginBottom: 16 }}></div>
-                    
-                    <Alert
-                      type={selectedQueryIds.length === 0 ? 'warning' : 'info'}
-                      showIcon
-                      message={
-                        selectedQueryIds.length === 0
-                          ? '尚未选择慢查询，保存前请至少勾选一条'
-                          : `当前已选择 ${selectedQueryIds.length} 条慢查询`
-                      }
-                      style={{ marginBottom: 16 }}
-                    />
 
                     <Space size={24} wrap style={{ marginBottom: 16 }}>
                       <Statistic
@@ -645,133 +634,134 @@ const CacheRuleEditor = () => {
                         重置筛选
                       </Button>
                     </Space>
+                  </div>
 
-                    <div
-                      style={{
-                        maxHeight: 520,
-                        overflowY: 'auto',
-                        paddingRight: 8,
+                  <div
+                    style={{
+                      flex: 1,
+                      overflowY: 'auto',
+                      paddingRight: 8,
+                      minHeight: 0
+                    }}
+                  >
+                    <List
+                      dataSource={mergedSlowQueryItems}
+                      loading={slowQueriesLoading}
+                      locale={{
+                        emptyText: (
+                          <Empty
+                            description="暂无慢查询数据"
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          />
+                        ),
                       }}
-                    >
-                      <List
-                        dataSource={mergedSlowQueryItems}
-                        loading={slowQueriesLoading}
-                        locale={{
-                          emptyText: (
-                            <Empty
-                              description="暂无慢查询数据"
-                              image={Empty.PRESENTED_IMAGE_SIMPLE}
-                            />
-                          ),
-                        }}
-                        renderItem={(item) => {
-                          const selected = Boolean(selectedQueriesMap[item.id])
-                          const tables = parseTables(item.tableNames)
-                          const visibleTables = tables.slice(0, 4)
-                          return (
-                            <List.Item
-                              key={item.id}
-                              style={{
-                                marginBottom: 12,
-                                borderRadius: 8,
-                                border: `1px solid ${selected ? '#1677ff' : '#f0f0f0'}`,
-                                background: selected ? 'rgba(22, 119, 255, 0.08)' : '#fff',
-                                padding: 16,
-                              }}
-                            >
-                              <div style={{ display: 'flex', gap: 16 }}>
-                                <Checkbox
-                                  checked={selected}
-                                  onChange={() => toggleQuerySelection(item)}
-                                  style={{ marginTop: 4 }}
-                                />
-                                <Space direction="vertical" size={8} style={{ flex: 1 }}>
+                      renderItem={(item) => {
+                        const selected = Boolean(selectedQueriesMap[item.id])
+                        const tables = parseTables(item.tableNames)
+                        const visibleTables = tables.slice(0, 4)
+                        return (
+                          <List.Item
+                            key={item.id}
+                            style={{
+                              marginBottom: 12,
+                              borderRadius: 8,
+                              border: `1px solid ${selected ? '#1677ff' : '#f0f0f0'}`,
+                              background: selected ? 'rgba(22, 119, 255, 0.08)' : '#fff',
+                              padding: 16,
+                            }}
+                          >
+                            <div style={{ display: 'flex', gap: 16, width: '100%' }}>
+                              <Checkbox
+                                checked={selected}
+                                onChange={() => toggleQuerySelection(item)}
+                                style={{ marginTop: 4 }}
+                              />
+                              <Space direction="vertical" size={8} style={{ flex: 1 }}>
+                                <Paragraph
+                                  copyable={{ text: item.sql }}
+                                  style={{
+                                    marginBottom: item.normalizedSql ? 4 : 0,
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                                  }}
+                                >
+                                  <Text strong>{item.sql}</Text>
+                                </Paragraph>
+                                {item.normalizedSql && item.normalizedSql !== item.sql ? (
                                   <Paragraph
-                                    copyable={{ text: item.sql }}
+                                    type="secondary"
                                     style={{
-                                      marginBottom: item.normalizedSql ? 4 : 0,
+                                      marginBottom: 0,
                                       whiteSpace: 'pre-wrap',
                                       wordBreak: 'break-word',
                                     }}
                                   >
-                                    <Text strong>{item.sql}</Text>
+                                    {item.normalizedSql}
                                   </Paragraph>
-                                  {item.normalizedSql && item.normalizedSql !== item.sql ? (
-                                    <Paragraph
-                                      type="secondary"
-                                      style={{
-                                        marginBottom: 0,
-                                        whiteSpace: 'pre-wrap',
-                                        wordBreak: 'break-word',
-                                      }}
-                                    >
-                                      {item.normalizedSql}
-                                    </Paragraph>
-                                  ) : null}
-                                  <Space size={8} wrap>
-                                    <Tooltip title={item.connHash}>
-                                      <Tag color="blue">{truncate(item.connHash, 18)}</Tag>
-                                    </Tooltip>
-                                    <Tag color={item.queryType === 'SELECT' ? 'green' : 'purple'}>
-                                      {item.queryType || '未知'}
-                                    </Tag>
-                                    <Tag color={item.executionTime > 1000 ? 'red' : item.executionTime > 500 ? 'orange' : 'green'}>
-                                      {formatExecutionTime(item.executionTime)}
-                                    </Tag>
-                                    <Tag color={item.hasError ? 'red' : 'green'}>
-                                      {item.hasError ? '执行失败' : '执行成功'}
-                                    </Tag>
-                                    {item._pinned ? <Tag color="blue">已选中</Tag> : null}
-                                    {item.inTransaction ? <Tag color="orange">事务中</Tag> : null}
-                                    <Button
-                                      type="link"
-                                      size="small"
-                                      onClick={() => setQueryDetailId(item.id)}
-                                      style={{ padding: 0 }}
-                                    >
-                                      查看详情
-                                    </Button>
-                                  </Space>
-                                  <Space size={8} wrap>
-                                    {visibleTables.length > 0 ? (
-                                      visibleTables.map((table) => (
-                                        <Tag key={table} color="cyan">
-                                          {table}
-                                        </Tag>
-                                      ))
-                                    ) : (
-                                      <Text type="secondary">未解析表信息</Text>
-                                    )}
-                                    {tables.length > visibleTables.length ? (
-                                      <Tag color="default">+{tables.length - visibleTables.length}</Tag>
-                                    ) : null}
-                                  </Space>
-                                  <Text type="secondary">
-                                    最近出现：{formatTimestamp(item.timestamp)}
-                                  </Text>
+                                ) : null}
+                                <Space size={8} wrap>
+                                  <Tooltip title={item.connHash}>
+                                    <Tag color="blue">{truncate(item.connHash, 18)}</Tag>
+                                  </Tooltip>
+                                  <Tag color={item.queryType === 'SELECT' ? 'green' : 'purple'}>
+                                    {item.queryType || '未知'}
+                                  </Tag>
+                                  <Tag color={item.executionTime > 1000 ? 'red' : item.executionTime > 500 ? 'orange' : 'green'}>
+                                    {formatExecutionTime(item.executionTime)}
+                                  </Tag>
+                                  <Tag color={item.hasError ? 'red' : 'green'}>
+                                    {item.hasError ? '执行失败' : '执行成功'}
+                                  </Tag>
+                                  {item._pinned ? <Tag color="blue">已选中</Tag> : null}
+                                  {item.inTransaction ? <Tag color="orange">事务中</Tag> : null}
+                                  <Button
+                                    type="link"
+                                    size="small"
+                                    onClick={() => setQueryDetailId(item.id)}
+                                    style={{ padding: 0 }}
+                                  >
+                                    查看详情
+                                  </Button>
                                 </Space>
-                              </div>
-                            </List.Item>
-                          )
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginTop: 16, textAlign: 'right' }}>
-                      <Pagination
-                        size="small"
-                        current={pagination.current}
-                        pageSize={pagination.pageSize}
-                        total={queriesPage?.total ?? 0}
-                        showSizeChanger={false}
-                        onChange={handlePaginationChange}
-                      />
-                    </div>
+                                <Space size={8} wrap>
+                                  {visibleTables.length > 0 ? (
+                                    visibleTables.map((table) => (
+                                      <Tag key={table} color="cyan">
+                                        {table}
+                                      </Tag>
+                                    ))
+                                  ) : (
+                                    <Text type="secondary">未解析表信息</Text>
+                                  )}
+                                  {tables.length > visibleTables.length ? (
+                                    <Tag color="default">+{tables.length - visibleTables.length}</Tag>
+                                  ) : null}
+                                </Space>
+                                <Text type="secondary">
+                                  最近出现：{formatTimestamp(item.timestamp)}
+                                </Text>
+                              </Space>
+                            </div>
+                          </List.Item>
+                        )
+                      }}
+                    />
                   </div>
-                </>
+                  <div style={{ marginTop: 16, textAlign: 'right', flexShrink: 0 }}>
+                    <Pagination
+                      size="small"
+                      current={pagination.current}
+                      pageSize={pagination.pageSize}
+                      total={queriesPage?.total ?? 0}
+                      showSizeChanger={false}
+                      onChange={handlePaginationChange}
+                    />
+                  </div>
+                </div>
               ) : null}
             </Space>
           </Card>
-        </Space>
+        </div>
       </Spin>
 
       <Drawer
@@ -798,40 +788,17 @@ const CacheRuleEditor = () => {
                   <Typography.Paragraph style={{ marginBottom: 0 }}>
                     {detailRecord.parameters}
                   </Typography.Paragraph>
-                ) : (
-                  <Text type="secondary">无</Text>
-                )}
+                ) : <Text type="secondary">无</Text>}
               </Descriptions.Item>
-              <Descriptions.Item label="连接">
-                <Tag color="blue">{detailRecord.connHash}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="类型">
-                <Tag color={detailRecord.queryType === 'SELECT' ? 'green' : 'purple'}>
-                  {detailRecord.queryType || '未知'}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="执行耗时">
-                {formatExecutionTime(detailRecord.executionTime)}
-              </Descriptions.Item>
-              <Descriptions.Item label="是否在事务中">
-                {detailRecord.inTransaction ? <Tag color="orange">是</Tag> : <Tag color="default">否</Tag>}
-              </Descriptions.Item>
-              <Descriptions.Item label="是否错误">
-                {detailRecord.hasError ? <Tag color="red">是</Tag> : <Tag color="green">否</Tag>}
-              </Descriptions.Item>
-              <Descriptions.Item label="涉及表">
-                {detailRecord.tableNames ? detailRecord.tableNames : <Text type="secondary">未解析</Text>}
-              </Descriptions.Item>
-              <Descriptions.Item label="采集时间">
-                {formatTimestamp(detailRecord.timestamp)}
+              <Descriptions.Item label="调用栈">
+                {detailRecord.stackTrace ? (
+                  <Typography.Paragraph ellipsis={{ rows: 2, expandable: true, symbol: '更多' }}>
+                    {detailRecord.stackTrace}
+                  </Typography.Paragraph>
+                ) : <Text type="secondary">-</Text>}
               </Descriptions.Item>
             </Descriptions>
-          ) : (
-            <Empty
-              description="未找到慢查询详情"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-            />
-          )}
+          ) : <Empty description="未找到详情" />}
         </Spin>
       </Drawer>
     </>

@@ -34,20 +34,26 @@ public class GrpcExceptionHandler {
      * @param sqlErrorType Indicates the type of error.
      */
     public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver, SqlErrorType sqlErrorType) {
-        Metadata metadata = new Metadata();
-        
-        SqlErrorResponse.Builder responseBuilder = SqlErrorResponse.newBuilder()
-                .setReason(e.getMessage())
-                .setSqlErrorType(sqlErrorType)
-                .setVendorCode(e.getErrorCode());
-        if (e.getSQLState() != null) {
-            responseBuilder.setSqlState(e.getSQLState());
-        }
+        try {
+            Metadata metadata = new Metadata();
+            
+            SqlErrorResponse.Builder responseBuilder = SqlErrorResponse.newBuilder()
+                    .setReason(e.getMessage())
+                    .setSqlErrorType(sqlErrorType)
+                    .setVendorCode(e.getErrorCode());
+            if (e.getSQLState() != null) {
+                responseBuilder.setSqlState(e.getSQLState());
+            }
 
-        SqlErrorResponse sqlErrorResponse = responseBuilder.build();
-        Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils.keyForProto(SqlErrorResponse.getDefaultInstance());
-        metadata.put(errorResponseKey, sqlErrorResponse);
-        
-        streamObserver.onError(Status.CANCELLED.asRuntimeException(metadata));
+            SqlErrorResponse sqlErrorResponse = responseBuilder.build();
+            Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils.keyForProto(SqlErrorResponse.getDefaultInstance());
+            metadata.put(errorResponseKey, sqlErrorResponse);
+            
+            streamObserver.onError(Status.CANCELLED.asRuntimeException(metadata));
+        } catch (RuntimeException re) {
+            log.error("Failed while sending error to client: " + re.getMessage() + ": " + e.getMessage(), e);
+            // Fallback to simple error if metadata construction fails
+            streamObserver.onError(Status.INTERNAL.withDescription("Failed to report SQL Exception: " + e.getMessage()).asRuntimeException());
+        }
     }
 }

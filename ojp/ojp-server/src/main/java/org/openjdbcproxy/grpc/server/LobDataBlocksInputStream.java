@@ -30,6 +30,8 @@ public class LobDataBlocksInputStream extends InputStream {
     private SettableFuture<Boolean> blockArrived;
     private AtomicBoolean fullyConsumed;
 
+    private final java.util.concurrent.locks.ReentrantLock lock = new java.util.concurrent.locks.ReentrantLock();
+
     public LobDataBlocksInputStream(LobDataBlock firstBlock) {
         this.uuid = UUID.randomUUID().toString();
         this.fullyConsumed = new AtomicBoolean(false);
@@ -66,13 +68,19 @@ public class LobDataBlocksInputStream extends InputStream {
                     }
                 }
                 log.debug("New block arrived");
-                synchronized (this) {
+                lock.lock();
+                try {
                     this.blockArrived = SettableFuture.create();
+                } finally {
+                    lock.unlock();
                 }
             }
-            synchronized (this) {
+            lock.lock();
+            try {
                 LobDataBlock nextBlock = this.blocksReceived.remove(0);
                 this.currentBlock = nextBlock.getData().toByteArray();
+            } finally {
+                lock.unlock();
             }
             this.currentIdx = -1;
             log.debug("Nex block positioned for reading");
@@ -83,9 +91,12 @@ public class LobDataBlocksInputStream extends InputStream {
     }
 
     public void addBlock(LobDataBlock lobDataBlock) {
-        synchronized (this) {
+        lock.lock();
+        try {
             this.blocksReceived.add(lobDataBlock);
             this.blockArrived.set(true);
+        } finally {
+            lock.unlock();
         }
     }
 

@@ -49,10 +49,20 @@ public class QueryPerformanceMonitor {
         }
     }
     
+    private final long updateGlobalAvgIntervalSeconds;
+    private final AtomicLong lastOverallAvgUpdateTime = new AtomicLong(0);
+
+    public QueryPerformanceMonitor() {
+        this(0);
+    }
+
+    public QueryPerformanceMonitor(long updateGlobalAvgIntervalSeconds) {
+        this.updateGlobalAvgIntervalSeconds = updateGlobalAvgIntervalSeconds;
+    }
+    
     private final ConcurrentHashMap<String, PerformanceRecord> operationRecords = new ConcurrentHashMap<>();
     private volatile double overallAverageExecutionTime = 0.0;
     private final AtomicLong totalOperations = new AtomicLong(0);
-    
     /**
      * Records the execution time for an operation.
      * 
@@ -128,21 +138,35 @@ public class QueryPerformanceMonitor {
     /**
      * Updates the overall average execution time.
      * This is calculated as the average of all current operation averages.
+     * Limits updates based on configured interval to reduce overhead.
      */
     private void updateOverallAverage() {
         if (operationRecords.isEmpty()) {
             overallAverageExecutionTime = 0.0;
             return;
         }
+
+        // Check if we should update based on interval
+        long now = System.currentTimeMillis();
+        long lastUpdate = lastOverallAvgUpdateTime.get();
+        if (updateGlobalAvgIntervalSeconds > 0 && 
+            (now - lastUpdate) < (updateGlobalAvgIntervalSeconds * 1000)) {
+            return;
+        }
         
-        double sum = operationRecords.values().stream()
-                .mapToDouble(PerformanceRecord::getAverageExecutionTime)
-                .sum();
-        
-        overallAverageExecutionTime = sum / operationRecords.size();
-        
-        log.trace("Updated overall average execution time to {}ms across {} operations", 
-                 overallAverageExecutionTime, operationRecords.size());
+        // Use CAS to ensure only one thread performs the calculation if interval is set
+        if (updateGlobalAvgIntervalSeconds <= 0 || 
+            lastOverallAvgUpdateTime.compareAndSet(lastUpdate, now)) {
+            
+            double sum = operationRecords.values().stream()
+                    .mapToDouble(PerformanceRecord::getAverageExecutionTime)
+                    .sum();
+            
+            overallAverageExecutionTime = sum / operationRecords.size();
+            
+            log.trace("Updated overall average execution time to {}ms across {} operations", 
+                     overallAverageExecutionTime, operationRecords.size());
+        }
     }
     
     /**

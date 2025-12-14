@@ -1,0 +1,96 @@
+networks:
+  a8:
+    external: false
+
+services:
+
+  # Shop Service服务
+  # shopservice:
+  #   build:
+  #     context: ./ojp
+  #     dockerfile: shopservice/Dockerfile
+  #     args:
+  #       - BUILDKIT_INLINE_CACHE=1
+  #   image: fluxdb-shopservice:0.0.7-alpha
+  #   container_name: shopservice
+  #   # 移除对外暴露的端口，通过Kong网关访问
+  #   # ports:
+  #   #   - "8180:8180"
+  #   #   - "5005:5005"  # Java远程调试端口
+  #   environment:
+  #     - JAVA_OPTS=-Xms256m -Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  #     - MAVEN_CONFIG=/root/.m2
+  #     - MAVEN_OPTS=-Dmaven.repo.local=/root/.m2/repository
+  #   # 健壮化启动：移除硬依赖顺序，改为启动前等待依赖就绪
+  #   command:
+  #     - sh
+  #     - -c
+  #     - |
+  #       set -e
+  #       echo "[shopservice] waiting for mysql:3306..."
+  #       for i in $(seq 1 120); do
+  #         (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) && break || sleep 1
+  #       done
+  #       (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) || { echo "[shopservice] mysql not ready after 120s"; exit 1; }
+  #       echo "[shopservice] waiting for ojp-server:8010 health..."
+  #       for i in $(seq 1 120); do
+  #         curl -sf http://ojp-server:8010/api/actuator/health >/dev/null && break || sleep 1
+  #       done
+  #       curl -sf http://ojp-server:8010/api/actuator/health >/dev/null || { echo "[shopservice] ojp-server not ready after 120s"; exit 1; }
+  #       exec java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.properties -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO -jar shopservice.jar
+  #   networks:
+  #     - a8
+
+  #   volumes:
+  #     - ./logs/shopservice:/app/logs
+  #     - ./docker/ojp/shopservice/application.properties:/app/config/application.properties
+
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "http://localhost:8280/actuator/health" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3
+
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    hostname: oracle
+    container_name: oracle
+    networks:
+      - a8
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=a8
+      - APP_USER=cdc_user
+      - APP_USER_PASSWORD=cdc_password
+    volumes:
+      - ./docker/oracle/initdb.d:/container-entrypoint-initdb.d
+      - ./docker/oracle/data:/opt/oracle/oradata
+
+  windows7:
+    image: dockurr/windows
+    container_name: windows7
+    environment:
+      - VERSION=7
+      - RAM_SIZE=8G
+      - CPU_CORES=4
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8006:8006"
+      - "53389:3389"
+      - "58080:8080"
+    volumes:
+      - ./docker/windows/storage:/storage
+      # 左侧路径是宿主机(Host)路径:
+      # - 如果是 WSL2 环境，D:\zhongjian 对应 /mnt/d/zhongjian
+      # - 如果是原生 Linux，请修改为实际路径
+      # 右侧 /shared 是容器内路径。Windows 7 启动后，会自动通过 SMB共享 访问该目录 (通常是 \\host.lan\shared)
+      - /mnt/d/zhongjian:/shared
+    stop_grace_period: 2m
+    restart: on-failure
+    networks:
+      - a8

@@ -35,21 +35,19 @@ public class GrpcExceptionHandler {
      */
     public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver, SqlErrorType sqlErrorType) {
         Metadata metadata = new Metadata();
-        try {
-            SqlErrorResponse.Builder responseBuilder = SqlErrorResponse.newBuilder()
-                    .setReason(e.getMessage())
-                    .setSqlErrorType(sqlErrorType)
-                    .setVendorCode(e.getErrorCode());
-            if (e.getSQLState() != null) {
-                responseBuilder.setSqlState(e.getSQLState());
-            }
-
-            SqlErrorResponse sqlErrorResponse = responseBuilder.build();
-            Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils.keyForProto(SqlErrorResponse.getDefaultInstance());
-            metadata.put(errorResponseKey, sqlErrorResponse);
-        } catch (RuntimeException re) {
-            log.error("Failed while sending error to client: " + re.getMessage() + ": " + e.getMessage(), e);
+        
+        SqlErrorResponse.Builder responseBuilder = SqlErrorResponse.newBuilder()
+                .setReason(e.getMessage())
+                .setSqlErrorType(sqlErrorType)
+                .setVendorCode(e.getErrorCode());
+        if (e.getSQLState() != null) {
+            responseBuilder.setSqlState(e.getSQLState());
         }
+
+        SqlErrorResponse sqlErrorResponse = responseBuilder.build();
+        Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils.keyForProto(SqlErrorResponse.getDefaultInstance());
+        metadata.put(errorResponseKey, sqlErrorResponse);
+        
         streamObserver.onError(Status.CANCELLED.asRuntimeException(metadata));
     }
 }

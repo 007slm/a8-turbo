@@ -9,7 +9,6 @@
 | Grafana | 3000 | [http://localhost:3000](http://localhost:3000) | 数据可视化平台，用于监控各项服务指标 |
 | Prometheus | 9090 | [http://localhost:9090](http://localhost:9090) | 监控和告警工具，收集和存储时间序列数据 |
 | NATS Dashboard | 8000 | [http://localhost:8000](http://localhost:8000) | NATS 消息系统的可视化监控面板 |
-| Flink Dashboard | 8081 | [http://localhost:8081](http://localhost:8081) | Apache Flink 流处理框架的管理控制台 |
 | SeaTunnel Zeta Master | 8080 | [http://localhost:8080](http://localhost:8080) | SeaTunnel Zeta 集群管理 REST 控制台（Swagger: `/swagger-ui/index.html`） |
 
 ### 数据库与存储服务
@@ -37,7 +36,8 @@
 | SeaTunnel Zeta Master (REST) | 8080 | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) | SeaTunnel Zeta 集群管理 REST 接口，可查询/管理作业 |
 | SeaTunnel Zeta Master (RPC) | 5801 | `seatunnel-master:5801` | SeaTunnel Zeta 集群 RPC 端口，供 worker 与 submitter 通信 |
 
-SeaTunnel 作业定义位于 `docker/seatunnel/jobs/`，默认启动脚本会通过 `seatunnel-submit` 容器以异步模式提交 `mysql_to_starrocks.conf` 作业，连接信息由 `docker/seatunnel/config/seatunnel.yaml` 提供。
+SeaTunnel 作业现在通过 OJP 系统动态创建和管理，不再使用静态配置文件。
+
 
 ### OJP服务
 
@@ -69,9 +69,8 @@ SeaTunnel 作业定义位于 `docker/seatunnel/jobs/`，默认启动脚本会通
 本项目包含多个 Docker Compose 配置文件：
 
 1. [docker-compose.yml](file:///E:/a8-turbo/docker-compose.yml) - 主配置文件，包含基础监控服务
-2. [docker-compose-cdc-sync.yml](file:///E:/a8-turbo/docker-compose-cdc-sync.yml) - CDC数据同步相关服务
-3. [docker-compose-smart-cache.yml](file:///E:/a8-turbo/docker-compose-smart-cache.yml) - Redis Smart Cache演示环境
-4. [docker-compose-ojp.yml](file:///E:/a8-turbo/docker-compose-ojp.yml) - OJP服务配置文件
+2. [docker-compose-smart-cache.yml](file:///E:/a8-turbo/docker-compose-smart-cache.yml) - Redis Smart Cache演示环境
+3. [docker-compose-ojp.yml](file:///E:/a8-turbo/docker-compose-ojp.yml) - OJP服务配置文件
 5. [docker-compose-cdc-sync-zeta.yml](file:///E:/a8-turbo/docker-compose-cdc-sync-zeta.yml) - SeaTunnel Zeta 集群（master/worker/submitter）与 CDC 作业编排
 
 ## 常用操作命令

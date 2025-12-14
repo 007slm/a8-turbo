@@ -62,14 +62,14 @@ public class SeatunnelJobService {
         if (!properties.isEnabled()) {
             return currentJobIds;
         }
-        Optional<MysqlEndpoint> targetEndpoint = parseEndpoint(newRule.getConnHash());
+        Optional<DatabaseEndpoint> targetEndpoint = parseEndpoint(newRule.getConnHash());
         if (targetEndpoint.isEmpty()) {
             log.warn("Skip Seatunnel sync for rule {}: unable to parse MySQL endpoint from connHash {}", newRule.getId(), newRule.getConnHash());
             cancelJobs(currentJobIds.values());
             return Collections.emptyMap();
         }
 
-        MysqlEndpoint endpoint = targetEndpoint.get();
+        DatabaseEndpoint endpoint = targetEndpoint.get();
         Map<String, String> normalisedToActual = resolveTables(newRule);
         Set<String> newTables = new HashSet<>(normalisedToActual.keySet());
 
@@ -128,8 +128,8 @@ public class SeatunnelJobService {
         storedJobIds.forEach(tables::putIfAbsent);
 
         Map<String, String> runningJobsByName = properties.isEnabled() ? listJobsByName() : Collections.emptyMap();
-        Optional<MysqlEndpoint> endpoint = parseEndpoint(rule.getConnHash());
-        String database = endpoint.map(MysqlEndpoint::database).orElse(null);
+        Optional<DatabaseEndpoint> endpoint = parseEndpoint(rule.getConnHash());
+        String database = endpoint.map(DatabaseEndpoint::database).orElse(null);
         boolean hasEndpoint = endpoint.isPresent();
 
         List<SeatunnelJobView> result = new ArrayList<>();
@@ -190,7 +190,7 @@ public class SeatunnelJobService {
     }
 
     private Optional<String> submitSingleTableJob(CacheRule rule,
-                                                MysqlEndpoint endpoint,
+                                                DatabaseEndpoint endpoint,
                                                 String tableName) {
         ensureRestClient();
         String database = endpoint.database();
@@ -339,8 +339,20 @@ public class SeatunnelJobService {
 
     private String buildJobRequest(String jobName,
                                    String resultTableName,
-                                   MysqlEndpoint endpoint,
+                                   DatabaseEndpoint endpoint,
                                    String tableName) {
+        if (endpoint instanceof MysqlEndpoint mysqlEndpoint) {
+            return buildMysqlJobRequest(jobName, resultTableName, mysqlEndpoint, tableName);
+        } else if (endpoint instanceof OracleEndpoint oracleEndpoint) {
+            return buildOracleJobRequest(jobName, resultTableName, oracleEndpoint, tableName);
+        }
+        throw new IllegalArgumentException("Unsupported endpoint type: " + endpoint.getClass().getName());
+    }
+
+    private String buildMysqlJobRequest(String jobName,
+                                        String resultTableName,
+                                        MysqlEndpoint endpoint,
+                                        String tableName) {
         StringBuilder sb = new StringBuilder();
         sb.append("env {\n");
         sb.append("  execution.parallelism = ").append(properties.getParallelism()).append("\n");
@@ -364,6 +376,41 @@ public class SeatunnelJobService {
         sb.append("  }\n");
         sb.append("}\n\n");
 
+        appendCommonTransformAndSink(sb, endpoint, resultTableName, tableName); // Changed to use resultTableName as source for sink if needed, but strict translation uses tableName in sink logic
+        return sb.toString();
+    }
+
+    private String buildOracleJobRequest(String jobName,
+                                         String resultTableName,
+                                         OracleEndpoint endpoint,
+                                         String tableName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("env {\n");
+        sb.append("  execution.parallelism = ").append(properties.getParallelism()).append("\n");
+        sb.append("  job.mode = \"STREAMING\"\n");
+        sb.append("  checkpoint.interval = ").append(properties.getCheckpointInterval()).append("\n");
+        sb.append("}\n\n");
+
+        sb.append("source {\n");
+        sb.append("  Oracle-CDC {\n");
+        sb.append("    result_table_name = \"").append(resultTableName).append("\"\n");
+        sb.append("    url = \"").append(endpoint.jdbcUrl()).append("\"\n");
+        sb.append("    username = \"").append(endpoint.username()).append("\"\n");
+        sb.append("    password = \"").append(endpoint.password()).append("\"\n");
+        sb.append("    database-names = [\"").append(endpoint.serviceName()).append("\"]\n");
+        sb.append("    schema-names = [\"").append(endpoint.schema()).append("\"]\n");
+        sb.append("    table-names = [\"").append(endpoint.schema()).append(".").append(tableName).append("\"]\n");
+        sb.append("    startup.mode = \"initial\"\n");
+        sb.append("    debezium.log.mining.strategy = \"").append(properties.getOracleLogMiningStrategy()).append("\"\n");
+        sb.append("    debezium.database.tablename.case.insensitive = false\n");
+        sb.append("  }\n");
+        sb.append("}\n\n");
+
+        appendCommonTransformAndSink(sb, endpoint, resultTableName, tableName);
+        return sb.toString();
+    }
+
+    private void appendCommonTransformAndSink(StringBuilder sb, DatabaseEndpoint endpoint, String resultTableName, String tableName) {
         sb.append("transform {\n");
         sb.append("}\n\n");
 
@@ -382,6 +429,7 @@ public class SeatunnelJobService {
         sb.append("    username = \"").append(properties.getStarrocksUsername()).append("\"\n");
         sb.append("    password = \"").append(properties.getStarrocksPassword()).append("\"\n");
         sb.append("    database = \"").append(endpoint.database()).append("\"\n");
+        // StarRocks table name usually matches source table name
         sb.append("    table = \"").append(tableName).append("\"\n");
         properties.getSinkProperties().forEach(
                 (key, value) -> sb.append("    sink.properties.").append(key).append(" = \"").append(value).append("\"\n")
@@ -389,9 +437,7 @@ public class SeatunnelJobService {
         sb.append("    sink.create_table.enable = true\n");
         sb.append("  }\n");
         sb.append("}\n");
-        log.info("job内容");
-        log.info(sb.toString());
-        return sb.toString();
+        log.info("job content generated for {}: \n{}", tableName, sb.toString());
     }
 
     private Map<String, String> normaliseTables(List<String> tables) {
@@ -442,11 +488,17 @@ public class SeatunnelJobService {
         return properties.getMysqlServerIdBase() + (hash % 1000);
     }
 
-    private Optional<MysqlEndpoint> parseEndpoint(String connHash) {
+    private Optional<DatabaseEndpoint> parseEndpoint(String connHash) {
         if (StringUtils.isBlank(connHash)) {
             return Optional.empty();
         }
         String trimmed = connHash.trim();
+        
+        // Oracle detection
+        if (trimmed.contains("oracle://") || trimmed.contains("jdbc:oracle:")) {
+            return parseOracleEndpoint(trimmed);
+        }
+
         int mysqlIdx = StringUtils.indexOf(trimmed, "mysql://");
         if (mysqlIdx < 0) {
             return Optional.empty();
@@ -487,6 +539,67 @@ public class SeatunnelJobService {
         }
     }
 
+    private Optional<DatabaseEndpoint> parseOracleEndpoint(String connHash) {
+         try {
+             // Expecting format like oracle://user:pass@host:1521/serviceName?schema=SCHEMA
+             // Or jdbc:oracle:thin:@host:1521/serviceName
+             
+             // Simplistic parsing for now, assuming standard URI structure if possible
+             // However, oracle JDBC URLs are notoriously complex. 
+             // We'll try to parse the "oracle://" part as a URI.
+             
+             String uriString = connHash;
+             if (!uriString.startsWith("oracle://") && !uriString.startsWith("jdbc:oracle:")) {
+                 return Optional.empty();
+             }
+             
+             // Convert jdbc:oracle:thin:@host:port/service to oracle://host:port/service for parsing if needed
+             // But let's assume the user provides our agreed format: oracle://user:pass@host:1521/serviceName?schema=SCHEMA
+             
+             if (uriString.startsWith("jdbc:oracle:")) {
+                 // Fallback or handle standard JDBC if it contains credentials
+                 // Standard JDBC usually doesn't have user/pass in URL for Oracle unless using OCI
+                 log.warn("Raw JDBC URL parsing for Oracle not fully implemented yet, use oracle:// scheme with user info");
+                 return Optional.empty();
+             }
+             
+             URI uri = new URI(uriString);
+             String host = uri.getHost();
+             int port = uri.getPort() > 0 ? uri.getPort() : properties.getOracleDefaultPort();
+             
+             JdbcUrlUtil.Credentials credentials = JdbcUrlUtil.extractCredentials(uri);
+             String username = credentials.username();
+             String password = credentials.password();
+             
+             if (StringUtils.isBlank(host) || StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+                 log.warn("Invalid Oracle connection string, missing host or credentials: {}", connHash);
+                 return Optional.empty();
+             }
+             
+             String path = uri.getPath(); // /serviceName
+             String serviceName = (path != null && path.length() > 1) ? path.substring(1) : "ORCL";
+             
+             // Query params for schema
+             String query = uri.getQuery();
+             String schema = username.toUpperCase(); // Default to username
+             if (query != null) {
+                 for (String param : query.split("&")) {
+                     String[] pair = param.split("=");
+                     if (pair.length == 2 && "schema".equalsIgnoreCase(pair[0])) {
+                         schema = pair[1];
+                     }
+                 }
+             }
+             
+             String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d/%s", host, port, serviceName);
+             return Optional.of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl));
+             
+         } catch (Exception e) {
+             log.warn("Failed to parse Oracle endpoint from {}: {}", connHash, e.getMessage());
+             return Optional.empty();
+         }
+    }
+
     private void ensureRestClient() {
         if (this.restClient != null) {
             return;
@@ -507,8 +620,25 @@ public class SeatunnelJobService {
         return this.restClient;
     }
 
+    private sealed interface DatabaseEndpoint permits MysqlEndpoint, OracleEndpoint {
+        String host();
+        int port();
+        String database();
+        String username();
+        String password();
+        String jdbcUrl();
+    }
+
     private record MysqlEndpoint(String host, int port, String database, String username, String password,
-                                 String jdbcUrl, String baseJdbcUrl) {
+                                 String jdbcUrl, String baseJdbcUrl) implements DatabaseEndpoint {
+    }
+
+    private record OracleEndpoint(String host, int port, String serviceName, String schema, String username, String password,
+                                  String jdbcUrl) implements DatabaseEndpoint {
+        @Override
+        public String database() {
+            return schema;
+        }
     }
 
 }

@@ -56,6 +56,10 @@ public class CircuitBreakerInterceptor implements StatementServiceInterceptor {
      */
     @Override
     public void onError(StatementServiceInterceptContext<?, ?> context, Throwable error) {
+        if (error == null) {
+            return;
+        }
+
         // 只处理executeUpdate方法的异常
         if (!"executeUpdate".equals(context.getMethodName()) && !"executeQuery".equals(context.getMethodName())) {
             return;

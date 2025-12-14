@@ -2,22 +2,21 @@ networks:
   a8:
     external: false
 
-
 include:
   - ./docker-compose-db.yml
   - ./docker-compose-cdc-sync-zeta.yml
   - ./docker-compose-kong.yml
-#  - ./docker-compose-ojp.yml
-#  - ./docker-compose-shopservice.yml
+  #  - ./docker-compose-ojp.yml
+  #  - ./docker-compose-shopservice.yml
   - ./docker-compose-ojp-local.yml
-
+  - ./docker-compose-addon.yml
 
 services:
   # 1. 自定义 DNS 服务器（dnsmasq）
   dns-server:
     image: andyshinn/dnsmasq
     volumes:
-      - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf  # 挂载解析规则
+      - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf # 挂载解析规则
     ports:
       - "50053:53/udp"
       - "50053:53/tcp"
@@ -108,4 +107,3 @@ services:
       - ./docker/phpredmin/custom-apache.conf:/etc/apache2/sites-enabled/000-default.conf
       - ./docker/phpredmin/config.php:/var/www/html/phpredmin/config.php
       - ./docker/phpredmin/index.php:/var/www/html/phpredmin/public/index.php
-

@@ -96,5 +96,18 @@ public class SeatunnelJobProperties {
     /**
      * HTTP timeout used when interacting with Seatunnel master.
      */
+    /**
+     * HTTP timeout used when interacting with Seatunnel master.
+     */
     private Duration requestTimeout = Duration.ofSeconds(15);
+
+    /**
+     * Default Oracle port.
+     */
+    private int oracleDefaultPort = 1521;
+
+    /**
+     * Oracle LogMiner strategy (e.g., online_catalog, redo_log_catalog).
+     */
+    private String oracleLogMiningStrategy = "online_catalog";
 }

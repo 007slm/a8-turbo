@@ -6,29 +6,26 @@ services:
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
     entrypoint: >
-      /bin/sh -c "
-      /opt/seatunnel/bin/seatunnel-cluster.sh -r master
-      "    
+      /bin/sh -c " /opt/seatunnel/bin/seatunnel-cluster.sh -r master "    
     ports:
       - "5801:5801"
       - "8080:8080"
-#    volumes:
-#      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
+    #    volumes:
+    #      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
     networks:
-      - a8
-
+      a8:
+        ipv4_address: 172.24.0.20
 
   seatunnel-worker1:
     image: apache/seatunnel
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
     entrypoint: >
-      /bin/sh -c "
-      /opt/seatunnel/bin/seatunnel-cluster.sh -r worker
-      " 
+      /bin/sh -c " /opt/seatunnel/bin/seatunnel-cluster.sh -r worker " 
     depends_on:
       - seatunnel-master
-#    volumes:
-#      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
+    #    volumes:
+    #      - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.21

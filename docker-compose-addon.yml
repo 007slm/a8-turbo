@@ -1,6 +1,9 @@
 networks:
   a8:
-    external: false
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
 
 services:
 
@@ -57,7 +60,8 @@ services:
     hostname: oracle
     container_name: oracle
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.50
     ports:
       - "1521:1521"
     environment:
@@ -93,4 +97,5 @@ services:
     stop_grace_period: 2m
     restart: on-failure
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.51

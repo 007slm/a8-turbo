@@ -6,15 +6,16 @@ services:
     image: kong:latest
     container_name: kong
     ports:
-      - "8000:8000"   # Proxy port
-      - "8443:8443"   # Proxy SSL port
-      - "8001:8001"   # Admin API
-      - "8444:8444"   # Admin API SSL
-      - "8002:8002"   # Kong Manager
-      - "8445:8445"   # Kong Manager SSL
+      - "8000:8000" # Proxy port
+      - "8443:8443" # Proxy SSL port
+      - "8001:8001" # Admin API
+      - "8444:8444" # Admin API SSL
+      - "8002:8002" # Kong Manager
+      - "8445:8445" # Kong Manager SSL
     networks:
-      - a8
-      
+      a8:
+        ipv4_address: 172.24.0.30
+
     depends_on:
       - ojp-server
       - shopservice
@@ -27,7 +28,7 @@ services:
       - KONG_ADMIN_GUI_URL=http://localhost:8002
       - KONG_ADMIN_GUI_PORT=8002
     healthcheck:
-      test: ["CMD", "kong", "health"]
+      test: [ "CMD", "kong", "health" ]
       interval: 10s
       timeout: 10s
       retries: 10

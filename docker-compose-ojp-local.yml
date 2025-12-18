@@ -1,6 +1,9 @@
 networks:
   a8:
-    external: false
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
 
 services:
   # 开发环境代理服务 - 将请求转发到宿主机的 ojp-server (8010端口)
@@ -8,13 +11,14 @@ services:
     image: alpine/socat:latest
     container_name: ojp-server-dev-proxy
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.40
     # 使用entrypoint确保参数正确传递
-    entrypoint: ["socat"]
-    command: ["TCP-LISTEN:8010,fork,reuseaddr", "TCP:host.docker.internal:8010"]
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:8010,fork,reuseaddr", "TCP:host.docker.internal:8010" ]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "8010"]
+      test: [ "CMD", "nc", "-z", "localhost", "8010" ]
       interval: 30s
       timeout: 10s
       start_period: 10s
@@ -25,13 +29,14 @@ services:
     image: alpine/socat:latest
     container_name: ojp-ui-dev-proxy
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.41
     # 使用entrypoint确保参数正确传递
-    entrypoint: ["socat"]
-    command: ["TCP-LISTEN:5173,fork,reuseaddr", "TCP:host.docker.internal:5173"]
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:5173,fork,reuseaddr", "TCP:host.docker.internal:5173" ]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "nc", "-z", "localhost", "5173"]
+      test: [ "CMD", "nc", "-z", "localhost", "5173" ]
       interval: 30s
       timeout: 10s
       start_period: 10s
@@ -42,7 +47,8 @@ services:
     image: alpine/socat:latest
     container_name: shopservice-dev-proxy
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.42
     # 使用entrypoint确保参数正确传递
     entrypoint: [ "socat" ]
     command: [ "TCP-LISTEN:8280,fork,reuseaddr", "TCP:host.docker.internal:8280" ]

@@ -1,6 +1,9 @@
 networks:
   a8:
-    external: false
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
 
 include:
   - ./docker-compose-db.yml
@@ -15,13 +18,15 @@ services:
   # 1. 自定义 DNS 服务器（dnsmasq）
   dns-server:
     image: andyshinn/dnsmasq
+    container_name: dns-server
     volumes:
       - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf # 挂载解析规则
     ports:
       - "50053:53/udp"
       - "50053:53/tcp"
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.2
     cap_add:
       - NET_ADMIN
 
@@ -34,7 +39,8 @@ services:
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.3
 
   grafana:
     image: grafana/grafana:latest
@@ -54,7 +60,8 @@ services:
       - GF_SERVER_ROOT_URL=http://localhost:3000/grafana
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.4
     depends_on:
       - prometheus
     volumes:
@@ -74,7 +81,8 @@ services:
     ports:
       - 6379:6379
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.5
 
   redis-exporter:
     image: oliver006/redis_exporter:latest
@@ -85,7 +93,8 @@ services:
     environment:
       - REDIS_ADDR=redis://redis:6379
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.6
     depends_on:
       - redis
 
@@ -97,7 +106,8 @@ services:
     # ports:
     #   - "50082:80"
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.7
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379

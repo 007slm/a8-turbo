@@ -32,6 +32,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.Arrays;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * Submits and cancels Seatunnel jobs on demand in response to cache rule mutations.
@@ -47,6 +50,7 @@ public class SeatunnelJobService {
     private final RestClient.Builder restClientBuilder;
     private final SlowQueryRepository slowQueryRepository;
     private final Map<String, String> inFlightJobs = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redisTemplate;
 
     private RestClient restClient;
 
@@ -367,7 +371,7 @@ public class SeatunnelJobService {
         sb.append("    username = \"").append(endpoint.username()).append("\"\n");
         sb.append("    password = \"").append(endpoint.password()).append("\"\n");
         sb.append("    database-names = [\"").append(endpoint.database()).append("\"]\n");
-        sb.append("    table-names = [\"").append(endpoint.database()).append(".").append(tableName).append("\"]\n");
+        sb.append("    table-names = [\"").append(endpoint.database()).append(".").append(tableName.toLowerCase(Locale.ROOT)).append("\"]\n");
         sb.append("    server-time-zone = \"").append(properties.getMysqlServerTimeZone()).append("\"\n");
         sb.append("    snapshot.split.size = ").append(properties.getMysqlSnapshotSplitSize()).append("\n");
         sb.append("    scan.startup.mode = \"initial\"\n");
@@ -429,11 +433,57 @@ public class SeatunnelJobService {
         sb.append("    username = \"").append(properties.getStarrocksUsername()).append("\"\n");
         sb.append("    password = \"").append(properties.getStarrocksPassword()).append("\"\n");
         sb.append("    database = \"").append(endpoint.database()).append("\"\n");
-        // StarRocks table name usually matches source table name
-        sb.append("    table = \"").append(tableName).append("\"\n");
+        
+        // Use lowercase table name for sink configuration (as requested for StarRocks)
+        String sinkTableName = tableName;
+        if (endpoint instanceof MysqlEndpoint) {
+            sinkTableName = tableName.toLowerCase(Locale.ROOT);
+        }
+        sb.append("    table = \"").append(sinkTableName).append("\"\n");
+        
         properties.getSinkProperties().forEach(
                 (key, value) -> sb.append("    sink.properties.").append(key).append(" = \"").append(value).append("\"\n")
         );
+
+        // Fetch PK info from Redis to determine template
+        try {
+            // Lookup using lowercase table name from the Hash structure
+            String redisHashKey = "ojp:schema:" + endpoint.connHash() + ":pks";
+            String fieldKey = tableName.toLowerCase(Locale.ROOT);
+            Object pkObj = redisTemplate.opsForHash().get(redisHashKey, fieldKey);
+            String pkStr = pkObj != null ? pkObj.toString() : null;
+            
+            if (pkStr != null) {
+                String template;
+                if (StringUtils.isBlank(pkStr)) {
+                    // No PK -> Duplicate Key model with Random Distribution
+                     template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
+                            "${rowtype_fields} " +
+                            ") ENGINE=OLAP " +
+                            "DISTRIBUTED BY RANDOM " +
+                            "PROPERTIES ( \\\"replication_num\\\" = \\\"1\\\" )";
+                } else {
+                    // PK exists -> Primary Key model with Hash Distribution
+                    String pkList = Arrays.stream(pkStr.split(","))
+                            .map(String::trim)
+                            .map(s -> "\\\"" + s + "\\\"")
+                            .collect(Collectors.joining(", "));
+                     template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
+                            "${rowtype_fields} " +
+                            ") ENGINE=OLAP " +
+                            "PRIMARY KEY (" + pkList + ") " +
+                            "DISTRIBUTED BY HASH (" + pkList + ") " +
+                            "PROPERTIES ( \\\"replication_num\\\" = \\\"1\\\" )";
+                }
+                sb.append("    sink.save_mode_create_template = \"").append(template).append("\"\n");
+                log.info("Applied custom StarRocks template for table {} using PKs: [{}]", tableName, pkStr);
+            } else {
+                log.warn("No schema info found in Redis for table {}. Using Seatunnel default.", tableName);
+            }
+        } catch (Exception e) {
+            log.error("Failed to query Redis for schema info: {}", e.getMessage());
+        }
+
         sb.append("    sink.create_table.enable = true\n");
         sb.append("  }\n");
         sb.append("}\n");
@@ -532,7 +582,7 @@ public class SeatunnelJobService {
 
             String jdbcUrl = String.format("jdbc:mysql://%s:%d/%s", host, port, database);
             String baseUrl = String.format("jdbc:mysql://%s:%d", host, port);
-            return Optional.of(new MysqlEndpoint(host, port, database, credentials.username(), credentials.password(), jdbcUrl, baseUrl));
+            return Optional.of(new MysqlEndpoint(host, port, database, credentials.username(), credentials.password(), jdbcUrl, baseUrl, connHash));
         } catch (URISyntaxException e) {
             log.warn("Failed to parse MySQL endpoint from connHash {}: {}", connHash, e.getMessage());
             return Optional.empty();
@@ -592,7 +642,7 @@ public class SeatunnelJobService {
              }
              
              String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d/%s", host, port, serviceName);
-             return Optional.of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl));
+             return Optional.of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl, connHash));
              
          } catch (Exception e) {
              log.warn("Failed to parse Oracle endpoint from {}: {}", connHash, e.getMessage());
@@ -627,14 +677,15 @@ public class SeatunnelJobService {
         String username();
         String password();
         String jdbcUrl();
+        String connHash();
     }
 
     private record MysqlEndpoint(String host, int port, String database, String username, String password,
-                                 String jdbcUrl, String baseJdbcUrl) implements DatabaseEndpoint {
+                                 String jdbcUrl, String baseJdbcUrl, String connHash) implements DatabaseEndpoint {
     }
 
     private record OracleEndpoint(String host, int port, String serviceName, String schema, String username, String password,
-                                  String jdbcUrl) implements DatabaseEndpoint {
+                                  String jdbcUrl, String connHash) implements DatabaseEndpoint {
         @Override
         public String database() {
             return schema;

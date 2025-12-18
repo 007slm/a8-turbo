@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.openjdbcproxy.constants.CommonConstants.MAX_LOB_DATA_BLOCK_SIZE;
 import static org.openjdbcproxy.grpc.SerializationHandler.deserialize;
@@ -66,6 +67,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     
     // Connection pool configurer with Micrometer support
     private final ConnectionPoolConfigurer connectionPoolConfigurer;
+    private final StringRedisTemplate redisTemplate;
 
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
 
@@ -95,6 +97,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             // Create a slow query segregation manager for this datasource
             createSlowQuerySegregationManagerForDatasource(connHash, config.getMaximumPoolSize());
+            refreshSchemaCache(connHash, ds);
         }
 
         this.sessionManager.registerClientUUID(connHash, connectionDetails.getClientUUID());
@@ -112,6 +115,41 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
      * Creates a slow query segregation manager for a specific datasource.
      * Each datasource gets its own manager with pool size based on actual HikariCP configuration.
      */
+    private void refreshSchemaCache(String connHash, HikariDataSource ds) {
+        CompletableFuture.runAsync(() -> {
+            log.info("Starting schema cache refresh for {}", connHash);
+            try (Connection conn = ds.getConnection()) {
+                DatabaseMetaData meta = conn.getMetaData();
+                String catalog = conn.getCatalog();
+                try (ResultSet tables = meta.getTables(catalog, null, "%", new String[]{"TABLE"})) {
+                    Map<String, String> schemaMap = new HashMap<>(); // Collect all PKs to store in a single Hash
+                    while (tables.next()) {
+                        String tableName = tables.getString("TABLE_NAME");
+                        try (ResultSet pks = meta.getPrimaryKeys(catalog, null, tableName)) {
+                            Map<Short, String> pkMap = new TreeMap<>();
+                            while (pks.next()) {
+                                pkMap.put(pks.getShort("KEY_SEQ"), pks.getString("COLUMN_NAME"));
+                            }
+                            String pkStr = String.join(",", pkMap.values());
+                            // Store using lowercase table name to ensure case-insensitive lookup
+                            // If pkStr is empty/blank, we still store it to indicate "No PK" (as opposed to "Unknown table")
+                            schemaMap.put(tableName.toLowerCase(Locale.ROOT), StringUtils.defaultString(pkStr));
+                        }
+                    }
+                    
+                    if (!schemaMap.isEmpty()) {
+                        // Key: ojp:schema:{connHash}:pks
+                        String redisHashKey = "ojp:schema:" + connHash + ":pks";
+                        redisTemplate.opsForHash().putAll(redisHashKey, schemaMap);
+                    }
+                }
+                log.info("Schema cache refresh completed for {}", connHash);
+            } catch (Exception e) {
+                log.error("Failed to refresh schema cache for " + connHash, e);
+            }
+        });
+    }
+
     private void createSlowQuerySegregationManagerForDatasource(String connHash, int actualPoolSize) {
         if (serverConfiguration.isSlowQuerySegregationEnabled()) {
             SlowQuerySegregationManager manager = new SlowQuerySegregationManager(

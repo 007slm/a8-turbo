@@ -151,7 +151,7 @@ public class StatementServiceGrpcClient implements StatementService {
             SettableFuture<LobReference> sfFinalLobReference = SettableFuture.create();
 
             StreamObserver<LobDataBlock> lobDataBlockStream = this.statemetServiceStub.createLob(
-                    new ServerCallStreamObserver<>() {
+                    new ServerCallStreamObserver<LobReference>() {
                         private final AtomicBoolean abFirstResponseReceived = new AtomicBoolean(true);
                         private LobReference lobReference;
 
@@ -358,7 +358,7 @@ public class StatementServiceGrpcClient implements StatementService {
     @Override
     public void terminateSession(SessionInfo session) {
         //Fire and forget - done async intentionally to improve client performance.
-        this.statemetServiceStub.terminateSession(session, new ServerCallStreamObserver<>() {
+        this.statemetServiceStub.terminateSession(session, new ServerCallStreamObserver<SessionTerminationStatus>() {
             @Override
             public boolean isCancelled() {
                 return false;

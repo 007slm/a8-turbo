@@ -48,6 +48,26 @@ public class CacheRule {
     private List<SeatunnelJobView> seatunnelJobs = new ArrayList<>();
 
 
+    // 获取匹配的Job ID列表
+    public List<String> getMatchingJobIds(SlowQuery query) {
+        List<String> jobIds = new ArrayList<>();
+        if (tables != null && !tables.isEmpty() && seatunnelJobIds != null) {
+            String tableNames = query.getTableNames();
+            if (tableNames != null && !tableNames.isEmpty()) {
+                String[] queryTables = tableNames.split(",");
+                for (String table : tables) {
+                    for (String queryTable : queryTables) {
+                        if (queryTable.trim().equals(table.trim())) {
+                           String jId = seatunnelJobIds.get(table);
+                           if (jId != null) jobIds.add(jId);
+                        }
+                    }
+                }
+            }
+        }
+        return jobIds;
+    }
+
     // 检查查询是否匹配此规则
     public boolean matches(SlowQuery query) {
         if (!enabled) {

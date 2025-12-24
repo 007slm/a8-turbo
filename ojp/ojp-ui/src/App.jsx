@@ -7,21 +7,32 @@ import {
   MonitorOutlined,
   BellOutlined,
   QuestionCircleOutlined,
-
+  BulbOutlined,
   ShopOutlined,
   MenuFoldOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  RocketOutlined,
+  ApiOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import Monitoring from './components/Monitoring'
 
 import MonitoringOverview from './components/MonitoringOverview'
 import ServiceMonitoring from './components/ServiceMonitoring'
-import ShopService from './components/shopservice/ShopService'
+import MonitorDashboard from './pages/monitor/index.jsx'
+import ServerNativeMonitor from './pages/monitor/server/index.jsx'
+import CacheNativeMonitor from './pages/monitor/cache/index.jsx'
+import RedisNativeMonitor from './pages/monitor/redis/index.jsx'
+import StarrocksNativeMonitor from './pages/monitor/starrocks/index.jsx'
+import PrometheusNativeMonitor from './pages/monitor/prometheus/index.jsx'
+import PrometheusTest from './pages/monitor/test/PrometheusTest.jsx'
+import ServicePortal from './pages/ServicePortal'
 import { getAllServices } from './config/monitoringConfig'
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
 import QueryCache from './components/cache/QueryCache'
+import CacheRecommendations from './components/cache/CacheRecommendations'
+import ShopService from './components/shopservice/ShopService'
 
 import { fetchSystemStatus } from './services/api'
 import './App.css'
@@ -38,8 +49,13 @@ function AppContent() {
   // 根据当前路径确定选中的菜单项
   const getSelectedKey = () => {
     const path = location.pathname
-    if (path === '/' || path === '/system-monitoring') return 'system-monitoring'
-    if (path.startsWith('/monitoring')) return 'grafana-monitoring'
+    if (path === '/' || path === '/home') return 'home'
+    if (path === '/monitor' || path === '/monitor/dashboard') return 'monitor-dashboard'
+    if (path === '/monitor/cache') return 'monitor-cache'
+    if (path === '/monitor/redis') return 'monitor-redis'
+    if (path === '/monitor/starrocks') return 'monitor-starrocks'
+    if (path === '/monitor/prometheus') return 'monitor-prometheus'
+    if (path === '/cache/recommendations') return 'cache-recommendations'
     if (path === '/cache' || path.startsWith('/cache/rules')) return 'cache-rules'
     if (path.startsWith('/cache/queries')) return 'cache-queries'
 
@@ -52,7 +68,9 @@ function AppContent() {
       return 'shopservice-users'
     }
 
-    return 'system-monitoring'
+    if (path === '/service-portal') return 'service-portal'
+
+    return 'home'
   }
 
   const selectedKey = getSelectedKey()
@@ -86,23 +104,35 @@ function AppContent() {
   // 菜单项配置
   const menuItems = [
     {
-      key: 'system-monitoring',
-      icon: <MonitorOutlined />,
-      label: '系统监控',
+      key: 'home',
+      icon: <DashboardOutlined />,
+      label: '监控总览',
     },
     {
-      key: 'grafana-monitoring',
-      icon: <DashboardOutlined />,
-      label: 'Grafana 监控',
+      key: 'monitor-dashboard',
+      icon: <MonitorOutlined />,
+      label: '服务监控',
       children: [
         {
-          key: 'monitoring-overview',
-          label: '监控总览',
+          key: 'monitor-cache',
+          icon: <DatabaseOutlined />,
+          label: '缓存服务',
         },
-        ...services.map(service => ({
-          key: `monitoring-${service.key}`,
-          label: `${service.icon} ${service.name}`,
-        }))
+        {
+          key: 'monitor-redis',
+          icon: <DatabaseOutlined />,
+          label: '数据同步服务',
+        },
+        {
+          key: 'monitor-starrocks',
+          icon: <DatabaseOutlined />,
+          label: '数据仓库',
+        },
+        {
+          key: 'monitor-prometheus',
+          icon: <MonitorOutlined />,
+          label: '监控服务',
+        },
       ]
     },
     {
@@ -110,6 +140,11 @@ function AppContent() {
       icon: <DatabaseOutlined />,
       label: '缓存管理',
       children: [
+        {
+          key: 'cache-recommendations',
+          label: '智能推荐',
+          icon: <BulbOutlined />,
+        },
         {
           key: 'cache-rules',
           label: '缓存规则',
@@ -148,6 +183,11 @@ function AppContent() {
         }
       ]
     },
+    {
+      key: 'service-portal',
+      icon: <ApiOutlined />,
+      label: '管理导航',
+    },
 
   ]
 
@@ -172,8 +212,13 @@ function AppContent() {
   // 处理菜单点击
   const handleMenuClick = ({ key }) => {
     const routes = {
-      'system-monitoring': '/',
-      'monitoring-overview': '/monitoring',
+      'home': '/',
+      'monitor-dashboard': '/monitor',
+      'monitor-cache': '/monitor/cache',
+      'monitor-redis': '/monitor/redis',
+      'monitor-starrocks': '/monitor/starrocks',
+      'monitor-prometheus': '/monitor/prometheus',
+      'cache-recommendations': '/cache/recommendations',
       'cache-rules': '/cache/rules',
       'cache-queries': '/cache/queries',
 
@@ -183,9 +228,10 @@ function AppContent() {
       'shopservice-reviews': '/shopservice/reviews',
       'shopservice-chinook': '/shopservice/chinook',
 
+      'service-portal': '/service-portal',
     }
 
-    // 处理服务监控路由
+    // 处理服务监控路由（保留以防万一）
     if (key.startsWith('monitoring-') && key !== 'monitoring-overview') {
       const serviceKey = key.replace('monitoring-', '')
       navigate(`/monitoring/${serviceKey}`)
@@ -320,17 +366,26 @@ function AppContent() {
             >
               <Routes>
                 <Route path="/" element={<Monitoring />} />
-                <Route path="/system-monitoring" element={<Monitoring />} />
+                <Route path="/home" element={<Monitoring />} />
+                <Route path="/monitor" element={<MonitorDashboard />} />
+                <Route path="/monitor/test" element={<PrometheusTest />} />
+                <Route path="/monitor/cache" element={<CacheNativeMonitor />} />
+                <Route path="/monitor/redis" element={<RedisNativeMonitor />} />
+                <Route path="/monitor/starrocks" element={<StarrocksNativeMonitor />} />
+                <Route path="/monitor/prometheus" element={<PrometheusNativeMonitor />} />
                 <Route path="/monitoring" element={<MonitoringOverview />} />
                 <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
                 <Route path="/cache" element={<CacheRules />} />
                 <Route path="/cache/rules" element={<CacheRules />} />
+                <Route path="/cache/recommendations" element={<CacheRecommendations />} />
                 <Route path="/cache/queries" element={<QueryCache />} />
                 <Route path="/cache/rules/new" element={<CacheRuleEditor />} />
                 <Route path="/cache/rules/:ruleId/edit" element={<CacheRuleEditor />} />
 
                 <Route path="/shopservice" element={<ShopService />} />
                 <Route path="/shopservice/*" element={<ShopService />} />
+
+                <Route path="/service-portal" element={<ServicePortal />} />
 
               </Routes>
             </Content>
@@ -340,6 +395,7 @@ function AppContent() {
     </ConfigProvider>
   )
 }
+
 
 // 主App组件，包装Router
 function App() {

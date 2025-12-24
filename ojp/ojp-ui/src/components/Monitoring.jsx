@@ -34,6 +34,7 @@ import MetricDetails from './monitoring/MetricDetails'
 import HikariCPMonitoring from './monitoring/HikariCPMonitoring'
 import OjpBusinessMetrics from './monitoring/OjpBusinessMetrics'
 import { AuroraBackground, MagicCard, StatusPill } from './magicui'
+import PrometheusChart from './charts/PrometheusChart'
 
 const { Text } = Typography
 const { Option } = Select
@@ -45,6 +46,7 @@ const Monitoring = () => {
   const [selectedMetric, setSelectedMetric] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [availableMetrics, setAvailableMetrics] = useState([])
+  const [promDuration, setPromDuration] = useState('1h')
 
   const {
     data: allMetrics,
@@ -316,6 +318,67 @@ const Monitoring = () => {
             </div>
           ))}
         </div>
+      </MagicCard>
+
+      <MagicCard
+        title="实时性能图表"
+        description="基于时序数据的核心性能指标趋势"
+        icon={<MonitorOutlined />}
+        extra={
+          <Space size={12}>
+            <Text>时间范围：</Text>
+            <Select value={promDuration} onChange={setPromDuration} style={{ width: 120 }}>
+              <Option value="15m">15分钟</Option>
+              <Option value="1h">1小时</Option>
+              <Option value="6h">6小时</Option>
+              <Option value="12h">12小时</Option>
+              <Option value="24h">24小时</Option>
+            </Select>
+          </Space>
+        }
+      >
+        <Row gutter={[16, 16]}>
+          <Col span={12}>
+            <PrometheusChart
+              title="请求量趋势"
+              query='sum(rate(http_server_requests_seconds_count[1m]))'
+              duration={promDuration}
+              unit="items"
+              type="area"
+              colors={['#8884d8']}
+            />
+          </Col>
+          <Col span={12}>
+            <PrometheusChart
+              title="响应延迟 (平均)"
+              query='sum(rate(http_server_requests_seconds_sum[1m])) / sum(rate(http_server_requests_seconds_count[1m])) * 1000'
+              duration={promDuration}
+              unit="ms"
+              colors={['#faad14']}
+            />
+          </Col>
+          <Col span={12}>
+            <PrometheusChart
+              title="内存使用趋势"
+              query='jvm_memory_used_bytes{area="heap"}'
+              legendFunc={(metric) => metric.id || 'Heap'}
+              duration={promDuration}
+              unit="bytes"
+              type="line"
+              colors={['#1677ff', '#2f54eb', '#722ed1']}
+            />
+          </Col>
+          <Col span={12}>
+            <PrometheusChart
+              title="线程数量"
+              query='jvm_threads_live_threads'
+              duration={promDuration}
+              unit="items"
+              type="line"
+              colors={['#52c41a']}
+            />
+          </Col>
+        </Row>
       </MagicCard>
 
       <MagicCard

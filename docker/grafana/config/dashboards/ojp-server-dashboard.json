@@ -16,7 +16,16 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "icon": "dashboard",
+      "tags": [],
+      "targetBlank": true,
+      "title": "缓存详细监控",
+      "type": "link",
+      "url": "/d/ojp-cache-monitoring"
+    }
+  ],
   "panels": [
     {
       "collapsed": false,

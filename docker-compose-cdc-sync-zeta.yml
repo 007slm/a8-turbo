@@ -5,8 +5,10 @@ services:
     image: apache/seatunnel
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
+    volumes:
+      - ./ojp/ojp-seatunnel-spi/lib:/ojp-libs
     entrypoint: >
-      /bin/sh -c " /opt/seatunnel/bin/seatunnel-cluster.sh -r master "    
+      /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
     ports:
       - "5801:5801"
       - "8080:8080"
@@ -20,8 +22,10 @@ services:
     image: apache/seatunnel
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
+    volumes:
+      - ./ojp/ojp-seatunnel-spi/lib:/ojp-libs
     entrypoint: >
-      /bin/sh -c " /opt/seatunnel/bin/seatunnel-cluster.sh -r worker " 
+      /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
     depends_on:
       - seatunnel-master
     #    volumes:

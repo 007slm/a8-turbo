@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openjdbcproxy.cache.entity.CacheRule;
 import org.openjdbcproxy.cache.model.SeatunnelJobView;
+import org.openjdbcproxy.cache.monitor.TableSyncStateManager;
 import org.openjdbcproxy.cache.repository.CacheRuleRepository;
 import org.openjdbcproxy.cache.service.SeatunnelJobService;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -39,6 +40,7 @@ public class CacheRuleController {
     private final CacheRuleRepository cacheRuleRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final SeatunnelJobService seatunnelJobService;
+    private final TableSyncStateManager tableSyncStateManager;
 
     @GetMapping("/list")
     @Operation(summary = "获取缓存规则列表", description = "获取所有缓存规则")
@@ -104,6 +106,7 @@ public class CacheRuleController {
             @Parameter(description = "规则ID") @PathVariable("ruleId") String ruleId) {
         cacheRuleRepository.findById(ruleId).ifPresent(rule -> {
             seatunnelJobService.removeRule(rule);
+            tableSyncStateManager.removeForRule(rule);
             if (rule.getTables() != null && !rule.getTables().isEmpty()) {
                 for (String table : rule.getTables()) {
                     String key = "ojp:cache:rule:table:" + table;
@@ -137,6 +140,9 @@ public class CacheRuleController {
                 redisTemplate.opsForSet().add(key, latest.getId());
             }
         }
+        
+        // 更新本地倒排索引
+        tableSyncStateManager.rebuildForRule(latest);
     }
 
 }

@@ -79,7 +79,9 @@ public class SeatunnelJobProperties {
             Map.of(
                     "format", "json",
                     "strip_outer_array", "true",
-                    "ignore_json_size", "true"
+                    "ignore_json_size", "true",
+                    "sink.buffer-flush.interval.ms", "1000",
+                    "sink.enable-upsert-delete", "true"
             )
     );
 
@@ -91,7 +93,7 @@ public class SeatunnelJobProperties {
     /**
      * Default checkpoint interval (ms) for streaming jobs.
      */
-    private long checkpointInterval = 10_000L;
+    private long checkpointInterval = 3_000L;
 
     /**
      * HTTP timeout used when interacting with Seatunnel master.

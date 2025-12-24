@@ -44,7 +44,7 @@ public class JSqlParserUtil {
     }
     
     /**
-     * 提取表名
+     * 提取表名 (从 Statement)
      */
     public static Set<String> extractTableNames(Statement statement) {
         TablesNamesFinder tablesNamesFinder = new TablesNamesFinder();
@@ -61,6 +61,22 @@ public class JSqlParserUtil {
         }
         // 返回保留原始大小写的唯一表名集合
         return new LinkedHashSet<>(casePreserved.values());
+    }
+    
+    /**
+     * 提取表名 (从 SQL 字符串)
+     */
+    public static Set<String> extractTableNames(String sql) {
+        if (!StringUtils.hasText(sql)) {
+            return Collections.emptySet();
+        }
+        try {
+            Statement statement = CCJSqlParserUtil.parse(sql);
+            return extractTableNames(statement);
+        } catch (JSQLParserException e) {
+            log.warn("Failed to parse SQL for table extraction: {}", e.getMessage());
+            return Collections.emptySet();
+        }
     }
     
     /**

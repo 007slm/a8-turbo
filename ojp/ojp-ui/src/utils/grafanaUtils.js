@@ -24,21 +24,22 @@ export const buildGrafanaUrl = ({
   orgId = 1
 }) => {
   const baseUrl = '/grafana';
-  
+
   // 服务键到仪表板路径的映射
   const dashboardMapping = {
     'prometheus': 'prometheus-overview',
-    'mysql': 'mysql-overview', 
+    'mysql': 'mysql-overview',
     'redis': 'redis-overview',
     'starrocks': 'starrocks-overview',
     'nats': 'nats-overview',
     'flink': 'flink-overview',
+    'ojp-cache': 'ojp-cache-monitoring',
     'a8-turbo': 'a8-turbo-dashboard' // 主仪表板
   };
-  
+
   const dashboardId = dashboardMapping[serviceKey] || `${serviceKey}-overview`;
   const dashboardPath = `/d/${dashboardId}`;
-  
+
   // 构建查询参数
   const params = new URLSearchParams({
     orgId: orgId.toString(),
@@ -46,7 +47,7 @@ export const buildGrafanaUrl = ({
     refresh,
     theme
   });
-  
+
   // 添加时间范围参数
   if (timeRange) {
     const timeParams = new URLSearchParams(timeRange);
@@ -54,17 +55,17 @@ export const buildGrafanaUrl = ({
       params.set(key, value);
     });
   }
-  
+
   // 添加面板ID（如果指定）
   if (panelId) {
     params.set('panelId', panelId.toString());
   }
-  
+
   // 添加kiosk模式
   if (kiosk) {
     params.set('kiosk', '1');
   }
-  
+
   return `${baseUrl}${dashboardPath}?${params.toString()}`;
 };
 

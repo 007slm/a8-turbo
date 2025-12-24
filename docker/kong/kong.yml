@@ -35,7 +35,7 @@ services:
   - name: prometheus-ui
     paths:
     - /prometheus
-    strip_path: false
+    strip_path: true
     preserve_host: true
 
 - name: nats-dashboard

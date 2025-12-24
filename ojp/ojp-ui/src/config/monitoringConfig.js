@@ -15,6 +15,13 @@ export const monitoringServices = [
     description: 'OJP 服务器性能监控'
   },
   {
+    key: 'ojp-cache',
+    name: 'OJP Cache',
+    icon: '🧠',
+    dashboardFile: 'ojp-cache-dashboard.json',
+    description: 'OJP 智能缓存服务监控'
+  },
+  {
     key: 'mysql',
     name: 'MySQL 数据库',
     icon: '🗄️',

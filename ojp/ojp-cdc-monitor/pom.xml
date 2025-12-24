@@ -10,8 +10,10 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>ojp-seatunnel-spi</artifactId>
+    <artifactId>ojp-cdc-monitor</artifactId>
     <packaging>jar</packaging>
+
+    <name>OJP CDC Monitor</name>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

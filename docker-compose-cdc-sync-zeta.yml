@@ -6,7 +6,7 @@ services:
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
     volumes:
-      - ./ojp/ojp-seatunnel-spi/lib:/ojp-libs
+      - ./ojp/docker/seatunnel/lib:/ojp-libs
     entrypoint: >
       /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
     ports:
@@ -23,7 +23,7 @@ services:
     environment:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
     volumes:
-      - ./ojp/ojp-seatunnel-spi/lib:/ojp-libs
+      - ./ojp/docker/seatunnel/lib:/ojp-libs
     entrypoint: >
       /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
     depends_on:

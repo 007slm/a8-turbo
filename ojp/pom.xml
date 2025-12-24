@@ -18,7 +18,7 @@
         <module>ojp-jdbc-driver</module>
         <module>ojp-cache</module>
         <module>ojp-server</module>
-        <module>ojp-seatunnel-spi</module>
+        <module>ojp-cdc-monitor</module>
     </modules>
 
     <properties>

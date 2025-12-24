@@ -1,4 +1,4 @@
-package org.openjdbcproxy.seatunnel.spi;
+package org.openjdbcproxy.cdc.monitor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # OJP 内核级授权哨兵 (Commercial Sentinel)
+  # 该组件负责在内核层监控并执行授权策略
+  ojp-sentinel:
+    build:
+      context: ./ojp/ojp-sentinel
+      dockerfile: Dockerfile
+    image: ojp-commercial/sentinel:latest
+    container_name: ojp-sentinel
+    privileged: true # 必须开启授权，用于加载 eBPF 探针到内核
+    network_mode: "host" # 使用 host 网络以访问 Docker 网桥设备
+    pid: "host" # 可选，用于更精准地定位进程与网卡的对应关系
+    environment:
+      - OJP_LICENSE=${OJP_LICENSE:-""}
+      - TARGET_SERVICE_PREFIX=ojp- # 监控所有以 ojp- 开头的容器流量
+      - DELAY_MS=5000 # 授权无效时的延迟时间
+    volumes:
+      - /lib/modules:/lib/modules:ro # 挂载内核模块库
+      - /sys/kernel/debug:/sys/kernel/debug:rw # 用于 eBPF 调试和挂载
+      - /sys/fs/bpf:/sys/fs/bpf:rw # BPF 文件系统，用于 pin eBPF 程序
+      - /proc:/host/proc:ro # 用于 nsenter 访问容器网络命名空间
+      - /var/run/docker.sock:/var/run/docker.sock:ro # 用于动态探测容器加入网络
+      - ./docker/ojp/license/:/etc/ojp/license:ro # 授权文件共享目录 (只读)
+    restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# 部署建议：
+# 1. 开发环境（本地 WSL）：
+#    - ojp-server 会自动使用 ojp-data/license 目录
+#    - 无需设置 OJP_LICENSE_PATH 环境变量
+#
+# 2. 生产环境（Docker Compose）：
+#    docker-compose -f docker-compose.yml -f docker-compose-sentinel.yml up -d
+#
+# 3. 授权文件位置：
+#    - 开发: ./ojp-data/license/license.key
+#    - 生产: Docker volume ojp-data/license 映射到容器内 /etc/ojp

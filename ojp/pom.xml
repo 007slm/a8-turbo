@@ -17,6 +17,7 @@
         <module>ojp-server-common</module>
         <module>ojp-jdbc-driver</module>
         <module>ojp-cache</module>
+        <module>ojp-license</module>
         <module>ojp-server</module>
         <module>ojp-cdc-monitor</module>
     </modules>
@@ -59,6 +60,12 @@
             <dependency>
                 <groupId>org.openjdbcproxy</groupId>
                 <artifactId>ojp-cache</artifactId>
+                <version>0.0.8-alpha</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.openjdbcproxy</groupId>
+                <artifactId>ojp-license</artifactId>
                 <version>0.0.8-alpha</version>
             </dependency>
             

@@ -1,32 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
+import { Button, Drawer, Space, Tag, Typography, Popconfirm, message, Tooltip, Alert, List } from 'antd'
 import {
-  Alert,
-  Button,
-  Drawer,
-  Input,
-  List,
-  Popconfirm,
-  Segmented,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-  message,
-} from 'antd'
-import {
-  DeleteOutlined,
-  EditOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SearchOutlined,
-  DatabaseOutlined,
+  DeleteOutlined,
+  EditOutlined,
 } from '@ant-design/icons'
+import { PageContainer, ProTable, ProCard } from '@ant-design/pro-components'
 import { useMutation, useQuery } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { ruleApi } from '../../services/api'
-import { MagicCard } from '../magicui'
 
 const { Text } = Typography
 
@@ -52,12 +35,8 @@ const renderJobStatusTag = (status) => {
 
 const CacheRules = () => {
   const navigate = useNavigate()
+  const actionRef = useRef()
   const [activeRule, setActiveRule] = useState(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [onlyEnabled, setOnlyEnabled] = useState(false)
-  const tableContainerRef = useRef(null)
-  const [scrollY, setScrollY] = useState(500)
 
   const {
     data: rules = [],
@@ -68,19 +47,10 @@ const CacheRules = () => {
     refetchOnWindowFocus: false,
   })
 
-  // Dynamic Scroll Height Calculation
-  useEffect(() => {
-    if (!tableContainerRef.current) return
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        // Calculate available height: Container Height - Header (~55px) - Pagination (~48px)
-        const newHeight = entry.contentRect.height - 55 - 48
-        setScrollY(Math.max(newHeight, 300))
-      }
-    })
-    resizeObserver.observe(tableContainerRef.current)
-    return () => resizeObserver.disconnect()
-  }, [])
+  // Calculate stats
+  const totalRules = rules.length
+  const enabledRules = rules.filter((rule) => rule.enabled).length
+  const seatunnelSynced = rules.filter((rule) => Object.keys(rule.seatunnelJobIds || {}).length > 0).length
 
   const deleteRuleMutation = useMutation((ruleId) => ruleApi.deleteRule(ruleId), {
     onSuccess: () => {
@@ -92,86 +62,56 @@ const CacheRules = () => {
     },
   })
 
-  const handleCreateRule = () => {
-    navigate('/cache/rules/new')
-  }
-
-  const handleEditRule = (rule) => {
-    navigate(`/cache/rules/${rule.id}/edit`, {
-      state: { rule },
-    })
-  }
-
   const jobDetails = activeRule?.seatunnelJobs || []
 
-  const refreshActiveRule = async () => {
-    const result = await refetch()
-    if (result?.data && activeRule?.id) {
-      const fresh = result.data.find((item) => item.id === activeRule.id)
-      if (fresh) {
-        setActiveRule(fresh)
-      }
-    }
-  }
-
+  // Derived helper
   const deriveRuleType = (record) =>
     record.ruleType ||
     (Array.isArray(record.tables) && record.tables.length > 0
       ? 'TABLES_ANY'
       : 'QUERY_IDS')
 
-  const filteredRules = useMemo(() => {
-    const keyword = searchTerm.trim().toLowerCase()
-    return rules.filter((rule) => {
-      const currentType = deriveRuleType(rule)
-      const matchesType =
-        typeFilter === 'all' ||
-        (typeFilter === 'tables' && currentType === 'TABLES_ANY') ||
-        (typeFilter === 'queries' && currentType !== 'TABLES_ANY')
-      const matchesEnabled = !onlyEnabled || rule.enabled
-      const searchTargets = [
-        rule.name,
-        rule.connHash,
-        ...(rule.tables || []),
-        ...(rule.queryIds || []),
-        ...(rule.slowQueryIds || []),
-      ]
-      const matchesSearch =
-        !keyword ||
-        searchTargets.some((target) =>
-          (target || '').toString().toLowerCase().includes(keyword),
-        )
-      return matchesType && matchesEnabled && matchesSearch
-    })
-  }, [rules, searchTerm, typeFilter, onlyEnabled])
-
-  const totalRules = rules.length
-  const enabledRules = rules.filter((rule) => rule.enabled).length
-  const seatunnelSynced = rules.filter((rule) => Object.keys(rule.seatunnelJobIds || {}).length > 0).length
-
   const columns = [
     {
       title: '规则名称',
       dataIndex: 'name',
-      key: 'name',
+      copyable: true,
       width: 200,
       ellipsis: true,
-      fixed: 'left',
-      render: (name) => <Text strong title={name}>{name}</Text>,
+      render: (dom, entity) => (
+        <a
+          onClick={() => {
+            navigate(`/cache/rules/${entity.id}/edit`, { state: { rule: entity } })
+          }}
+        >
+          {dom}
+        </a>
+      ),
     },
     {
-      title: '规则 ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 120,
-      ellipsis: true,
-      render: (text) => <Text code>{text ? text.toString().substring(0, 8) + '...' : '-'}</Text>,
+      title: '状态',
+      dataIndex: 'enabled',
+      width: 100,
+      filters: true,
+      onFilter: true,
+      valueEnum: {
+        true: { text: '启用', status: 'Success' },
+        false: { text: '禁用', status: 'Default' },
+      },
+      render: (_, record) => (
+        <Tag color={record.enabled ? 'green' : 'default'}>{record.enabled ? '启用' : '禁用'}</Tag>
+      ),
     },
     {
       title: '类型',
-      dataIndex: 'ruleType',
       key: 'ruleType',
       width: 120,
+      filters: true,
+      onFilter: true,
+      valueEnum: {
+        tables: { text: '表名匹配', status: 'Processing' },
+        queries: { text: '慢查询匹配', status: 'Warning' },
+      },
       render: (_, record) => {
         const type = deriveRuleType(record)
         return (
@@ -180,36 +120,38 @@ const CacheRules = () => {
           </Tag>
         )
       },
+      search: false, // Custom search logic would be complex here, simplifying for now
     },
     {
       title: '连接哈希',
       dataIndex: 'connHash',
-      key: 'connHash',
       width: 180,
       ellipsis: true,
-      render: (connHash) =>
-        connHash ? (
-          <Tooltip title={connHash}>
-            <Tag color="blue">{truncate(connHash, 20)}</Tag>
+      copyable: true,
+      render: (_, record) =>
+        record.connHash ? (
+          <Tooltip title={record.connHash}>
+            <Tag color="blue">{truncate(record.connHash, 12)}</Tag>
           </Tooltip>
         ) : (
           <Text type="secondary">未指定</Text>
         ),
     },
     {
-      title: '条件',
+      title: '匹配条件',
       key: 'conditions',
-      width: 240,
-      ellipsis: true,
+      search: false,
       render: (_, record) => {
         const type = deriveRuleType(record)
         if (type === 'TABLES_ANY') {
           const tables = record.tables || []
           if (tables.length === 0) return <Text type="secondary">未配置</Text>
           return (
-            <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {tables.join(', ')}
-            </div>
+            <Tooltip title={tables.join(', ')}>
+              <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {tables.join(', ')}
+              </div>
+            </Tooltip>
           )
         }
         const queryIds = (Array.isArray(record.queryIds) && record.queryIds.length > 0 ? record.queryIds : record.slowQueryIds) || []
@@ -219,199 +161,150 @@ const CacheRules = () => {
     {
       title: 'TTL',
       dataIndex: 'ttl',
-      key: 'ttl',
       width: 100,
-      render: (text) => text ? <Tag color="cyan">{text}</Tag> : <Text type="secondary">-</Text>,
-    },
-    {
-      title: '状态',
-      dataIndex: 'enabled',
-      key: 'enabled',
-      width: 100,
-      render: (enabled) => (
-        <Tag color={enabled ? 'green' : 'default'}>{enabled ? '启用' : '禁用'}</Tag>
-      ),
-    },
-    {
-      title: '最后更新',
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      width: 180,
-      render: (text) => text ? new Date(text).toLocaleString('zh-CN') : '-',
+      search: false,
+      render: (text) => text ? <Tag color="cyan">{text}</Tag> : '-',
     },
     {
       title: 'Seatunnel 作业',
       key: 'seatunnel',
-      width: 220,
+      width: 180,
+      search: false,
       render: (_, record) => {
         const jobIds = record.seatunnelJobIds || {}
         const jobCount = Object.keys(jobIds).length
         return (
-          <Space size={8}>
-            <Tag color={jobCount > 0 ? 'blue' : 'default'}>
-              {jobCount > 0 ? `已生成 ${jobCount} 个` : '未生成'}
-            </Tag>
-            <Button size="small" type="link" onClick={() => setActiveRule(record)}>详情</Button>
+          <Space size={4}>
+            {jobCount > 0 ? (
+              <Tag color="blue" style={{ cursor: 'pointer' }} onClick={() => setActiveRule(record)}>
+                {jobCount} 个作业
+              </Tag>
+            ) : (
+              <Text type="secondary" style={{ fontSize: 12 }}>无作业</Text>
+            )}
           </Space>
         )
       },
     },
     {
-      title: '操作',
-      key: 'action',
+      title: '更新时间',
+      dataIndex: 'updatedAt',
+      valueType: 'dateTime',
       width: 160,
+      search: false,
+      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+    },
+    {
+      title: '操作',
+      valueType: 'option',
+      key: 'option',
       fixed: 'right',
-      render: (_, record) => (
-        <Space size={4}>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEditRule(record)}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定要删除该缓存规则吗？"
-            onConfirm={() => deleteRuleMutation.mutate(record.id)}
-            okText="确认"
-            cancelText="取消"
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
+      width: 120,
+      render: (text, record) => [
+        <a
+          key="edit"
+          onClick={() => navigate(`/cache/rules/${record.id}/edit`, { state: { rule: record } })}
+        >
+          编辑
+        </a>,
+        <Popconfirm
+          key="delete"
+          title="确定要删除该缓存规则吗？"
+          onConfirm={() => deleteRuleMutation.mutate(record.id)}
+          okText="确认"
+          cancelText="取消"
+        >
+          <a key="delete-link" style={{ color: '#ff4d4f' }}>删除</a>
+        </Popconfirm>,
+      ],
     },
   ]
 
-  const toolbar = (
-    <div className="cache-rules-toolbar">
-      <Input
-        placeholder="搜索..."
-        prefix={<SearchOutlined />}
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        allowClear
-        style={{ flex: 1, minWidth: 200 }}
-      />
-      <Segmented
-        value={typeFilter}
-        onChange={setTypeFilter}
-        options={[
-          { label: '全部', value: 'all' },
-          { label: '表', value: 'tables' },
-          { label: 'SQL', value: 'queries' },
-        ]}
-      />
-      <Space align="center" size={8}>
-        <Switch checked={onlyEnabled} onChange={setOnlyEnabled} size="small" />
-        <Text type="secondary" style={{ fontSize: 13 }}>仅启用</Text>
-      </Space>
-    </div>
-  )
-
   return (
-    <>
-      <div className="cache-page" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <MagicCard
-          title="缓存规则中心"
-          description="管理缓存策略与同步作业"
-          icon={<DatabaseOutlined />}
-          className="cache-table-card"
-          style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
-          bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 0 }}
-          extra={
-            <Space size={12}>
-              <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching} />
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateRule}>
-                创建规则
-              </Button>
-            </Space>
-          }
-        >
-          <div style={{ flexShrink: 0 }}>
-            {/* Stats Row */}
-            <div className="cache-stat-grid">
-              <div className="cache-stat-card">
-                <div className="cache-stat-label">规则总数</div>
-                <div className="cache-stat-value">{totalRules}</div>
-              </div>
-              <div className="cache-stat-card">
-                <div className="cache-stat-label">启用中</div>
-                <div className="cache-stat-value" style={{ color: '#10b981' }}>{enabledRules}</div>
-              </div>
-              <div className="cache-stat-card">
-                <div className="cache-stat-label">已映射</div>
-                <div className="cache-stat-value" style={{ color: '#3b82f6' }}>{seatunnelSynced}</div>
-              </div>
-            </div>
-            {toolbar}
-          </div>
-
-          <div
-            className="cache-table-wrapper"
-            ref={tableContainerRef}
-            style={{ flex: 1, minHeight: 0, marginTop: 12 }}
-          >
-            <Table
-              rowKey="id"
-              columns={columns}
-              dataSource={filteredRules}
-              loading={isLoading}
-              bordered
-              size="middle"
-              scroll={{ x: 'max-content', y: scrollY }}
-              pagination={{
-                pageSize: 20,
-                showSizeChanger: true,
-                size: 'small',
-              }}
-            />
-          </div>
-        </MagicCard>
-      </div>
+    <PageContainer
+      header={{
+        title: '缓存规则管理',
+        subTitle: '配置和管理数据库查询缓存策略',
+        extra: [
+          <Button key="refresh" icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching}>刷新</Button>,
+          <Button key="create" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/cache/rules/new')}>
+            新建规则
+          </Button>
+        ]
+      }}
+      content={
+        <ProCard.Group direction="row" style={{ marginBottom: 16 }} gutter={16} ghost>
+          <ProCard colSpan={8} layout="center" bordered direction="column">
+            <div style={{ color: '#00000073' }}>规则总数</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalRules}</div>
+          </ProCard>
+          <ProCard colSpan={8} layout="center" bordered direction="column">
+            <div style={{ color: '#00000073' }}>启用状态</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>{enabledRules}</div>
+          </ProCard>
+          <ProCard colSpan={8} layout="center" bordered direction="column">
+            <div style={{ color: '#00000073' }}>已同步作业</div>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>{seatunnelSynced}</div>
+          </ProCard>
+        </ProCard.Group>
+      }
+    >
+      <ProTable
+        actionRef={actionRef}
+        rowKey="id"
+        headerTitle="规则列表"
+        columns={columns}
+        dataSource={rules}
+        loading={isLoading}
+        search={{
+          labelWidth: 'auto',
+          filterType: 'light',
+        }}
+        pagination={{
+          pageSize: 10,
+        }}
+        dateFormatter="string"
+        toolBarRender={() => []}
+      />
 
       <Drawer
         title={activeRule ? `Seatunnel Jobs - ${activeRule.name}` : 'Job Details'}
-        width={520}
+        width={600}
         open={Boolean(activeRule)}
         onClose={() => setActiveRule(null)}
         destroyOnClose
-        extra={
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={refreshActiveRule}
-            disabled={!activeRule}
-            loading={isFetching}
-          >
-            刷新
-          </Button>
-        }
       >
         {activeRule ? (
-          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
             <Alert
               type="info"
-              message={
+              message="连接信息"
+              description={
                 <div>
-                  <div><b>规则:</b> {activeRule.name}</div>
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>{activeRule.connHash}</div>
+                  <div><b>规则名称:</b> {activeRule.name}</div>
+                  <div style={{ fontSize: 13, color: '#666', marginTop: 4 }}><b>Connection Hash:</b> {activeRule.connHash}</div>
                 </div>
               }
+              showIcon
             />
+
+            <Typography.Title level={5} style={{ margin: 0 }}>作业列表</Typography.Title>
             <List
+              bordered
               dataSource={jobDetails}
-              loading={isFetching}
               renderItem={(item) => (
                 <List.Item>
                   <List.Item.Meta
-                    title={item?.table || item?.normalizedTable || 'Unknown Table'}
+                    title={<Text strong>{item?.table || item?.normalizedTable || 'Unknown Table'}</Text>}
                     description={
-                      <Space wrap size={[0, 8]}>
-                        {renderJobStatusTag(item?.status)}
-                        {item?.jobName && <Tag>{item.jobName}</Tag>}
+                      <Space direction="vertical" size={4} style={{ marginTop: 6, width: '100%' }}>
+                        <Space wrap>
+                          {renderJobStatusTag(item?.status)}
+                          {item?.jobName && <Tag>{item.jobName}</Tag>}
+                        </Space>
+                        {item?.message && (
+                          <Text type="secondary" style={{ fontSize: 12 }}>{item.message}</Text>
+                        )}
                       </Space>
                     }
                   />
@@ -421,7 +314,7 @@ const CacheRules = () => {
           </Space>
         ) : null}
       </Drawer>
-    </>
+    </PageContainer>
   )
 }
 

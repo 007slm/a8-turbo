@@ -3,15 +3,52 @@
   padding: 0;
 }
 
+/* Service Card Styles merged from ServicePortal */
 .service-card {
   transition: all 0.3s ease;
-  border-radius: 8px;
+  border-radius: 16px;
+  /* Updated to match ServicePortal */
   overflow: hidden;
 }
 
 .service-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+.service-card-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.service-card:hover .service-card-header {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
 }
 
 .service-icon {
@@ -87,16 +124,16 @@
   .service-card {
     margin-bottom: 8px;
   }
-  
+
   .monitoring-header {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .grafana-iframe {
     min-height: 500px;
   }
-  
+
   .grafana-iframe-fullsize {
     height: 600px;
     min-height: 600px;

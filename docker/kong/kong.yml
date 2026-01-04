@@ -2,10 +2,10 @@ _format_version: "3.0"
 _transform: true
 
 services:
-- name: ojp-server
-  url: http://ojp-server:8010
+- name: a8-dbproxy
+  url: http://a8-dbproxy:8010
   routes:
-  - name: ojp-server-api
+  - name: a8-dbproxy-api
     paths:
     - /api/
     strip_path: false
@@ -56,10 +56,10 @@ services:
     strip_path: false
     preserve_host: true
 
-- name: ojp-ui
-  url: http://ojp-ui:5173
+- name: a8-ui
+  url: http://a8-ui:3000
   routes:
-  - name: ojp-ui-main
+  - name: a8-ui-main
     paths:
     - /
     strip_path: true
@@ -90,5 +90,14 @@ services:
   - name: kong-admin-api
     paths:
     - /kong-admin
+    strip_path: true
+    preserve_host: true
+
+- name: a8-sql-translator
+  url: http://a8-sql-translator:8000
+  routes:
+  - name: a8-sql-translator-api
+    paths:
+    - /sql-translator
     strip_path: true
     preserve_host: true

@@ -1,0 +1,245 @@
+networks:
+  a8:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+
+services:
+  # --------------------------------------------------------------------------
+  # 开发环境代理服务 (Proxies for Local Dev)
+  # --------------------------------------------------------------------------
+
+  # 开发环境代理服务 - 将请求转发到宿主机的 a8-dbproxy (8010端口)
+  a8-dbproxy:
+    image: alpine/socat:latest
+    container_name: a8-dbproxy-dev-proxy
+    networks:
+      a8:
+        ipv4_address: 172.24.0.40
+    # 使用entrypoint确保参数正确传递
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:8010,fork,reuseaddr", "TCP:host.docker.internal:8010" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "8010" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  # 开发环境代理服务 - 将请求转发到宿主机的 a8-ui (5173端口)
+  a8-ui:
+    image: alpine/socat:latest
+    container_name: a8-ui-dev-proxy
+    networks:
+      a8:
+        ipv4_address: 172.24.0.41
+    # 使用entrypoint确保参数正确传递
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:3000,fork,reuseaddr", "TCP:host.docker.internal:3000" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3000" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  # 开发环境代理服务 - 将请求转发到宿主机的 shopservice (8280端口)
+  shopservice:
+    image: alpine/socat:latest
+    container_name: shopservice-dev-proxy
+    networks:
+      a8:
+        ipv4_address: 172.24.0.42
+    # 使用entrypoint确保参数正确传递
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:8280,fork,reuseaddr", "TCP:host.docker.internal:8280" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "8280" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+  # --------------------------------------------------------------------------
+  # 开发辅助服务 (Development Addons)
+  # --------------------------------------------------------------------------
+
+  oracle:
+    image: gvenzl/oracle-xe:21-slim
+    hostname: oracle
+    container_name: oracle
+    networks:
+      a8:
+        ipv4_address: 172.24.0.50
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=a8
+      - APP_USER=cdc_user
+      - APP_USER_PASSWORD=cdc_password
+    volumes:
+      - ./docker/oracle/initdb.d:/container-entrypoint-initdb.d
+      - ./docker/oracle/data:/opt/oracle/oradata
+
+  windows7:
+    image: dockurr/windows
+    container_name: windows7
+    environment:
+      - VERSION=7
+      - RAM_SIZE=8G
+      - CPU_CORES=4
+    devices:
+      - /dev/kvm
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8006:8006"
+      - "53389:3389"
+      - "58080:8080"
+    volumes:
+      - ./docker/windows/storage:/storage
+      # 左侧路径是宿主机(Host)路径:
+      # - 如果是 WSL2 环境，D:\zhongjian 对应 /mnt/d/zhongjian
+      # - 如果是原生 Linux，请修改为实际路径
+      # 右侧 /shared 是容器内路径。Windows 7 启动后，会自动通过 SMB共享 访问该目录 (通常是 \\host.lan\shared)
+      - /mnt/d/zhongjian:/shared
+    stop_grace_period: 2m
+    restart: on-failure
+    networks:
+      a8:
+        ipv4_address: 172.24.0.51
+  # --------------------------------------------------------------------------
+  # 数据库服务 (Databases for Development)
+  # --------------------------------------------------------------------------
+
+  mysql:
+    image: mysql:8.0
+    hostname: mysql
+    container_name: mysql
+    networks:
+      a8:
+        ipv4_address: 172.24.0.10
+    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    ports:
+      - 3306:3306
+    volumes:
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/mysql/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=a8
+      #      - MYSQL_ALLOW_EMPTY_PASSWORD=true
+      - MYSQL_USER=smartcache
+      - MYSQL_PASSWORD=smartcache
+      - MYSQL_DATABASE=smartcache
+      # cd /opt/flink-cdc  ./bin/flink-cdc.sh --jar /opt/flink-cdc/lib/mysql-connector-java.jar --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
+
+
+  mysql5:
+    image: mysql:5.7
+    hostname: mysql5
+    container_name: mysql5
+    networks:
+      a8:
+        ipv4_address: 172.24.0.11
+    command: --port=3307 --default-authentication-plugin=mysql_native_password --character-set-server=utf8 --collation-server=utf8_general_ci --lower_case_table_names=1 --skip-name-resolve --server-id=5 --log-bin=mysql-bin --binlog-format=ROW
+    ports:
+      - 3307:3307
+    volumes:
+      - ./docker/mysql5/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql5/initdb.d:/docker-entrypoint-initdb.d
+      - ./docker/mysql5/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=a8
+      - MYSQL_USER=smartcache
+      - MYSQL_PASSWORD=smartcache
+      - MYSQL_DATABASE=smartcache
+
+  mysql-exporter:
+    image: prom/mysqld-exporter
+    container_name: mysql-exporter
+    command:
+      - "--mysqld.username=smartcache:smartcache"
+      - "--mysqld.address=mysql:3306"
+    environment:
+      - DATA_SOURCE_NAME=smartcache:smartcache@tcp(mysql:3306)/smartcache
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "9104:9104"
+    networks:
+      a8:
+        ipv4_address: 172.24.0.12
+
+    depends_on:
+      - mysql
+
+  starrocks:
+    image: starrocks/allin1-ubuntu
+    container_name: starrocks
+    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    ports:
+      - "9030:9030"
+      # - "8030:8030"
+      # - "8040:8040"
+      #   - "8080:8080"
+    tty: true
+    privileged: true
+    networks:
+      a8:
+        ipv4_address: 172.24.0.13
+  # --------------------------------------------------------------------------
+  # 可选服务 (Commented Out)
+  # --------------------------------------------------------------------------
+
+  # Shop Service (Docker Container Version)
+  # 取消注释以运行容器化版本，同时必须注释掉上方的 shopservice 代理
+  # shopservice:
+  #   build:
+  #     context: ./ojp
+  #     dockerfile: shopservice/Dockerfile
+  #     args:
+  #       - BUILDKIT_INLINE_CACHE=1
+  #   image: fluxdb-shopservice:0.0.7-alpha
+  #   container_name: shopservice
+  #   # 移除对外暴露的端口，通过Kong网关访问
+  #   # ports:
+  #   #   - "8180:8180"
+  #   #   - "5005:5005"  # Java远程调试端口
+  #   environment:
+  #     - JAVA_OPTS=-Xms256m -Xmx512m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+  #     - MAVEN_CONFIG=/root/.m2
+  #     - MAVEN_OPTS=-Dmaven.repo.local=/root/.m2/repository
+  #   # 健壮化启动：移除硬依赖顺序，改为启动前等待依赖就绪
+  #   command:
+  #     - sh
+  #     - -c
+  #     - |
+  #       set -e
+  #       echo "[shopservice] waiting for mysql:3306..."
+  #       for i in $(seq 1 120); do
+  #         (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) && break || sleep 1
+  #       done
+  #       (echo -e "\x1dclose\x0d" | telnet mysql 3306 >/dev/null 2>&1) || { echo "[shopservice] mysql not ready after 120s"; exit 1; }
+  #       echo "[shopservice] waiting for a8-dbproxy:8010 health..."
+  #       for i in $(seq 1 120); do
+  #         curl -sf http://a8-dbproxy:8010/api/actuator/health >/dev/null && break || sleep 1
+  #       done
+  #       curl -sf http://a8-dbproxy:8010/api/actuator/health >/dev/null || { echo "[shopservice] a8-dbproxy not ready after 120s"; exit 1; }
+  #       exec java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.properties -Dorg.slf4j.simpleLogger.defaultLogLevel=INFO -jar shopservice.jar
+  #   networks:
+  #     - a8
+  #
+  #   volumes:
+  #     - ./logs/shopservice:/app/logs
+  #     - ./docker/ojp/shopservice/application.properties:/app/config/application.properties
+  #
+  #   healthcheck:
+  #     test: [ "CMD", "curl", "-f", "http://localhost:8280/actuator/health" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     start_period: 60s
+  #     retries: 3

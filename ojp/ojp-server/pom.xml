@@ -44,6 +44,12 @@
             <artifactId>ojp-server-common</artifactId>
         </dependency>
 
+        <!-- OJP License Module -->
+        <dependency>
+            <groupId>org.openjdbcproxy</groupId>
+            <artifactId>ojp-license</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>

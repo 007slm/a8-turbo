@@ -1,0 +1,12 @@
+services:
+  a8-sql-translator:
+    build:
+      context: ./ojp/ojp-sql-translator
+      dockerfile: Dockerfile
+    image: ojp-sql-translator:latest
+    container_name: a8-sql-translator
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - a8

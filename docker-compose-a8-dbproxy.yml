@@ -1,0 +1,35 @@
+services:
+  # OJP Server服务
+  a8-dbproxy:
+    build:
+      context: ./ojp
+      dockerfile: ojp-server/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: fluxdb-server:0.0.8-alpha
+    container_name: a8-dbproxy
+    # 移除对外暴露的端口，通过Kong网关访问
+    # ports:
+    #   - "8010:8010"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+      - MAVEN_CONFIG=/root/.m2
+      - MAVEN_OPTS=-Dmaven.repo.local=/root/.m2/repository
+    depends_on:
+      - redis
+      - a8-sql-translator
+    networks:
+      - a8
+    volumes:
+      - ./docker/ojp/license:/etc/ojp/license:rw
+      - ./docker/ojp/server/logs:/app/logs
+      - ./docker/ojp/server/application.yml:/app/config/application.yml
+      - C:\Users\007sl\.m2\repository:/root/.m2/repository
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8010/api/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3

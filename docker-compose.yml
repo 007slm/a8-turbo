@@ -6,13 +6,13 @@ networks:
         - subnet: 172.24.0.0/16
 
 include:
-  - ./docker-compose-db.yml
   - ./docker-compose-cdc-sync-zeta.yml
   - ./docker-compose-kong.yml
   #  - ./docker-compose-ojp.yml
   #  - ./docker-compose-shopservice.yml
-  - ./docker-compose-ojp-local.yml
-  - ./docker-compose-addon.yml
+  - ./docker-compose-dev.yml
+  - ./docker-compose-sidecar.yml
+  - ./docker-compose-sentinel.yml
 
 services:
   # 1. 自定义 DNS 服务器（dnsmasq）

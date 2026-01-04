@@ -41,6 +41,7 @@ public class CacheRuleController {
     private final RedisTemplate<String, Object> redisTemplate;
     private final SeatunnelJobService seatunnelJobService;
     private final TableSyncStateManager tableSyncStateManager;
+    private final org.openjdbcproxy.cache.service.SqlTranslationService sqlTranslationService;
 
     @GetMapping("/list")
     @Operation(summary = "获取缓存规则列表", description = "获取所有缓存规则")
@@ -69,6 +70,9 @@ public class CacheRuleController {
         CacheRule persistedRule = cacheRuleRepository.save(request);
         updateRedisIndexes(persistedRule, previousRule);
 
+        // Trigger SQL translation if needed
+        sqlTranslationService.processRule(persistedRule);
+
         Map<String, String> updatedJobIds = seatunnelJobService.synchroniseRule(persistedRule, previousRule);
         if (!Objects.equals(updatedJobIds, persistedRule.getSeatunnelJobIds())) {
             persistedRule.setSeatunnelJobIds(updatedJobIds);
@@ -88,6 +92,9 @@ public class CacheRuleController {
         request.setId(ruleId);
         CacheRule persistedRule = cacheRuleRepository.save(request);
         updateRedisIndexes(persistedRule, previousRule);
+
+        // Trigger SQL translation if needed
+        sqlTranslationService.processRule(persistedRule);
 
         Map<String, String> updatedJobIds = seatunnelJobService.synchroniseRule(persistedRule, previousRule);
         if (!Objects.equals(updatedJobIds, persistedRule.getSeatunnelJobIds())) {

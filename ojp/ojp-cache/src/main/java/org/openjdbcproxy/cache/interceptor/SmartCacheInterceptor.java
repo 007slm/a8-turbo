@@ -49,12 +49,16 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
 
         Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session, existingCacheConn);
         if (cacheConn != null) {
-            context.setCurrentInterceptedConnection(cacheConn);
+            // Wrap the connection to emulate Oracle metadata behavior
+            Connection wrapperConn = new org.openjdbcproxy.cache.emulator.OracleCompatibleConnection(cacheConn);
+            
+            context.setCurrentInterceptedConnection(wrapperConn);
             context.setAttribute("cache.intercepted", true);
             if (sessionContext != null && existingCacheConn == null) {
-                sessionContext.addAttr("cache.intercepted.conn", cacheConn);
+                // Store the WRAPPED connection so subsequent reused calls also get emulation
+                sessionContext.addAttr("cache.intercepted.conn", wrapperConn);
             }
-            log.info("缓存命中");
+            log.info("缓存命中 (Oracle Metadata Emulator Enabled)");
         }
     }
 

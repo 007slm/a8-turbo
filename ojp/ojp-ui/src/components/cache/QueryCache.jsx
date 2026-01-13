@@ -66,18 +66,44 @@ const QueryCache = () => {
       width: 120,
       ellipsis: true,
       copyable: true,
-      render: (text) => (
-        <Tooltip title={text}>
-          <Tag color="geekblue">{String(text || '').substring(0, 8)}...</Tag>
-        </Tooltip>
-      ),
+      render: (text) => {
+        let val = text;
+        if (typeof text === 'object' && text !== null) {
+          if (React.isValidElement(text)) {
+            return text;
+          }
+          try {
+            val = JSON.stringify(text);
+          } catch (e) {
+            val = '[Circular/Complex Object]';
+          }
+        }
+        return (
+          <Tooltip title={String(val)}>
+            <Tag color="geekblue">{String(val || '').substring(0, 8)}...</Tag>
+          </Tooltip>
+        )
+      },
     },
     {
       title: '查询ID',
       dataIndex: 'id',
       width: 120,
       copyable: true,
-      render: (text) => <Text code>{String(text || '').substring(0, 8)}...</Text>,
+      render: (text) => {
+        let val = text;
+        if (typeof text === 'object' && text !== null) {
+          if (React.isValidElement(text)) {
+            return text;
+          }
+          try {
+            val = JSON.stringify(text);
+          } catch (e) {
+            val = '[Circular/Complex Object]';
+          }
+        }
+        return <Text code>{String(val || '').substring(0, 8)}...</Text>
+      },
     },
     {
       title: 'SQL语句',
@@ -204,11 +230,29 @@ const QueryCache = () => {
         {selectedQuery && (
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label="查询ID">
-              <Text code copyable>{selectedQuery.id}</Text>
+              <Text code copyable>
+                {(() => {
+                  const val = selectedQuery.id;
+                  if (typeof val === 'object' && val !== null) {
+                    if (React.isValidElement(val)) return val;
+                    try { return JSON.stringify(val) } catch (e) { return '[Circular]' }
+                  }
+                  return val;
+                })()}
+              </Text>
             </Descriptions.Item>
 
             <Descriptions.Item label="连接哈希">
-              <Tag color="blue">{selectedQuery.connHash}</Tag>
+              <Tag color="blue">
+                {(() => {
+                  const val = selectedQuery.connHash;
+                  if (typeof val === 'object' && val !== null) {
+                    if (React.isValidElement(val)) return val;
+                    try { return JSON.stringify(val) } catch (e) { return '[Circular]' }
+                  }
+                  return val;
+                })()}
+              </Tag>
             </Descriptions.Item>
 
             <Descriptions.Item label="SQL语句">

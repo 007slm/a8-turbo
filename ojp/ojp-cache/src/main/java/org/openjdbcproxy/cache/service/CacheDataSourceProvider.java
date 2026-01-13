@@ -68,7 +68,7 @@ public class CacheDataSourceProvider implements DisposableBean {
         // 连接测试
         config.setConnectionTestQuery("SELECT 1");
         
-        log.info("Creating StarRocks data source for database: {}, URL: {}",
+        log.info("正在为数据库创建 StarRocks 数据源: {}, URL: {}",
                 connHash, config.getJdbcUrl());
         
         return new HikariDataSource(config);

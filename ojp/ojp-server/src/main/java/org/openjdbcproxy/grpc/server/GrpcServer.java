@@ -22,7 +22,7 @@ public class GrpcServer {
     
     public static void main(String[] args) {
         try {
-            log.info("44455启动OJP Server...");
+            log.info("启动OJP Server...");
             
             // 启动 Spring Boot 应用
             applicationContext = SpringApplication.run(GrpcServer.class, args);

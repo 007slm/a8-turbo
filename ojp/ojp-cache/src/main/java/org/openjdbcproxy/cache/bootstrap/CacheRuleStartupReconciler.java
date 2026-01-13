@@ -21,19 +21,20 @@ public class CacheRuleStartupReconciler implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<CacheRule> rules = cacheRuleRepository.findAll();
-        for (CacheRule rule : rules) {
-            try {
-                if (rule.isEnabled()) {
-                    rule.setSeatunnelJobIds(
-                            seatunnelJobService.synchroniseRule(rule, null)
-                    );
-                    cacheRuleRepository.save(rule);
-                    log.info("Startup reconciled rule {}", rule.getId());
-                }
-            } catch (Exception ex) {
-                log.warn("Startup reconcile failed for rule {}: {}", rule.getId(), ex.getMessage());
+        try {
+            List<CacheRule> rules = cacheRuleRepository.findAll();
+            // Perform one global reconciliation on startup
+            var activeJobs = seatunnelJobService.reconcile(rules);
+            
+            // Update mapping for all rules
+            for (CacheRule rule : rules) {
+                var jobIds = seatunnelJobService.resolveJobIds(rule, activeJobs);
+                rule.setSeatunnelJobIds(jobIds);
+                cacheRuleRepository.save(rule);
             }
+            log.info("启动时同步已完成。共处理 {} 条规则。", rules.size());
+        } catch (Exception ex) {
+            log.error("启动时同步失败: {}", ex.getMessage(), ex);
         }
     }
 }

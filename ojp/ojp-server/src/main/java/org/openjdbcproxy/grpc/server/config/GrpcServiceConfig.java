@@ -1,7 +1,6 @@
 package org.openjdbcproxy.grpc.server.config;
 
 import io.grpc.ServerInterceptor;
-import io.opentelemetry.instrumentation.grpc.v1_6.GrpcTelemetry;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -18,20 +17,4 @@ import org.springframework.grpc.server.GlobalServerInterceptor;
 @Configuration
 public class GrpcServiceConfig {
     
-    private final GrpcTelemetry grpcTelemetry;
-    
-    public GrpcServiceConfig(GrpcTelemetry grpcTelemetry) {
-        this.grpcTelemetry = grpcTelemetry;
-    }
-    
-    /**
-     * 配置 OpenTelemetry gRPC 拦截器
-     * 这个拦截器需要手动配置，因为它不是标准的 gRPC 拦截器
-     */
-    @Bean
-    @GlobalServerInterceptor
-    @Order(200)
-    public ServerInterceptor grpcTelemetryInterceptor() {
-        return grpcTelemetry.newServerInterceptor();
-    }
 }

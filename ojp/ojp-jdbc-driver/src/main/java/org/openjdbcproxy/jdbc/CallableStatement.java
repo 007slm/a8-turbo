@@ -50,13 +50,13 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
         log.debug("registerOutParameter: {}, {}", parameterIndex, sqlType);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterIndex, sqlType));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterIndex, sqlType));
     }
 
     @Override
     public void registerOutParameter(int parameterIndex, int sqlType, int scale) throws SQLException {
         log.debug("registerOutParameter: {}, {}, {}", parameterIndex, sqlType, scale);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterIndex, sqlType, scale));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterIndex, sqlType, scale));
     }
 
     @Override
@@ -68,259 +68,259 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public String getString(int parameterIndex) throws SQLException {
         log.debug("getString: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "String", String.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "String", String.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public boolean getBoolean(int parameterIndex) throws SQLException {
         log.debug("getBoolean: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public byte getByte(int parameterIndex) throws SQLException {
         log.debug("getByte: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public short getShort(int parameterIndex) throws SQLException {
         log.debug("getShort: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Short", Short.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Short", Short.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public int getInt(int parameterIndex) throws SQLException {
         log.debug("getInt: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public long getLong(int parameterIndex) throws SQLException {
         log.debug("getLong: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Long", Long.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Long", Long.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public float getFloat(int parameterIndex) throws SQLException {
         log.debug("getFloat: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Float", Float.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Float", Float.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public double getDouble(int parameterIndex) throws SQLException {
         log.debug("getDouble: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Double", Double.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Double", Double.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public BigDecimal getBigDecimal(int parameterIndex, int scale) throws SQLException {
         log.debug("getBigDecimal: {}, {}", parameterIndex, scale);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(parameterIndex, scale));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(parameterIndex, scale));
     }
 
     @Override
     public byte[] getBytes(int parameterIndex) throws SQLException {
         log.debug("getBytes: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Date getDate(int parameterIndex) throws SQLException {
         log.debug("getDate: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Time getTime(int parameterIndex) throws SQLException {
         log.debug("getTime: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Timestamp getTimestamp(int parameterIndex) throws SQLException {
         log.debug("getTimestamp: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Object getObject(int parameterIndex) throws SQLException {
         log.debug("getObject: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public BigDecimal getBigDecimal(int parameterIndex) throws SQLException {
         log.debug("getBigDecimal: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Object getObject(int parameterIndex, Map<String, Class<?>> map) throws SQLException {
         log.debug("getObject: {}, <Map>", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(parameterIndex, map));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(parameterIndex, map));
     }
 
     @Override
     public Ref getRef(int parameterIndex) throws SQLException {
         log.debug("getRef: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Ref", Ref.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Ref", Ref.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Blob getBlob(int parameterIndex) throws SQLException {
         log.debug("getBlob: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Blob", Blob.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Blob", Blob.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Clob getClob(int parameterIndex) throws SQLException {
         log.debug("getClob: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Clob", Clob.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Clob", Clob.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Array getArray(int parameterIndex) throws SQLException {
         log.debug("getArray: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Array", Array.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "Array", Array.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Date getDate(int parameterIndex, Calendar cal) throws SQLException {
         log.debug("getDate: {}, <Calendar>", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(parameterIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(parameterIndex, cal));
     }
 
     @Override
     public Time getTime(int parameterIndex, Calendar cal) throws SQLException {
         log.debug("getTime: {}, <Calendar>", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(parameterIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(parameterIndex, cal));
     }
 
     @Override
     public Timestamp getTimestamp(int parameterIndex, Calendar cal) throws SQLException {
         log.debug("getTimestamp: {}, <Calendar>", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(parameterIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(parameterIndex, cal));
     }
 
     @Override
     public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException {
         log.debug("registerOutParameter: {}, {}, {}", parameterIndex, sqlType, typeName);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterIndex, sqlType, typeName));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterIndex, sqlType, typeName));
     }
 
     @Override
     public void registerOutParameter(String parameterName, int sqlType) throws SQLException {
         log.debug("registerOutParameter: {}, {}", parameterName, sqlType);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterName, sqlType));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterName, sqlType));
     }
 
     @Override
     public void registerOutParameter(String parameterName, int sqlType, int scale) throws SQLException {
         log.debug("registerOutParameter: {}, {}, {}", parameterName, sqlType, scale);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterName, sqlType, scale));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterName, sqlType, scale));
     }
 
     @Override
     public void registerOutParameter(String parameterName, int sqlType, String typeName) throws SQLException {
         log.debug("registerOutParameter: {}, {}, {}", parameterName, sqlType, typeName);
-        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, List.of(parameterName, sqlType, typeName));
+        this.callProxy(CallType.CALL_REGISTER, "OutParameter", Void.class, java.util.Arrays.asList(parameterName, sqlType, typeName));
     }
 
     @Override
     public URL getURL(int parameterIndex) throws SQLException {
         log.debug("getURL: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "URL", URL.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "URL", URL.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public void setURL(String parameterName, URL val) throws SQLException {
         log.debug("setURL: {}, {}", parameterName, val);
-        this.callProxy(CallType.CALL_SET, "URL", Void.class, List.of(parameterName, val));
+        this.callProxy(CallType.CALL_SET, "URL", Void.class, java.util.Arrays.asList(parameterName, val));
     }
 
     @Override
     public void setNull(String parameterName, int sqlType) throws SQLException {
         log.debug("setNull: {}, {}", parameterName, sqlType);
-        this.callProxy(CallType.CALL_SET, "Null", Void.class, List.of(parameterName, sqlType));
+        this.callProxy(CallType.CALL_SET, "Null", Void.class, java.util.Arrays.asList(parameterName, sqlType));
     }
 
     @Override
     public void setBoolean(String parameterName, boolean x) throws SQLException {
         log.debug("setBoolean: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Boolean", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Boolean", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setByte(String parameterName, byte x) throws SQLException {
         log.debug("setByte: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Byte", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Byte", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setShort(String parameterName, short x) throws SQLException {
         log.debug("setShort: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Short", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Short", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setInt(String parameterName, int x) throws SQLException {
         log.debug("setInt: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Int", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Int", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setLong(String parameterName, long x) throws SQLException {
         log.debug("setLong: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Long", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Long", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setFloat(String parameterName, float x) throws SQLException {
         log.debug("setFloat: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Float", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Float", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setDouble(String parameterName, double x) throws SQLException {
         log.debug("setDouble: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Double", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Double", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setBigDecimal(String parameterName, BigDecimal x) throws SQLException {
         log.debug("setBigDecimal: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "BigDecimal", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "BigDecimal", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setString(String parameterName, String x) throws SQLException {
         log.debug("setString: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "String", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "String", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setBytes(String parameterName, byte[] x) throws SQLException {
         log.debug("setBytes: {}, <byte[]>", parameterName);
-        this.callProxy(CallType.CALL_SET, "Bytes", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Bytes", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setDate(String parameterName, Date x) throws SQLException {
         log.debug("setDate: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Date", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Date", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setTime(String parameterName, Time x) throws SQLException {
         log.debug("setTime: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Time", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Time", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setTimestamp(String parameterName, Timestamp x) throws SQLException {
         log.debug("setTimestamp: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
@@ -332,397 +332,397 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setBinaryStream(String parameterName, InputStream x, int length) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterName, x, length));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterName, x, length));
     }
 
     @Override
     public void setObject(String parameterName, Object x, int targetSqlType, int scale) throws SQLException {
         log.debug("setObject: {}, {}, {}, {}", parameterName, x, targetSqlType, scale);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterName, x, targetSqlType, scale));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterName, x, targetSqlType, scale));
     }
 
     @Override
     public void setObject(String parameterName, Object x, int targetSqlType) throws SQLException {
         log.debug("setObject: {}, {}, {}", parameterName, x, targetSqlType);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterName, x, targetSqlType));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterName, x, targetSqlType));
     }
 
     @Override
     public void setObject(String parameterName, Object x) throws SQLException {
         log.debug("setObject: {}, {}", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader, int length) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterName, reader, length));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterName, reader, length));
     }
 
     @Override
     public void setDate(String parameterName, Date x, Calendar cal) throws SQLException {
         log.debug("setDate: {}, {}, <Calendar>", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Date", Void.class, List.of(parameterName, x, cal));
+        this.callProxy(CallType.CALL_SET, "Date", Void.class, java.util.Arrays.asList(parameterName, x, cal));
     }
 
     @Override
     public void setTime(String parameterName, Time x, Calendar cal) throws SQLException {
         log.debug("setTime: {}, {}, <Calendar>", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Time", Void.class, List.of(parameterName, x, cal));
+        this.callProxy(CallType.CALL_SET, "Time", Void.class, java.util.Arrays.asList(parameterName, x, cal));
     }
 
     @Override
     public void setTimestamp(String parameterName, Timestamp x, Calendar cal) throws SQLException {
         log.debug("setTimestamp: {}, {}, <Calendar>", parameterName, x);
-        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, List.of(parameterName, x, cal));
+        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, java.util.Arrays.asList(parameterName, x, cal));
     }
 
     @Override
     public void setNull(String parameterName, int sqlType, String typeName) throws SQLException {
         log.debug("setNull: {}, {}, {}", parameterName, sqlType, typeName);
-        this.callProxy(CallType.CALL_SET, "Null", Void.class, List.of(parameterName, sqlType, typeName));
+        this.callProxy(CallType.CALL_SET, "Null", Void.class, java.util.Arrays.asList(parameterName, sqlType, typeName));
     }
 
     @Override
     public String getString(String parameterName) throws SQLException {
         log.debug("getString: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "String", String.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "String", String.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public boolean getBoolean(String parameterName) throws SQLException {
         log.debug("getBoolean: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public byte getByte(String parameterName) throws SQLException {
         log.debug("getByte: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public short getShort(String parameterName) throws SQLException {
         log.debug("getShort: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Short", Short.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Short", Short.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public int getInt(String parameterName) throws SQLException {
         log.debug("getInt: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public long getLong(String parameterName) throws SQLException {
         log.debug("getLong: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Long", Long.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Long", Long.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public float getFloat(String parameterName) throws SQLException {
         log.debug("getFloat: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Float", Float.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Float", Float.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public double getDouble(String parameterName) throws SQLException {
         log.debug("getDouble: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Double", Double.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Double", Double.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public byte[] getBytes(String parameterName) throws SQLException {
         log.debug("getBytes: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Date getDate(String parameterName) throws SQLException {
         log.debug("getDate: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Time getTime(String parameterName) throws SQLException {
         log.debug("getTime: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Timestamp getTimestamp(String parameterName) throws SQLException {
         log.debug("getTimestamp: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Object getObject(String parameterName) throws SQLException {
         log.debug("getObject: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public BigDecimal getBigDecimal(String parameterName) throws SQLException {
         log.debug("getBigDecimal: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Object getObject(String parameterName, Map<String, Class<?>> map) throws SQLException {
         log.debug("getObject: {}, <Map>", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(parameterName, map));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(parameterName, map));
     }
 
     @Override
     public Ref getRef(String parameterName) throws SQLException {
         log.debug("getRef: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Ref", Ref.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Ref", Ref.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Blob getBlob(String parameterName) throws SQLException {
         log.debug("getBlob: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Blob", Blob.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Blob", Blob.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Clob getClob(String parameterName) throws SQLException {
         log.debug("getClob: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Clob", Clob.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Clob", Clob.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Array getArray(String parameterName) throws SQLException {
         log.debug("getArray: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Array", Array.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "Array", Array.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Date getDate(String parameterName, Calendar cal) throws SQLException {
         log.debug("getDate: {}, <Calendar>", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(parameterName, cal));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(parameterName, cal));
     }
 
     @Override
     public Time getTime(String parameterName, Calendar cal) throws SQLException {
         log.debug("getTime: {}, <Calendar>", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(parameterName, cal));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(parameterName, cal));
     }
 
     @Override
     public Timestamp getTimestamp(String parameterName, Calendar cal) throws SQLException {
         log.debug("getTimestamp: {}, <Calendar>", parameterName);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(parameterName, cal));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(parameterName, cal));
     }
 
     @Override
     public URL getURL(String parameterName) throws SQLException {
         log.debug("getURL: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "URL", URL.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "URL", URL.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public RowId getRowId(int parameterIndex) throws SQLException {
         log.debug("getRowId: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "RowId", RowId.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "RowId", RowId.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public RowId getRowId(String parameterName) throws SQLException {
         log.debug("getRowId: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "RowId", RowId.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "RowId", RowId.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public void setRowId(String parameterName, RowId x) throws SQLException {
         log.debug("setRowId: {}, <RowId>", parameterName);
-        this.callProxy(CallType.CALL_SET, "RowId", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "RowId", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setNString(String parameterName, String value) throws SQLException {
         log.debug("setNString: {}, {}", parameterName, value);
-        this.callProxy(CallType.CALL_SET, "NString", Void.class, List.of(parameterName, value));
+        this.callProxy(CallType.CALL_SET, "NString", Void.class, java.util.Arrays.asList(parameterName, value));
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
         log.debug("setNCharacterStream: {}, <Reader>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, List.of(parameterName, value, length));
+        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, java.util.Arrays.asList(parameterName, value, length));
     }
 
     @Override
     public void setNClob(String parameterName, NClob value) throws SQLException {
         log.debug("setNClob: {}, <NClob>", parameterName);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterName, value));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterName, value));
     }
 
     @Override
     public void setClob(String parameterName, Reader reader, long length) throws SQLException {
         log.debug("setClob: {}, <Reader>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterName, reader, length));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterName, reader, length));
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
         log.debug("setBlob: {}, <InputStream>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterName, inputStream, length));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterName, inputStream, length));
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
         log.debug("setNClob: {}, <Reader>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterName, reader, length));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterName, reader, length));
     }
 
     @Override
     public NClob getNClob(int parameterIndex) throws SQLException {
         log.debug("getNClob: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "NClob", NClob.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "NClob", NClob.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public NClob getNClob(String parameterName) throws SQLException {
         log.debug("getNClob: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "NClob", NClob.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "NClob", NClob.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
         log.debug("setSQLXML: {}, <SQLXML>", parameterName);
-        this.callProxy(CallType.CALL_SET, "SQLXML", Void.class, List.of(parameterName, xmlObject));
+        this.callProxy(CallType.CALL_SET, "SQLXML", Void.class, java.util.Arrays.asList(parameterName, xmlObject));
     }
 
     @Override
     public SQLXML getSQLXML(int parameterIndex) throws SQLException {
         log.debug("getSQLXML: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "SQLXML", SQLXML.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "SQLXML", SQLXML.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public SQLXML getSQLXML(String parameterName) throws SQLException {
         log.debug("getSQLXML: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "SQLXML", SQLXML.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "SQLXML", SQLXML.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public String getNString(int parameterIndex) throws SQLException {
         log.debug("getNString: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "NString", String.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "NString", String.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public String getNString(String parameterName) throws SQLException {
         log.debug("getNString: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "NString", String.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "NString", String.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Reader getNCharacterStream(int parameterIndex) throws SQLException {
         log.debug("getNCharacterStream: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "NCharacterStream", Reader.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "NCharacterStream", Reader.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Reader getNCharacterStream(String parameterName) throws SQLException {
         log.debug("getNCharacterStream: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "NCharacterStream", Reader.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "NCharacterStream", Reader.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public Reader getCharacterStream(int parameterIndex) throws SQLException {
         log.debug("getCharacterStream: {}", parameterIndex);
-        return this.callProxy(CallType.CALL_GET, "CharacterStream", Reader.class, List.of(parameterIndex));
+        return this.callProxy(CallType.CALL_GET, "CharacterStream", Reader.class, java.util.Arrays.asList(parameterIndex));
     }
 
     @Override
     public Reader getCharacterStream(String parameterName) throws SQLException {
         log.debug("getCharacterStream: {}", parameterName);
-        return this.callProxy(CallType.CALL_GET, "CharacterStream", Reader.class, List.of(parameterName));
+        return this.callProxy(CallType.CALL_GET, "CharacterStream", Reader.class, java.util.Arrays.asList(parameterName));
     }
 
     @Override
     public void setBlob(String parameterName, Blob x) throws SQLException {
         log.debug("setBlob: {}, <Blob>", parameterName);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setClob(String parameterName, Clob x) throws SQLException {
         log.debug("setClob: {}, <Clob>", parameterName);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setAsciiStream(String parameterName, InputStream x, long length) throws SQLException {
         log.debug("setAsciiStream: {}, <InputStream>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, List.of(parameterName, x, length));
+        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, java.util.Arrays.asList(parameterName, x, length));
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x, long length) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterName, x, length));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterName, x, length));
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader, long length) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>, {}", parameterName, length);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterName, reader, length));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterName, reader, length));
     }
 
     @Override
     public void setAsciiStream(String parameterName, InputStream x) throws SQLException {
         log.debug("setAsciiStream: {}, <InputStream>", parameterName);
-        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setBinaryStream(String parameterName, InputStream x) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>", parameterName);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterName, x));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterName, x));
     }
 
     @Override
     public void setCharacterStream(String parameterName, Reader reader) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>", parameterName);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterName, reader));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterName, reader));
     }
 
     @Override
     public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
         log.debug("setNCharacterStream: {}, <Reader>", parameterName);
-        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, List.of(parameterName, value));
+        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, java.util.Arrays.asList(parameterName, value));
     }
 
     @Override
     public void setClob(String parameterName, Reader reader) throws SQLException {
         log.debug("setClob: {}, <Reader>", parameterName);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterName, reader));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterName, reader));
     }
 
     @Override
     public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
         log.debug("setBlob: {}, <InputStream>", parameterName);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterName, inputStream));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterName, inputStream));
     }
 
     @Override
     public void setNClob(String parameterName, Reader reader) throws SQLException {
         log.debug("setNClob: {}, <Reader>", parameterName);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterName, reader));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterName, reader));
     }
 
     @Override
     public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
         log.debug("getObject: {}, {}", parameterIndex, type);
-        return this.callProxy(CallType.CALL_GET, "Object", type, List.of(parameterIndex, type));
+        return this.callProxy(CallType.CALL_GET, "Object", type, java.util.Arrays.asList(parameterIndex, type));
     }
 
     @Override
     public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
         log.debug("getObject: {}, {}", parameterName, type);
-        return this.callProxy(CallType.CALL_GET, "Object", type, List.of(parameterName, type));
+        return this.callProxy(CallType.CALL_GET, "Object", type, java.util.Arrays.asList(parameterName, type));
     }
 
     @Override
@@ -741,103 +741,103 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
         log.debug("setNull: {}, {}", parameterIndex, sqlType);
-        this.callProxy(CallType.CALL_SET, "Null", Void.class, List.of(parameterIndex, sqlType));
+        this.callProxy(CallType.CALL_SET, "Null", Void.class, java.util.Arrays.asList(parameterIndex, sqlType));
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
         log.debug("setBoolean: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Boolean", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Boolean", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
         log.debug("setByte: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Byte", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Byte", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
         log.debug("setShort: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Short", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Short", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
         log.debug("setInt: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Int", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Int", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
         log.debug("setLong: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Long", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Long", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
         log.debug("setFloat: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Float", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Float", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
         log.debug("setDouble: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Double", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Double", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
         log.debug("setBigDecimal: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "BigDecimal", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "BigDecimal", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
         log.debug("setString: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "String", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "String", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
         log.debug("setBytes: {}, <byte[]>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Bytes", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Bytes", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
         log.debug("setDate: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Date", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Date", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
         log.debug("setTime: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Time", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Time", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
         log.debug("setTimestamp: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
         log.debug("setAsciiStream: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, List.of(parameterIndex, x, length));
+        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, java.util.Arrays.asList(parameterIndex, x, length));
     }
 
     @Override
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
         log.debug("setUnicodeStream: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "UnicodeStream", Void.class, List.of(parameterIndex, x, length));
+        this.callProxy(CallType.CALL_SET, "UnicodeStream", Void.class, java.util.Arrays.asList(parameterIndex, x, length));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterIndex, x, length));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterIndex, x, length));
     }
 
     @Override
@@ -849,13 +849,13 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
         log.debug("setObject: {}, {}, {}", parameterIndex, x, targetSqlType);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterIndex, x, targetSqlType));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterIndex, x, targetSqlType));
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
         log.debug("setObject: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
@@ -873,31 +873,31 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterIndex, reader, length));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterIndex, reader, length));
     }
 
     @Override
     public void setRef(int parameterIndex, Ref x) throws SQLException {
         log.debug("setRef: {}, <Ref>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Ref", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Ref", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
         log.debug("setBlob: {}, <Blob>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setClob(int parameterIndex, Clob x) throws SQLException {
         log.debug("setClob: {}, <Clob>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setArray(int parameterIndex, Array x) throws SQLException {
         log.debug("setArray: {}, <Array>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Array", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "Array", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
@@ -909,31 +909,31 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
         log.debug("setDate: {}, {}, <Calendar>", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Date", Void.class, List.of(parameterIndex, x, cal));
+        this.callProxy(CallType.CALL_SET, "Date", Void.class, java.util.Arrays.asList(parameterIndex, x, cal));
     }
 
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
         log.debug("setTime: {}, {}, <Calendar>", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Time", Void.class, List.of(parameterIndex, x, cal));
+        this.callProxy(CallType.CALL_SET, "Time", Void.class, java.util.Arrays.asList(parameterIndex, x, cal));
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
         log.debug("setTimestamp: {}, {}, <Calendar>", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, List.of(parameterIndex, x, cal));
+        this.callProxy(CallType.CALL_SET, "Timestamp", Void.class, java.util.Arrays.asList(parameterIndex, x, cal));
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
         log.debug("setNull: {}, {}, {}", parameterIndex, sqlType, typeName);
-        this.callProxy(CallType.CALL_SET, "Null", Void.class, List.of(parameterIndex, sqlType, typeName));
+        this.callProxy(CallType.CALL_SET, "Null", Void.class, java.util.Arrays.asList(parameterIndex, sqlType, typeName));
     }
 
     @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
         log.debug("setURL: {}, {}", parameterIndex, x);
-        this.callProxy(CallType.CALL_SET, "URL", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "URL", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
@@ -945,127 +945,127 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
         log.debug("setRowId: {}, <RowId>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "RowId", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "RowId", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
         log.debug("setNString: {}, {}", parameterIndex, value);
-        this.callProxy(CallType.CALL_SET, "NString", Void.class, List.of(parameterIndex, value));
+        this.callProxy(CallType.CALL_SET, "NString", Void.class, java.util.Arrays.asList(parameterIndex, value));
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
         log.debug("setNCharacterStream: {}, <Reader>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, List.of(parameterIndex, value, length));
+        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, java.util.Arrays.asList(parameterIndex, value, length));
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
         log.debug("setNClob: {}, <NClob>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterIndex, value));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterIndex, value));
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
         log.debug("setClob: {}, <Reader>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterIndex, reader, length));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterIndex, reader, length));
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
         log.debug("setBlob: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterIndex, inputStream, length));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterIndex, inputStream, length));
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         log.debug("setNClob: {}, <Reader>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterIndex, reader, length));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterIndex, reader, length));
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
         log.debug("setSQLXML: {}, <SQLXML>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "SQLXML", Void.class, List.of(parameterIndex, xmlObject));
+        this.callProxy(CallType.CALL_SET, "SQLXML", Void.class, java.util.Arrays.asList(parameterIndex, xmlObject));
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
         log.debug("setObject: {}, {}, {}, {}", parameterIndex, x, targetSqlType, scaleOrLength);
-        this.callProxy(CallType.CALL_SET, "Object", Void.class, List.of(parameterIndex, x, targetSqlType, scaleOrLength));
+        this.callProxy(CallType.CALL_SET, "Object", Void.class, java.util.Arrays.asList(parameterIndex, x, targetSqlType, scaleOrLength));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
         log.debug("setAsciiStream: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, List.of(parameterIndex, x, length));
+        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, java.util.Arrays.asList(parameterIndex, x, length));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterIndex, x, length));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterIndex, x, length));
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>, {}", parameterIndex, length);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterIndex, reader, length));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterIndex, reader, length));
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
         log.debug("setAsciiStream: {}, <InputStream>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "AsciiStream", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
         log.debug("setBinaryStream: {}, <InputStream>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, List.of(parameterIndex, x));
+        this.callProxy(CallType.CALL_SET, "BinaryStream", Void.class, java.util.Arrays.asList(parameterIndex, x));
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, List.of(parameterIndex, reader));
+        this.callProxy(CallType.CALL_SET, "CharacterStream", Void.class, java.util.Arrays.asList(parameterIndex, reader));
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
         log.debug("setNCharacterStream: {}, <Reader>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, List.of(parameterIndex, value));
+        this.callProxy(CallType.CALL_SET, "NCharacterStream", Void.class, java.util.Arrays.asList(parameterIndex, value));
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
         log.debug("setClob: {}, <Reader>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Clob", Void.class, List.of(parameterIndex, reader));
+        this.callProxy(CallType.CALL_SET, "Clob", Void.class, java.util.Arrays.asList(parameterIndex, reader));
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
         log.debug("setBlob: {}, <InputStream>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "Blob", Void.class, List.of(parameterIndex, inputStream));
+        this.callProxy(CallType.CALL_SET, "Blob", Void.class, java.util.Arrays.asList(parameterIndex, inputStream));
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
         log.debug("setNClob: {}, <Reader>", parameterIndex);
-        this.callProxy(CallType.CALL_SET, "NClob", Void.class, List.of(parameterIndex, reader));
+        this.callProxy(CallType.CALL_SET, "NClob", Void.class, java.util.Arrays.asList(parameterIndex, reader));
     }
 
     @Override
     public ResultSet executeQuery(String sql) throws SQLException {
         log.debug("executeQuery: {}", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "Query", ResultSet.class, List.of(sql));
+        return this.callProxy(CallType.CALL_EXECUTE, "Query", ResultSet.class, java.util.Arrays.asList(sql));
     }
 
     @Override
     public int executeUpdate(String sql) throws SQLException {
         log.debug("executeUpdate: {}", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, List.of(sql));
+        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, java.util.Arrays.asList(sql));
     }
 
     @Override
@@ -1083,7 +1083,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setMaxFieldSize(int max) throws SQLException {
         log.debug("setMaxFieldSize: {}", max);
-        this.callProxy(CallType.CALL_SET, "MaxFieldSize", Void.class, List.of(max));
+        this.callProxy(CallType.CALL_SET, "MaxFieldSize", Void.class, java.util.Arrays.asList(max));
     }
 
     @Override
@@ -1095,13 +1095,13 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setMaxRows(int max) throws SQLException {
         log.debug("setMaxRows: {}", max);
-        this.callProxy(CallType.CALL_SET, "MaxRows", Void.class, List.of(max));
+        this.callProxy(CallType.CALL_SET, "MaxRows", Void.class, java.util.Arrays.asList(max));
     }
 
     @Override
     public void setEscapeProcessing(boolean enable) throws SQLException {
         log.debug("setEscapeProcessing: {}", enable);
-        this.callProxy(CallType.CALL_SET, "EscapeProcessing", Void.class, List.of(enable));
+        this.callProxy(CallType.CALL_SET, "EscapeProcessing", Void.class, java.util.Arrays.asList(enable));
     }
 
     @Override
@@ -1113,7 +1113,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setQueryTimeout(int seconds) throws SQLException {
         log.debug("setQueryTimeout: {}", seconds);
-        this.callProxy(CallType.CALL_SET, "QueryTimeout", Void.class, List.of(seconds));
+        this.callProxy(CallType.CALL_SET, "QueryTimeout", Void.class, java.util.Arrays.asList(seconds));
     }
 
     @Override
@@ -1137,13 +1137,13 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setCursorName(String name) throws SQLException {
         log.debug("setCursorName: {}", name);
-        this.callProxy(CallType.CALL_SET, "CursorName", Void.class, List.of(name));
+        this.callProxy(CallType.CALL_SET, "CursorName", Void.class, java.util.Arrays.asList(name));
     }
 
     @Override
     public boolean execute(String sql) throws SQLException {
         log.debug("execute: {}", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, List.of(sql));
+        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, java.util.Arrays.asList(sql));
     }
 
     @Override
@@ -1167,7 +1167,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setFetchDirection(int direction) throws SQLException {
         log.debug("setFetchDirection: {}", direction);
-        this.callProxy(CallType.CALL_SET, "FetchDirection", Void.class, List.of(direction));
+        this.callProxy(CallType.CALL_SET, "FetchDirection", Void.class, java.util.Arrays.asList(direction));
     }
 
     @Override
@@ -1179,7 +1179,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setFetchSize(int rows) throws SQLException {
         log.debug("setFetchSize: {}", rows);
-        this.callProxy(CallType.CALL_SET, "FetchSize", Void.class, List.of(rows));
+        this.callProxy(CallType.CALL_SET, "FetchSize", Void.class, java.util.Arrays.asList(rows));
     }
 
     @Override
@@ -1203,7 +1203,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void addBatch(String sql) throws SQLException {
         log.debug("addBatch: {}", sql);
-        this.callProxy(CallType.CALL_ADD, "Batch", Void.class, List.of(sql));
+        this.callProxy(CallType.CALL_ADD, "Batch", Void.class, java.util.Arrays.asList(sql));
     }
 
     @Override
@@ -1227,7 +1227,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public boolean getMoreResults(int current) throws SQLException {
         log.debug("getMoreResults: {}", current);
-        return this.callProxy(CallType.CALL_GET, "MoreResults", Boolean.class, List.of(current));
+        return this.callProxy(CallType.CALL_GET, "MoreResults", Boolean.class, java.util.Arrays.asList(current));
     }
 
     @Override
@@ -1239,37 +1239,37 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public int executeUpdate(String sql, int autoGeneratedKeys) throws SQLException {
         log.debug("executeUpdate: {}, {}", sql, autoGeneratedKeys);
-        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, List.of(sql, autoGeneratedKeys));
+        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, java.util.Arrays.asList(sql, autoGeneratedKeys));
     }
 
     @Override
     public int executeUpdate(String sql, int[] columnIndexes) throws SQLException {
         log.debug("executeUpdate: {}, <int[]>", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, List.of(sql, columnIndexes));
+        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, java.util.Arrays.asList(sql, columnIndexes));
     }
 
     @Override
     public int executeUpdate(String sql, String[] columnNames) throws SQLException {
         log.debug("executeUpdate: {}, <String[]>", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, List.of(sql, columnNames));
+        return this.callProxy(CallType.CALL_EXECUTE, "Update", Integer.class, java.util.Arrays.asList(sql, columnNames));
     }
 
     @Override
     public boolean execute(String sql, int autoGeneratedKeys) throws SQLException {
         log.debug("execute: {}, {}", sql, autoGeneratedKeys);
-        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, List.of(sql, autoGeneratedKeys));
+        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, java.util.Arrays.asList(sql, autoGeneratedKeys));
     }
 
     @Override
     public boolean execute(String sql, int[] columnIndexes) throws SQLException {
         log.debug("execute: {}, <int[]>", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, List.of(sql, columnIndexes));
+        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, java.util.Arrays.asList(sql, columnIndexes));
     }
 
     @Override
     public boolean execute(String sql, String[] columnNames) throws SQLException {
         log.debug("execute: {}, <String[]>", sql);
-        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, List.of(sql, columnNames));
+        return this.callProxy(CallType.CALL_EXECUTE, "", Boolean.class, java.util.Arrays.asList(sql, columnNames));
     }
 
     @Override
@@ -1287,7 +1287,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public void setPoolable(boolean poolable) throws SQLException {
         log.debug("setPoolable: {}", poolable);
-        this.callProxy(CallType.CALL_SET, "Poolable", Void.class, List.of(poolable));
+        this.callProxy(CallType.CALL_SET, "Poolable", Void.class, java.util.Arrays.asList(poolable));
     }
 
     @Override
@@ -1317,7 +1317,7 @@ public class CallableStatement implements java.sql.CallableStatement {
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         log.debug("isWrapperFor: {}", iface);
-        return this.callProxy(CallType.CALL_IS, "WrapperFor", Boolean.class, List.of(iface));
+        return this.callProxy(CallType.CALL_IS, "WrapperFor", Boolean.class, java.util.Arrays.asList(iface));
     }
 
     private CallResourceRequest.Builder newCallBuilder() {

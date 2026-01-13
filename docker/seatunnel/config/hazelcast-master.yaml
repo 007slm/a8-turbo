@@ -1,0 +1,32 @@
+hazelcast:
+  cluster-name: seatunnel-cluster
+
+  network:
+    rest-api:
+      enabled: true
+      endpoint-groups:
+        CLUSTER_WRITE:
+          enabled: true
+        DATA:
+          enabled: true
+    join:
+      tcp-ip:
+        enabled: true
+        member-list:
+          - seatunnel-master
+          - seatunnel-worker1
+
+  # 下面是 IMap 持久化
+  map:
+    engine*:
+      map-store:
+        enabled: true
+        initial-mode: EAGER
+        factory-class-name: org.apache.seatunnel.engine.server.persistence.FileMapStoreFactory
+        properties:
+          # SeaTunnel 目前 type 只支持 hdfs，这里用 file:/// + 本地路径
+          type: hdfs
+          namespace: /seatunnel-data/imap       # 逻辑路径名
+          clusterName: seatunnel-cluster
+          storage.type: hdfs
+          fs.defaultFS: file:///opt/seatunnel/data/imap

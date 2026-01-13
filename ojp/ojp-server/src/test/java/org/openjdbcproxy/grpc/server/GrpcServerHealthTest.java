@@ -52,7 +52,7 @@ class GrpcServerHealthTest {
         }
 
         System.clearProperty("ojp.server.port");
-        System.clearProperty("ojp.opentelemetry.enabled");
+
     }
 
     @AfterAll
@@ -67,17 +67,10 @@ class GrpcServerHealthTest {
         startServer();
 
         assertHealthStatus(Services.OJP_SERVER, HealthCheckResponse.ServingStatus.SERVING);
-        assertHealthStatus(Services.OPENTELEMETRY_SERVICE, HealthCheckResponse.ServingStatus.SERVING);
+
     }
 
-    @Test
-    void testHealthEndpointOtelServiceNotServing() {
-        System.setProperty("ojp.opentelemetry.enabled", "false");
-        startServer();
 
-        assertHealthStatus(Services.OJP_SERVER, HealthCheckResponse.ServingStatus.SERVING);
-        assertHealthStatus(Services.OPENTELEMETRY_SERVICE, HealthCheckResponse.ServingStatus.NOT_SERVING);
-    }
 
     @Test
     void testServerHealthEndpointNotServing() {

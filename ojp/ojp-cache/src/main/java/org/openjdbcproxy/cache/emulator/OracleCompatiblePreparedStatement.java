@@ -40,6 +40,11 @@ public class OracleCompatiblePreparedStatement implements PreparedStatement {
     }
 
     @Override
+    public ResultSet executeQuery(String sql) throws SQLException {
+        return new OracleCompatibleResultSet(original.executeQuery(sql));
+    }
+
+    @Override
     public ResultSet getResultSet() throws SQLException {
         ResultSet rs = original.getResultSet();
         return rs != null ? new OracleCompatibleResultSet(rs) : null;

@@ -4,6 +4,9 @@ import org.openjdbcproxy.grpc.SessionInfo;
 import org.openjdbcproxy.grpc.TransactionStatus;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.skywalking.apm.toolkit.trace.ActiveSpan;
+import org.apache.skywalking.apm.toolkit.trace.SpanRef;
+import org.apache.skywalking.apm.toolkit.trace.Tracer;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -24,6 +27,9 @@ public class SessionManagerImpl implements SessionManager {
 
     private Map<String, String> connectionHashMap = new ConcurrentHashMap<>();
     private Map<String, Session> sessionMap = new ConcurrentHashMap<>();
+    
+    // 存储每个 session 的 trace context，用于关联同一 session 的所有操作
+    private Map<String, SpanRef> sessionTraceMap = new ConcurrentHashMap<>();
 
     @Override
     public void registerClientUUID(String connectionHash, String clientUUID) {
@@ -35,10 +41,24 @@ public class SessionManagerImpl implements SessionManager {
     public SessionInfo createSession(String clientUUID, Connection connection,boolean readOnly) {
         log.info("Create session for client uuid {} readOnly: {}" , clientUUID,readOnly);
         Session session = new Session(connection, connectionHashMap.get(clientUUID), clientUUID, readOnly);
-        log.info("Session " + session.getSessionUUID() + " created for client uuid " + clientUUID);
-        this.sessionMap.put(session.getSessionUUID(), session);
+        String sessionUUID = session.getSessionUUID();
+        
+        // 为新 session 创建一个 session 级别的 trace span
+        SpanRef sessionSpan = Tracer.createLocalSpan("session-lifecycle");
+        ActiveSpan.tag("session.uuid", sessionUUID);
+        ActiveSpan.tag("client.uuid", clientUUID);
+        ActiveSpan.tag("connection.hash", connectionHashMap.get(clientUUID));
+        ActiveSpan.tag("read.only", String.valueOf(readOnly));
+        ActiveSpan.tag("component", "ojp-session");
+        
+        // 存储 session 的 trace context
+        sessionTraceMap.put(sessionUUID, sessionSpan);
+        
+        log.info("Session {} created for client uuid {}", sessionUUID, clientUUID);
+        this.sessionMap.put(sessionUUID, session);
         return session.getSessionInfo();
     }
+
 
     @Override
     public Connection getConnection(SessionInfo sessionInfo) {
@@ -132,8 +152,9 @@ public class SessionManagerImpl implements SessionManager {
 
     @Override
     public void terminateSession(SessionInfo sessionInfo) throws SQLException {
-        log.info("Terminating session -> " + sessionInfo.getSessionUUID());
-        Session targetSession = this.sessionMap.remove(sessionInfo.getSessionUUID());
+        String sessionUUID = sessionInfo.getSessionUUID();
+        log.info("Terminating session -> {}", sessionUUID);
+        Session targetSession = this.sessionMap.remove(sessionUUID);
 
         if (TransactionStatus.TRX_ACTIVE.equals(sessionInfo.getTransactionInfo().getTransactionStatus())) {
             if (!targetSession.getConnection().getAutoCommit()) {
@@ -142,6 +163,22 @@ public class SessionManagerImpl implements SessionManager {
             }
         }
         targetSession.terminate();
+        
+        // 结束 session 级别的 trace span
+        SpanRef sessionSpanObj = sessionTraceMap.remove(sessionUUID);
+        if (sessionSpanObj != null) {
+            // Note: Tracing lifecycle is managed by SkyWalking, we just hold the reference.
+            // If we needed to stop it we would call stop(), but usually thread-local based.
+            log.debug("Removed session trace context for session {}", sessionUUID);
+        }
+    }
+
+    /**
+     * 获取指定 session 的 trace context，用于关联同一 session 的所有操作
+     */
+    @Override
+    public SpanRef getSessionTraceContext(String sessionUUID) {
+        return sessionTraceMap.get(sessionUUID);
     }
 
     @SneakyThrows

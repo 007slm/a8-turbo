@@ -104,11 +104,7 @@ ojp:
     username: ${REDIS_USERNAME:}
     timeout: ${REDIS_TIMEOUT:10000}
 
-  # 监控配置
-  monitoring:
-    opentelemetry:
-      enabled: true
-      endpoint: ""
+
   prometheus:
     port: 59050
     allowed-ips: "*"

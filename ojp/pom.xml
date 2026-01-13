@@ -16,6 +16,7 @@
         <module>ojp-grpc-commons</module>
         <module>ojp-server-common</module>
         <module>ojp-jdbc-driver</module>
+        <module>ojp-jdbc-driver-java8</module>
         <module>ojp-cache</module>
         <module>ojp-license</module>
         <module>ojp-server</module>

@@ -25,7 +25,6 @@
         <lombok.version>1.18.38</lombok.version>
         <slf4j.version>2.0.17</slf4j.version>
         <grpc.version>1.70.0</grpc.version>
-        <spring.boot.version>3.3.3</spring.boot.version>
     </properties>
 
     <dependencies>
@@ -96,6 +95,14 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.17.0</version>
         </dependency>
+        
+        <!-- SkyWalking Trace Toolkit -->
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-trace</artifactId>
+            <version>9.3.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>

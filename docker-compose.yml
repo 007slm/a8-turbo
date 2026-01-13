@@ -4,13 +4,23 @@ networks:
     ipam:
       config:
         - subnet: 172.24.0.0/16
+          # IP Range Allocation:
+          # - Infrastructure: 172.24.0.2 - 172.24.0.19
+          # - CDC/SeaTunnel: 172.24.0.20 - 172.24.0.39
+          # - Dev Environment: 172.24.0.40 - 172.24.0.79
+          # - LGT/Monitoring: 172.24.0.80 - 172.24.0.99
+          # - Sidecars: 172.24.0.100 - 172.24.0.119
+          # - Commercial: 172.24.0.120 - 172.24.0.139
 
 include:
   - ./docker-compose-cdc-sync-zeta.yml
   - ./docker-compose-kong.yml
   #  - ./docker-compose-ojp.yml
   #  - ./docker-compose-shopservice.yml
+  - ./docker-compose-db.yml
   - ./docker-compose-dev.yml
+
+  - ./docker-compose-skywalking.yml
   - ./docker-compose-sidecar.yml
   - ./docker-compose-sentinel.yml
 
@@ -72,17 +82,20 @@ services:
 
   redis:
     image: redis-server-with-cache-cli
+    container_name: redis
     build:
       context: ./docker/redis
       dockerfile: ./Dockerfile
     hostname: redis
-    container_name: redis-server-with-cache-cli
-    # 移除对外暴露的端口，通过Kong网关访问（如需要）
+    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
     ports:
       - 6379:6379
     networks:
       a8:
         ipv4_address: 172.24.0.5
+    volumes:
+      - ./docker/redis/data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   redis-exporter:
     image: oliver006/redis_exporter:latest

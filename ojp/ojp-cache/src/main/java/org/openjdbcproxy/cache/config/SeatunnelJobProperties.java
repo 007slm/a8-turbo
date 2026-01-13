@@ -61,7 +61,7 @@ public class SeatunnelJobProperties {
     /**
      * StarRocks HTTP node URLs.
      */
-    private List<String> starrocksNodeUrls = new ArrayList<>(List.of("starrocks:8040"));
+    private List<String> starrocksNodeUrls = new ArrayList<>(java.util.Arrays.asList("starrocks:8040"));
 
     /**
      * StarRocks JDBC base URL.

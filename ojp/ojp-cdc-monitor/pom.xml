@@ -39,19 +39,12 @@
             <scope>provided</scope>
         </dependency>
         
-        <!-- Redis Client for pushing events -->
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>5.1.0</version>
-        </dependency>
-        
         <!-- JSON processing -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-            <scope>provided</scope>
+            <version>2.13.3</version>
+            <scope>compile</scope>
         </dependency>
         
         <dependency>
@@ -67,6 +60,23 @@
             <version>${slf4j.version}</version>
             <scope>provided</scope>
         </dependency>
+
+
+        <!-- ========== SeaTunnel Engine Event API ========== -->
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>seatunnel-engine-common</artifactId>
+            <version>${seatunnel.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- ========== Redis Client (Jedis) ========== -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>5.1.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -74,7 +84,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.2.4</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -82,12 +92,20 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <artifactSet>
+                                <includes>
+                                    <include>com.fasterxml.jackson.core:*</include>
+                                    <include>com.fasterxml.jackson.core:jackson-databind</include>
+                                </includes>
+                            </artifactSet>
                             <relocations>
                                 <relocation>
-                                    <pattern>redis.clients</pattern>
-                                    <shadedPattern>org.openjdbcproxy.seatunnel.shade.redis</shadedPattern>
+                                    <pattern>com.fasterxml.jackson</pattern>
+                                    <shadedPattern>org.openjdbcproxy.seatunnel.shade.jackson</shadedPattern>
                                 </relocation>
                             </relocations>
+
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
                         </configuration>
                     </execution>
                 </executions>
@@ -101,24 +119,50 @@
                     <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
-            <!-- 自动复制 SPI JAR 到 SeaTunnel Docker 目录 -->
+            <!-- 清空并复制依赖到 Docker 目录 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>copy-spi-jar</id>
+                        <id>clean-and-copy-libs</id>
                         <phase>package</phase>
                         <goals><goal>run</goal></goals>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.basedir}/../docker/seatunnel/lib"/>
+                                <!-- 清空目标 lib 目录 -->
+                                <delete dir="${project.basedir}/../../docker/seatunnel/lib"/>
+                                <mkdir dir="${project.basedir}/../../docker/seatunnel/lib"/>
+                                <echo message="Cleaned docker/seatunnel/lib directory"/>
+                                
+                                <!-- 复制项目 JAR -->
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="${project.basedir}/../docker/seatunnel/lib"
-                                      overwrite="true"/>
+                                      todir="${project.basedir}/../../docker/seatunnel/lib"/>
                                 <echo message="Copied SPI JAR to docker/seatunnel/lib"/>
                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- 复制运行时依赖到 Docker 目录 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.basedir}/../../docker/seatunnel/lib</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <excludeScope>provided</excludeScope>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
                     </execution>
                 </executions>

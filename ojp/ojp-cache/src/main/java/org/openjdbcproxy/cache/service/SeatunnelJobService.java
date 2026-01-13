@@ -37,7 +37,8 @@ import java.util.Arrays;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
- * Submits and cancels Seatunnel jobs on demand in response to cache rule mutations.
+ * Submits and cancels Seatunnel jobs on demand in response to cache rule
+ * mutations.
  */
 @Slf4j
 @Service
@@ -55,72 +56,104 @@ public class SeatunnelJobService {
     private RestClient restClient;
 
     /**
-     * Synchronise Seatunnel jobs to match the latest rule definition.
+     * Reconcile the state of all SeaTunnel jobs based on the provided list of
+     * rules.
+     * <p>
+     * This method ensures that:
+     * 1. Jobs required by at least one enabled rule are running (submitted if
+     * missing).
+     * 2. Jobs not required by any enabled rule are cancelled.
+     * 3. Shared jobs (same DB + Table) are reused.
      *
-     * @return an updated mapping of normalised table names to Seatunnel job ids.
+     * @param rules All currently existing cache rules.
+     * @return A map of JobName -> JobId for all currently active/valid jobs.
      */
-    public Map<String, String> synchroniseRule(CacheRule newRule, @Nullable CacheRule previousRule) {
-        Map<String, String> currentJobIds =
-                new HashMap<>(Optional.ofNullable(newRule.getSeatunnelJobIds()).orElseGet(HashMap::new));
-
+    public Map<String, String> reconcile(List<CacheRule> rules) {
         if (!properties.isEnabled()) {
-            return currentJobIds;
-        }
-        Optional<DatabaseEndpoint> targetEndpoint = parseEndpoint(newRule.getConnHash());
-        if (targetEndpoint.isEmpty()) {
-            log.warn("Skip Seatunnel sync for rule {}: unable to parse MySQL endpoint from connHash {}", newRule.getId(), newRule.getConnHash());
-            cancelJobs(currentJobIds.values());
             return Collections.emptyMap();
         }
 
-        DatabaseEndpoint endpoint = targetEndpoint.get();
-        Map<String, String> normalisedToActual = resolveTables(newRule);
-        Set<String> newTables = new HashSet<>(normalisedToActual.keySet());
+        // 1. Identify all expected jobs (unique by Job Name)
+        // Map JobName -> Context (so we can submit if missing)
+        Map<String, JobSubmissionContext> expectedJobs = new HashMap<>();
 
-        Map<String, String> previousTables = resolveTables(previousRule);
-        boolean connectionChanged = previousRule != null && !Objects.equals(
-                parseEndpoint(previousRule.getConnHash()).orElse(null),
-                endpoint);
+        for (CacheRule rule : rules) {
+            if (!rule.isEnabled())
+                continue;
+            Optional<DatabaseEndpoint> endpointOpt = parseEndpoint(rule.getConnHash());
+            if (endpointOpt.isEmpty())
+                continue;
+            DatabaseEndpoint endpoint = endpointOpt.get();
 
-        if (!newRule.isEnabled()) {
-            log.info("Rule {} disabled, cancelling {} Seatunnel jobs", newRule.getId(), currentJobIds.size());
-            cancelJobs(currentJobIds.values());
-            return Collections.emptyMap();
-        }
-
-        if (connectionChanged) {
-            log.info("Rule {} connection changed, cancelling {} existing jobs", newRule.getId(), currentJobIds.size());
-            cancelJobs(currentJobIds.values());
-            currentJobIds.clear();
-            previousTables = Collections.emptyMap();
-        }
-
-        Set<String> removedTables = new HashSet<>(previousTables.keySet());
-        removedTables.removeAll(newTables);
-        for (String removed : removedTables) {
-            String jobId = currentJobIds.remove(removed);
-            if (jobId != null) {
-                cancelJob(jobId);
+            Map<String, String> resolved = resolveTables(rule);
+            for (Map.Entry<String, String> entry : resolved.entrySet()) {
+                String actualTable = entry.getValue();
+                String jobName = buildJobName(endpoint, actualTable);
+                // We only need one valid request context for this job name
+                expectedJobs.putIfAbsent(jobName, new JobSubmissionContext(rule, endpoint, actualTable));
             }
         }
 
-        Map<String, String> resultingJobIds = new HashMap<>();
-        for (Map.Entry<String, String> entry : normalisedToActual.entrySet()) {
+        // 2. Get currently running jobs
+        Map<String, String> runningJobs = listJobsByName();
+        Map<String, String> finalActiveJobs = new HashMap<>();
+
+        // 3. Submit Missing
+        for (Map.Entry<String, JobSubmissionContext> entry : expectedJobs.entrySet()) {
+            String jobName = entry.getKey();
+            if (runningJobs.containsKey(jobName)) {
+                finalActiveJobs.put(jobName, runningJobs.get(jobName));
+            } else {
+                JobSubmissionContext ctx = entry.getValue();
+                // Pass checkExists=false since we already know it's missing from runningJobs
+                submitSingleTableJob(ctx.rule, ctx.endpoint, ctx.table, false)
+                        .ifPresent(jobId -> finalActiveJobs.put(jobName, jobId));
+            }
+        }
+
+        // 4. Cancel Orphans
+        List<String> toCancel = new ArrayList<>();
+        for (Map.Entry<String, String> entry : runningJobs.entrySet()) {
+            String jobName = entry.getKey();
+            // Only manage jobs created by this service (prefix check)
+            if (jobName.startsWith("ojp-cache-") && !expectedJobs.containsKey(jobName)) {
+                toCancel.add(entry.getValue());
+            }
+        }
+
+        if (!toCancel.isEmpty()) {
+            log.info("同步: 正在取消 {} 个孤立作业...", toCancel.size());
+            cancelJobs(toCancel);
+        }
+
+        return finalActiveJobs;
+    }
+
+    /**
+     * Resolve the job IDs for a specific rule based on the global active jobs.
+     */
+    public Map<String, String> resolveJobIds(CacheRule rule, Map<String, String> globalActiveJobs) {
+        if (!rule.isEnabled() || !properties.isEnabled()) {
+            return Collections.emptyMap();
+        }
+        Optional<DatabaseEndpoint> endpointOpt = parseEndpoint(rule.getConnHash());
+        if (endpointOpt.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        DatabaseEndpoint endpoint = endpointOpt.get();
+        Map<String, String> ruleJobIds = new HashMap<>();
+        Map<String, String> resolved = resolveTables(rule);
+
+        for (Map.Entry<String, String> entry : resolved.entrySet()) {
             String normalised = entry.getKey();
             String actualTable = entry.getValue();
-            String existingJob = currentJobIds.get(normalised);
-            if (existingJob != null) {
-                Optional<String> liveJob = findExistingJob(buildJobName(newRule.getId(), endpoint.database(), actualTable));
-                if (liveJob.isPresent()) {
-                    resultingJobIds.put(normalised, liveJob.get());
-                    continue;
-                }
+            String jobName = buildJobName(endpoint, actualTable);
+            String jobId = globalActiveJobs.get(jobName);
+            if (jobId != null) {
+                ruleJobIds.put(normalised, jobId);
             }
-            submitSingleTableJob(newRule, endpoint, actualTable)
-                    .ifPresent(jobId -> resultingJobIds.put(normalised, jobId));
         }
-
-        return resultingJobIds;
+        return ruleJobIds;
     }
 
     /**
@@ -128,7 +161,8 @@ public class SeatunnelJobService {
      */
     public List<SeatunnelJobView> describeRuleJobs(CacheRule rule) {
         Map<String, String> tables = new LinkedHashMap<>(resolveTables(rule));
-        Map<String, String> storedJobIds = Optional.ofNullable(rule.getSeatunnelJobIds()).orElse(Collections.emptyMap());
+        Map<String, String> storedJobIds = Optional.ofNullable(rule.getSeatunnelJobIds())
+                .orElse(Collections.emptyMap());
         storedJobIds.forEach(tables::putIfAbsent);
 
         Map<String, String> runningJobsByName = properties.isEnabled() ? listJobsByName() : Collections.emptyMap();
@@ -140,7 +174,7 @@ public class SeatunnelJobService {
         for (Map.Entry<String, String> entry : tables.entrySet()) {
             String normalisedTable = entry.getKey();
             String actualTable = entry.getValue();
-            String jobName = database != null ? buildJobName(rule.getId(), database, actualTable) : null;
+            String jobName = hasEndpoint ? buildJobName(endpoint.get(), actualTable) : null;
             String liveJobId = jobName == null ? null : runningJobsByName.get(jobName);
             String storedJobId = storedJobIds.get(normalisedTable);
             String status = deriveStatus(properties.isEnabled(), hasEndpoint, storedJobId, liveJobId);
@@ -181,31 +215,30 @@ public class SeatunnelJobService {
         return mapping;
     }
 
-    /**
-     * Cancel all jobs associated with the provided rule.
-     */
-    public void removeRule(CacheRule rule) {
-        Map<String, String> jobIds = Optional.ofNullable(rule.getSeatunnelJobIds()).orElse(Collections.emptyMap());
-        if (jobIds.isEmpty()) {
-            return;
-        }
-        log.info("Cancelling {} Seatunnel jobs for deleted rule {}", jobIds.size(), rule.getId());
-        cancelJobs(jobIds.values());
+    private Optional<String> submitSingleTableJob(CacheRule rule,
+            DatabaseEndpoint endpoint,
+            String tableName) {
+        return submitSingleTableJob(rule, endpoint, tableName, true);
     }
 
     private Optional<String> submitSingleTableJob(CacheRule rule,
-                                                DatabaseEndpoint endpoint,
-                                                String tableName) {
+            DatabaseEndpoint endpoint,
+            String tableName,
+            boolean checkExists) {
         ensureRestClient();
         String database = endpoint.database();
-        String jobName = buildJobName(rule.getId(), database, tableName);
-        Optional<String> existing = findExistingJob(jobName);
-        if (existing.isPresent()) {
-            String jobId = existing.get();
-            log.info("检测到已有同名 Seatunnel job: name={}, jobId={}, 跳过重复提交", jobName, jobId);
-            inFlightJobs.put(jobName, jobId);
-            return Optional.of(jobId);
+        String jobName = buildJobName(endpoint, tableName);
+
+        if (checkExists) {
+            Optional<String> existing = findExistingJob(jobName);
+            if (existing.isPresent()) {
+                String jobId = existing.get();
+                log.info("检测到已有同名 Seatunnel job: name={}, jobId={}, 跳过重复提交", jobName, jobId);
+                inFlightJobs.put(jobName, jobId);
+                return Optional.of(jobId);
+            }
         }
+
         String resultTableName = jobName.replace('-', '_');
         String jobConfig = buildJobRequest(jobName, resultTableName, endpoint, tableName);
         URI submitUri = UriComponentsBuilder
@@ -225,14 +258,14 @@ public class SeatunnelJobService {
                     .body(Map.class);
             if (response != null && response.get("jobId") != null) {
                 String jobId = response.get("jobId");
-                log.info("提交 Seatunnel job {} for rule {} table {} (jobId={})",
+                log.info("提交 Seatunnel job {} (规则: {}, 表: {}), jobId={}",
                         jobName, rule.getId(), tableName, jobId);
                 inFlightJobs.put(jobName, jobId);
                 return Optional.of(jobId);
             }
-            log.warn("提交  job {} returned empty response", jobName);
+            log.warn("提交 job {} 返回了空响应", jobName);
         } catch (Exception ex) {
-            log.error("提交 Seatunnel job {} for rule {}: {} 失败", jobName, rule.getId(), ex.getMessage(), ex);
+            log.error("提交 Seatunnel job {} (规则: {}) 失败: {}", jobName, rule.getId(), ex.getMessage(), ex);
         }
         return Optional.empty();
     }
@@ -255,8 +288,7 @@ public class SeatunnelJobService {
                 .toUri();
         Map<String, Object> payload = Map.of(
                 "jobId", jobId,
-                "isStopWithSavePoint", Boolean.FALSE
-        );
+                "isStopWithSavePoint", Boolean.FALSE);
         try {
             restClient()
                     .post()
@@ -265,9 +297,9 @@ public class SeatunnelJobService {
                     .body(payload)
                     .retrieve()
                     .toBodilessEntity();
-            log.info("Cancelled Seatunnel job {}", jobId);
+            log.info("已取消 Seatunnel job {}", jobId);
         } catch (Exception ex) {
-            log.warn("Failed to cancel Seatunnel job {}: {}", jobId, ex.getMessage());
+            log.warn("取消 Seatunnel job {} 失败: {}", jobId, ex.getMessage());
         } finally {
             inFlightJobs.values().removeIf(value -> Objects.equals(value, jobId));
         }
@@ -342,9 +374,9 @@ public class SeatunnelJobService {
     }
 
     private String buildJobRequest(String jobName,
-                                   String resultTableName,
-                                   DatabaseEndpoint endpoint,
-                                   String tableName) {
+            String resultTableName,
+            DatabaseEndpoint endpoint,
+            String tableName) {
         if (endpoint instanceof MysqlEndpoint mysqlEndpoint) {
             return buildMysqlJobRequest(jobName, resultTableName, mysqlEndpoint, tableName);
         } else if (endpoint instanceof OracleEndpoint oracleEndpoint) {
@@ -354,9 +386,9 @@ public class SeatunnelJobService {
     }
 
     private String buildMysqlJobRequest(String jobName,
-                                        String resultTableName,
-                                        MysqlEndpoint endpoint,
-                                        String tableName) {
+            String resultTableName,
+            MysqlEndpoint endpoint,
+            String tableName) {
         StringBuilder sb = new StringBuilder();
         sb.append("env {\n");
         sb.append("  execution.parallelism = ").append(properties.getParallelism()).append("\n");
@@ -371,7 +403,8 @@ public class SeatunnelJobService {
         sb.append("    username = \"").append(endpoint.username()).append("\"\n");
         sb.append("    password = \"").append(endpoint.password()).append("\"\n");
         sb.append("    database-names = [\"").append(endpoint.database()).append("\"]\n");
-        sb.append("    table-names = [\"").append(endpoint.database()).append(".").append(tableName.toLowerCase(Locale.ROOT)).append("\"]\n");
+        sb.append("    table-names = [\"").append(endpoint.database()).append(".")
+                .append(tableName.toLowerCase(Locale.ROOT)).append("\"]\n");
         sb.append("    server-time-zone = \"").append(properties.getMysqlServerTimeZone()).append("\"\n");
         sb.append("    snapshot.split.size = ").append(properties.getMysqlSnapshotSplitSize()).append("\n");
         sb.append("    scan.startup.mode = \"initial\"\n");
@@ -380,14 +413,17 @@ public class SeatunnelJobService {
         sb.append("  }\n");
         sb.append("}\n\n");
 
-        appendCommonTransformAndSink(sb, endpoint, resultTableName, tableName); // Changed to use resultTableName as source for sink if needed, but strict translation uses tableName in sink logic
+        appendCommonTransformAndSink(sb, endpoint, resultTableName, tableName); // Changed to use resultTableName as
+                                                                                // source for sink if needed, but strict
+                                                                                // translation uses tableName in sink
+                                                                                // logic
         return sb.toString();
     }
 
     private String buildOracleJobRequest(String jobName,
-                                         String resultTableName,
-                                         OracleEndpoint endpoint,
-                                         String tableName) {
+            String resultTableName,
+            OracleEndpoint endpoint,
+            String tableName) {
         StringBuilder sb = new StringBuilder();
         sb.append("env {\n");
         sb.append("  execution.parallelism = ").append(properties.getParallelism()).append("\n");
@@ -405,7 +441,8 @@ public class SeatunnelJobService {
         sb.append("    schema-names = [\"").append(endpoint.schema()).append("\"]\n");
         sb.append("    table-names = [\"").append(endpoint.schema()).append(".").append(tableName).append("\"]\n");
         sb.append("    startup.mode = \"initial\"\n");
-        sb.append("    debezium.log.mining.strategy = \"").append(properties.getOracleLogMiningStrategy()).append("\"\n");
+        sb.append("    debezium.log.mining.strategy = \"").append(properties.getOracleLogMiningStrategy())
+                .append("\"\n");
         sb.append("    debezium.database.tablename.case.insensitive = false\n");
         sb.append("  }\n");
         sb.append("}\n\n");
@@ -414,7 +451,8 @@ public class SeatunnelJobService {
         return sb.toString();
     }
 
-    private void appendCommonTransformAndSink(StringBuilder sb, DatabaseEndpoint endpoint, String resultTableName, String tableName) {
+    private void appendCommonTransformAndSink(StringBuilder sb, DatabaseEndpoint endpoint, String resultTableName,
+            String tableName) {
         sb.append("transform {\n");
         sb.append("}\n\n");
 
@@ -433,17 +471,17 @@ public class SeatunnelJobService {
         sb.append("    username = \"").append(properties.getStarrocksUsername()).append("\"\n");
         sb.append("    password = \"").append(properties.getStarrocksPassword()).append("\"\n");
         sb.append("    database = \"").append(endpoint.database()).append("\"\n");
-        
+
         // Use lowercase table name for sink configuration (as requested for StarRocks)
         String sinkTableName = tableName;
         if (endpoint instanceof MysqlEndpoint) {
             sinkTableName = tableName.toLowerCase(Locale.ROOT);
         }
         sb.append("    table = \"").append(sinkTableName).append("\"\n");
-        
+
         properties.getSinkProperties().forEach(
-                (key, value) -> sb.append("    sink.properties.").append(key).append(" = \"").append(value).append("\"\n")
-        );
+                (key, value) -> sb.append("    sink.properties.").append(key).append(" = \"").append(value)
+                        .append("\"\n"));
 
         // Fetch PK info from Redis to determine template
         try {
@@ -452,12 +490,12 @@ public class SeatunnelJobService {
             String fieldKey = tableName.toLowerCase(Locale.ROOT);
             Object pkObj = redisTemplate.opsForHash().get(redisHashKey, fieldKey);
             String pkStr = pkObj != null ? pkObj.toString() : null;
-            
+
             if (pkStr != null) {
                 String template;
                 if (StringUtils.isBlank(pkStr)) {
                     // No PK -> Duplicate Key model with Random Distribution
-                     template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
+                    template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
                             "${rowtype_fields} " +
                             ") ENGINE=OLAP " +
                             "DISTRIBUTED BY RANDOM " +
@@ -468,7 +506,7 @@ public class SeatunnelJobService {
                             .map(String::trim)
                             .map(s -> "\\\"" + s + "\\\"")
                             .collect(Collectors.joining(", "));
-                     template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
+                    template = "CREATE TABLE IF NOT EXISTS `${database}`.`${table}` ( " +
                             "${rowtype_fields} " +
                             ") ENGINE=OLAP " +
                             "PRIMARY KEY (" + pkList + ") " +
@@ -476,18 +514,18 @@ public class SeatunnelJobService {
                             "PROPERTIES ( \\\"replication_num\\\" = \\\"1\\\" )";
                 }
                 sb.append("    sink.save_mode_create_template = \"").append(template).append("\"\n");
-                log.info("Applied custom StarRocks template for table {} using PKs: [{}]", tableName, pkStr);
+                log.info("为表 {} 应用了自定义 StarRocks 模板 (PKs: [{}])", tableName, pkStr);
             } else {
-                log.warn("No schema info found in Redis for table {}. Using Seatunnel default.", tableName);
+                log.warn("Redis 中未找到表 {} 的 schema 信息，使用 Seatunnel 默认配置", tableName);
             }
         } catch (Exception e) {
-            log.error("Failed to query Redis for schema info: {}", e.getMessage());
+            log.error("查询 Redis schema 信息失败: {}", e.getMessage());
         }
 
         sb.append("    sink.create_table.enable = true\n");
         sb.append("  }\n");
         sb.append("}\n");
-        log.info("job content generated for {}: \n{}", tableName, sb.toString());
+        log.info("已生成 job 内容 {}: \n{}", tableName, sb.toString());
     }
 
     private Map<String, String> normaliseTables(List<String> tables) {
@@ -522,15 +560,9 @@ public class SeatunnelJobService {
         return raw.trim().toLowerCase(Locale.ROOT);
     }
 
-    private String buildJobName(String ruleId, String database, String table) {
-        String safeRuleId = StringUtils.defaultIfBlank(ruleId, "rule");
-        String slug = (database + "-" + table).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
-        slug = slug.replaceAll("^-+", "").replaceAll("-+$", "");
-        String ruleSegment = safeRuleId.replaceAll("[^a-zA-Z0-9]", "").toLowerCase(Locale.ROOT);
-        if (ruleSegment.length() > 12) {
-            ruleSegment = ruleSegment.substring(0, 12);
-        }
-        return "ojp-cache-" + ruleSegment + "-" + slug;
+    private String buildJobName(DatabaseEndpoint endpoint, String table) {
+        return org.openjdbcproxy.cache.util.SeatunnelUtils.buildJobName(endpoint.connHash(), endpoint.database(),
+                table);
     }
 
     private int computeServerId(String identifier) {
@@ -543,7 +575,7 @@ public class SeatunnelJobService {
             return Optional.empty();
         }
         String trimmed = connHash.trim();
-        
+
         // Oracle detection
         if (trimmed.contains("oracle://") || trimmed.contains("jdbc:oracle:")) {
             return parseOracleEndpoint(trimmed);
@@ -558,20 +590,20 @@ public class SeatunnelJobService {
             URI uri = new URI(mysqlSection);
             String host = uri.getHost();
             if (StringUtils.isBlank(host)) {
-                log.warn("Missing host information in connHash {}", connHash);
+                log.warn("connHash {} 中缺失主机信息", connHash);
                 return Optional.empty();
             }
             int port = uri.getPort() > 0 ? uri.getPort() : DEFAULT_MYSQL_PORT;
 
             JdbcUrlUtil.Credentials credentials = JdbcUrlUtil.extractCredentials(uri);
             if (credentials.username() == null || credentials.password() == null) {
-                log.warn("Missing MySQL credentials in connHash {} – expected user info or query parameters", connHash);
+                log.warn("connHash {} 中缺失 MySQL 凭据 - 预期包含用户信息或查询参数", connHash);
                 return Optional.empty();
             }
 
             String path = uri.getPath();
             if (StringUtils.isBlank(path) || path.length() <= 1) {
-                log.warn("Missing database name in connHash {}", connHash);
+                log.warn("connHash {} 中缺失数据库名称", connHash);
                 return Optional.empty();
             }
             String database = path.substring(1);
@@ -582,72 +614,77 @@ public class SeatunnelJobService {
 
             String jdbcUrl = String.format("jdbc:mysql://%s:%d/%s", host, port, database);
             String baseUrl = String.format("jdbc:mysql://%s:%d", host, port);
-            return Optional.of(new MysqlEndpoint(host, port, database, credentials.username(), credentials.password(), jdbcUrl, baseUrl, connHash));
+            return Optional.of(new MysqlEndpoint(host, port, database, credentials.username(), credentials.password(),
+                    jdbcUrl, baseUrl, connHash));
         } catch (URISyntaxException e) {
-            log.warn("Failed to parse MySQL endpoint from connHash {}: {}", connHash, e.getMessage());
+            log.warn("解析 MySQL 端点失败 (connHash: {}): {}", connHash, e.getMessage());
             return Optional.empty();
         }
     }
 
     private Optional<DatabaseEndpoint> parseOracleEndpoint(String connHash) {
-         try {
-             // Expecting format like oracle://user:pass@host:1521/serviceName?schema=SCHEMA
-             // Or jdbc:oracle:thin:@host:1521/serviceName
-             
-             // Simplistic parsing for now, assuming standard URI structure if possible
-             // However, oracle JDBC URLs are notoriously complex. 
-             // We'll try to parse the "oracle://" part as a URI.
-             
-             String uriString = connHash;
-             if (!uriString.startsWith("oracle://") && !uriString.startsWith("jdbc:oracle:")) {
-                 return Optional.empty();
-             }
-             
-             // Convert jdbc:oracle:thin:@host:port/service to oracle://host:port/service for parsing if needed
-             // But let's assume the user provides our agreed format: oracle://user:pass@host:1521/serviceName?schema=SCHEMA
-             
-             if (uriString.startsWith("jdbc:oracle:")) {
-                 // Fallback or handle standard JDBC if it contains credentials
-                 // Standard JDBC usually doesn't have user/pass in URL for Oracle unless using OCI
-                 log.warn("Raw JDBC URL parsing for Oracle not fully implemented yet, use oracle:// scheme with user info");
-                 return Optional.empty();
-             }
-             
-             URI uri = new URI(uriString);
-             String host = uri.getHost();
-             int port = uri.getPort() > 0 ? uri.getPort() : properties.getOracleDefaultPort();
-             
-             JdbcUrlUtil.Credentials credentials = JdbcUrlUtil.extractCredentials(uri);
-             String username = credentials.username();
-             String password = credentials.password();
-             
-             if (StringUtils.isBlank(host) || StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-                 log.warn("Invalid Oracle connection string, missing host or credentials: {}", connHash);
-                 return Optional.empty();
-             }
-             
-             String path = uri.getPath(); // /serviceName
-             String serviceName = (path != null && path.length() > 1) ? path.substring(1) : "ORCL";
-             
-             // Query params for schema
-             String query = uri.getQuery();
-             String schema = username.toUpperCase(); // Default to username
-             if (query != null) {
-                 for (String param : query.split("&")) {
-                     String[] pair = param.split("=");
-                     if (pair.length == 2 && "schema".equalsIgnoreCase(pair[0])) {
-                         schema = pair[1];
-                     }
-                 }
-             }
-             
-             String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d/%s", host, port, serviceName);
-             return Optional.of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl, connHash));
-             
-         } catch (Exception e) {
-             log.warn("Failed to parse Oracle endpoint from {}: {}", connHash, e.getMessage());
-             return Optional.empty();
-         }
+        try {
+            // Expecting format like oracle://user:pass@host:1521/serviceName?schema=SCHEMA
+            // Or jdbc:oracle:thin:@host:1521/serviceName
+
+            // Simplistic parsing for now, assuming standard URI structure if possible
+            // However, oracle JDBC URLs are notoriously complex.
+            // We'll try to parse the "oracle://" part as a URI.
+
+            String uriString = connHash;
+            if (!uriString.startsWith("oracle://") && !uriString.startsWith("jdbc:oracle:")) {
+                return Optional.empty();
+            }
+
+            // Convert jdbc:oracle:thin:@host:port/service to oracle://host:port/service for
+            // parsing if needed
+            // But let's assume the user provides our agreed format:
+            // oracle://user:pass@host:1521/serviceName?schema=SCHEMA
+
+            if (uriString.startsWith("jdbc:oracle:")) {
+                // Fallback or handle standard JDBC if it contains credentials
+                // Standard JDBC usually doesn't have user/pass in URL for Oracle unless using
+                // OCI
+                log.warn("尚未完全实现原始 Oracle JDBC URL 解析，请使用包含用户信息的 oracle:// 协议");
+                return Optional.empty();
+            }
+
+            URI uri = new URI(uriString);
+            String host = uri.getHost();
+            int port = uri.getPort() > 0 ? uri.getPort() : properties.getOracleDefaultPort();
+
+            JdbcUrlUtil.Credentials credentials = JdbcUrlUtil.extractCredentials(uri);
+            String username = credentials.username();
+            String password = credentials.password();
+
+            if (StringUtils.isBlank(host) || StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
+                log.warn("无效的 Oracle 连接字符串，缺失主机或凭据: {}", connHash);
+                return Optional.empty();
+            }
+
+            String path = uri.getPath(); // /serviceName
+            String serviceName = (path != null && path.length() > 1) ? path.substring(1) : "ORCL";
+
+            // Query params for schema
+            String query = uri.getQuery();
+            String schema = username.toUpperCase(); // Default to username
+            if (query != null) {
+                for (String param : query.split("&")) {
+                    String[] pair = param.split("=");
+                    if (pair.length == 2 && "schema".equalsIgnoreCase(pair[0])) {
+                        schema = pair[1];
+                    }
+                }
+            }
+
+            String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d/%s", host, port, serviceName);
+            return Optional
+                    .of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl, connHash));
+
+        } catch (Exception e) {
+            log.warn("无法解析 Oracle 端点 {}: {}", connHash, e.getMessage());
+            return Optional.empty();
+        }
     }
 
     private void ensureRestClient() {
@@ -672,24 +709,34 @@ public class SeatunnelJobService {
 
     private sealed interface DatabaseEndpoint permits MysqlEndpoint, OracleEndpoint {
         String host();
+
         int port();
+
         String database();
+
         String username();
+
         String password();
+
         String jdbcUrl();
+
         String connHash();
     }
 
     private record MysqlEndpoint(String host, int port, String database, String username, String password,
-                                 String jdbcUrl, String baseJdbcUrl, String connHash) implements DatabaseEndpoint {
+            String jdbcUrl, String baseJdbcUrl, String connHash) implements DatabaseEndpoint {
     }
 
-    private record OracleEndpoint(String host, int port, String serviceName, String schema, String username, String password,
-                                  String jdbcUrl, String connHash) implements DatabaseEndpoint {
+    private record OracleEndpoint(String host, int port, String serviceName, String schema, String username,
+            String password,
+            String jdbcUrl, String connHash) implements DatabaseEndpoint {
         @Override
         public String database() {
             return schema;
         }
+    }
+
+    private record JobSubmissionContext(CacheRule rule, DatabaseEndpoint endpoint, String table) {
     }
 
 }

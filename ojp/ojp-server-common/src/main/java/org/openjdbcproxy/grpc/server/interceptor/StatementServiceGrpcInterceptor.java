@@ -3,6 +3,9 @@ package org.openjdbcproxy.grpc.server.interceptor;
 import io.grpc.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.skywalking.apm.toolkit.trace.ActiveSpan;
+import org.apache.skywalking.apm.toolkit.trace.Tracer;
+import org.apache.skywalking.apm.toolkit.trace.SpanRef;
 import org.openjdbcproxy.grpc.server.SessionManager;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +14,11 @@ import java.util.List;
 /**
  * Spring gRPC拦截器适配器
  * 基于框架原生拦截器机制，提供业务友好的拦截能力
+ *
+ * SkyWalking Trace 管理策略：
+ * - 在 onMessage 中创建 EntrySpan
+ * - 在 ServerCall.close() 中结束 span
+ * - 这样确保整个 gRPC 请求处理过程（包括 Service 方法执行）都有 trace context
  */
 @Component
 @RequiredArgsConstructor
@@ -34,7 +42,7 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
             ServerCall<ReqT, RespT> call,
             Metadata headers,
             ServerCallHandler<ReqT, RespT> next) {
-        
+
         // 1. 解析方法名
         String methodName = call.getMethodDescriptor().getBareMethodName();
 
@@ -46,17 +54,15 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
                 sessionManager
         );
 
+        // 3. 将 context 存入 gRPC Context（span 在 onMessage 中创建，确保包裹 Service 方法执行）
+        Context grpcContextWithInterceptorContext = Context.current()
+                .withValue(grpcContextWithInterceptorContextKey, context);
+
         // 4. 包装响应处理器（处理后置逻辑）
         ServerCall<ReqT, RespT> wrappedCall = wrapServerCall(call, context);
-        
-        // 5. 包装处理请求和流式数据
-        Context grpcContextWithInterceptorContext = Context.current()
-                .withValue(grpcContextWithInterceptorContextKey,
-                        context);
-
 
         ServerCall.Listener<ReqT> listener = Contexts.interceptCall(grpcContextWithInterceptorContext, wrappedCall, headers, next);
-        return wrapListener(listener, context,call);
+        return wrapListener(listener, context, call);
     }
 
     /**
@@ -88,45 +94,89 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
 
             @Override
             public void close(Status status, Metadata trailers) {
-                if (status.isOk()) {
-                    // 正常结束时执行后置处理
-                    executePostProcessors(context);
-                } else {
-                    // 异常时执行错误处理
-                    context.setError(status.getCause());
-                    executeErrorProcessors(context);
+                try {
+                    if (status.isOk()) {
+                        // 正常结束时执行后置处理
+                        executePostProcessors(context);
+                    } else {
+                        // 异常时执行错误处理
+                        context.setError(status.getCause());
+                        executeErrorProcessors(context);
+                    }
+                } finally {
+                    super.close(status, trailers);
                 }
-                super.close(status, trailers);
             }
         };
     }
 
     /**
      * 包装监听器，处理请求数据和流式数据
+     * 
+     * 关键：在 onMessage 中创建和结束 span，确保 Service 方法执行时有 trace context
+     * 如果请求包含 sessionUUID，则创建该 session 的子 span；否则创建独立 span
      */
     private <ReqT, RespT> ServerCall.Listener<ReqT> wrapListener(
             ServerCall.Listener<ReqT> original,
             StatementServiceInterceptContext<ReqT, RespT> context,
-            ServerCall  call) {
-        
+            ServerCall call) {
+
         return new ForwardingServerCallListener.SimpleForwardingServerCallListener<ReqT>(original) {
             @Override
             public void onMessage(ReqT message) {
-                // 保存请求数据到上下文
-                context.setRequest(message);
-                // 执行前置拦截
-                executePreProcessors(context);
-
-                // 触发客户端流式数据拦截
-                for (StatementServiceInterceptor interceptor : businessInterceptors) {
-                    interceptor.onClientData(context, message);
-                }
+                // 提取 session 信息（如果存在）
+                String sessionUUID = extractSessionUUID(message, context.getMethodName());
+                SpanRef entrySpan = null;
+                
                 try {
+                    // 根据是否有 session 来决定 span 创建策略
+                    if (sessionUUID != null) {
+                        // 有 session：尝试获取 session 的 trace context
+                        Object sessionTraceObj = sessionManager.getSessionTraceContext(sessionUUID);
+                        
+                        if (sessionTraceObj instanceof SpanRef) {
+                            // 创建 session 的子 span
+                            entrySpan = Tracer.createLocalSpan("gRPC/" + call.getMethodDescriptor().getFullMethodName());
+                            ActiveSpan.tag("grpc.method", context.getMethodName());
+                            ActiveSpan.tag("session.uuid", sessionUUID);
+                            ActiveSpan.tag("component", "ojp-grpc-request");
+                        } else {
+                            // session span 不存在，创建独立 span
+                            entrySpan = Tracer.createEntrySpan("gRPC/" + call.getMethodDescriptor().getFullMethodName(), null);
+                            ActiveSpan.tag("grpc.method", context.getMethodName());
+                            ActiveSpan.tag("session.uuid", sessionUUID);
+                            ActiveSpan.tag("component", "ojp-grpc-server");
+                        }
+                    } else {
+                        // 没有 session（如 connect 请求）：创建独立的 entry span
+                        entrySpan = Tracer.createEntrySpan("gRPC/" + call.getMethodDescriptor().getFullMethodName(), null);
+                        ActiveSpan.tag("grpc.method", context.getMethodName());
+                        ActiveSpan.tag("component", "ojp-grpc-server");
+                    }
+                    
+                    // 保存请求数据到上下文
+                    context.setRequest(message);
+                    // 执行前置拦截
+                    executePreProcessors(context);
+
+                    // 触发客户端流式数据拦截
+                    for (StatementServiceInterceptor interceptor : businessInterceptors) {
+                        interceptor.onClientData(context, message);
+                    }
+                    
+                    // 调用原始的 onMessage（Service 方法）- 同步执行
                     super.onMessage(message);
+                    
                 } catch (Exception e) {
-                    context.setError(e);
-                    executeErrorProcessors(context);
+                    if (entrySpan != null) {
+                        ActiveSpan.error(e);
+                    }
                     throw e;
+                } finally {
+                    // 在 Service 方法执行完成后结束 span
+                    if (entrySpan != null) {
+                        Tracer.stopSpan();
+                    }
                 }
             }
 
@@ -276,5 +326,37 @@ public class StatementServiceGrpcInterceptor implements ServerInterceptor {
                 interceptor.postProcessCreatePreparedStatement(context);
                 break;
         }
+    }
+    
+    /**
+     * 从请求消息中提取 session UUID
+     * 使用反射来处理不同类型的请求消息
+     */
+    private String extractSessionUUID(Object message, String methodName) {
+        if (message == null) {
+            return null;
+        }
+        
+        try {
+            // connect 请求没有 session
+            if ("connect".equals(methodName)) {
+                return null;
+            }
+            
+            // 大部分请求都有 session 字段
+            java.lang.reflect.Method getSessionMethod = message.getClass().getMethod("getSession");
+            Object sessionInfo = getSessionMethod.invoke(message);
+            
+            if (sessionInfo != null) {
+                java.lang.reflect.Method getSessionUUIDMethod = sessionInfo.getClass().getMethod("getSessionUUID");
+                String sessionUUID = (String) getSessionUUIDMethod.invoke(sessionInfo);
+                return sessionUUID != null && !sessionUUID.isEmpty() ? sessionUUID : null;
+            }
+        } catch (Exception e) {
+            // 如果反射失败，记录日志但不影响正常流程
+            log.debug("Failed to extract session UUID from message: {}", e.getMessage());
+        }
+        
+        return null;
     }
 }

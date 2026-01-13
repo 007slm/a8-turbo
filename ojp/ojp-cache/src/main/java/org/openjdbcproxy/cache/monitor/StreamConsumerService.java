@@ -50,8 +50,9 @@ public class StreamConsumerService implements InitializingBean {
     }
     
     private void consumeStream() {
-        log.info("Starting Redis Stream consumer for {}", STREAM_KEY);
-        String lastId = "$";
+        log.info("正在启动 Redis Stream 消费者: {}", STREAM_KEY);
+        // Start from beginning to reconstruct state, since we don't persist offset yet and need latest state
+        String lastId = "0-0";
         int retryCount = 0;
         
         while (running.get()) {
@@ -68,7 +69,7 @@ public class StreamConsumerService implements InitializingBean {
                     retryCount = 0;
                 }
             } catch (Exception e) {
-                log.error("Error consuming Redis Stream", e);
+                log.error("消费 Redis Stream 时发生错误", e);
                 retryCount++;
                 long backoffMs = Math.min(1000L * (1 << Math.min(retryCount, 6)), 30_000);
                 try {
@@ -91,11 +92,11 @@ public class StreamConsumerService implements InitializingBean {
             tableSyncStateManager.updateFromStreamEvent(event);
             cacheMetrics.recordStreamEvent();
             
-            log.debug("Processed stream event: type={}, table={}", 
+            log.debug("已处理流事件: type={}, table={}", 
                     event.get("type"), event.get("table"));
             
         } catch (Exception e) {
-            log.error("Failed to process event: {}", body, e);
+            log.error("处理事件失败: {}", body, e);
         }
     }
     

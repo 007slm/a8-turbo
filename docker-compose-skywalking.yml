@@ -1,0 +1,43 @@
+# IP Range: 172.24.0.85 - 172.24.0.89 (SkyWalking Observability Stack)
+services:
+  banyandb:
+    image: apache/skywalking-banyandb:0.7.0
+    container_name: banyandb
+    command: standalone
+    ports:
+      - "17912:17912"
+    volumes:
+      - banyandb-data:/tmp/banyandb-stream-data
+    networks:
+      a8:
+        ipv4_address: 172.24.0.84
+
+  skywalking-oap:
+    image: apache/skywalking-oap-server:10.1.0
+    container_name: skywalking-oap
+    environment:
+      SW_STORAGE: banyandb
+      SW_STORAGE_BANYANDB_TARGETS: banyandb:17912
+      SW_CORE_RECORD_DATA_TTL: 3
+    depends_on:
+      - banyandb
+    ports:
+      - "11800:11800"
+      - "12800:12800"
+    networks:
+      a8:
+        ipv4_address: 172.24.0.85
+
+  skywalking-ui:
+    build:
+      context: .
+      dockerfile: docker/skywalking-ui/Dockerfile
+    container_name: skywalking-ui
+    depends_on:
+      - skywalking-oap
+    networks:
+      a8:
+        ipv4_address: 172.24.0.86
+
+volumes:
+  banyandb-data:

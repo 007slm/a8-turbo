@@ -74,7 +74,7 @@ public class JSqlParserUtil {
             Statement statement = CCJSqlParserUtil.parse(sql);
             return extractTableNames(statement);
         } catch (JSQLParserException e) {
-            log.warn("Failed to parse SQL for table extraction: {}", e.getMessage());
+            log.warn("解析 SQL 以提取表名失败: {}", e.getMessage());
             return Collections.emptySet();
         }
     }
@@ -111,7 +111,7 @@ public class JSqlParserUtil {
             }
             return sb.toString();
         } catch (NoSuchAlgorithmException e) {
-            log.error("MD5 algorithm not available", e);
+            log.error("MD5 算法不可用", e);
             return java.lang.String.valueOf(input.hashCode());
         }
     }

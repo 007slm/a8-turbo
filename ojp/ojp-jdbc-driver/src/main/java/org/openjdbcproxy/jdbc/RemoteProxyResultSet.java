@@ -109,187 +109,187 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public boolean getBoolean(int columnIndex) throws SQLException {
         log.debug("getBoolean: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public byte getByte(int columnIndex) throws SQLException {
         log.debug("getByte: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public short getShort(int columnIndex) throws SQLException {
         log.debug("getShort: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Short", Short.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Short", Short.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public int getInt(int columnIndex) throws SQLException {
         log.debug("getInt: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public long getLong(int columnIndex) throws SQLException {
         log.debug("getLong: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Long", Long.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Long", Long.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public float getFloat(int columnIndex) throws SQLException {
         log.debug("getFloat: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Float", Float.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Float", Float.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public double getDouble(int columnIndex) throws SQLException {
         log.debug("getDouble: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Double", Double.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Double", Double.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
         log.debug("getBigDecimal: {}, {}", columnIndex, scale);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(columnIndex, scale));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(columnIndex, scale));
     }
 
     @Override
     public byte[] getBytes(int columnIndex) throws SQLException {
         log.debug("getBytes: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Date getDate(int columnIndex) throws SQLException {
         log.debug("getDate: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Time getTime(int columnIndex) throws SQLException {
         log.debug("getTime: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex) throws SQLException {
         log.debug("getTimestamp: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public InputStream getAsciiStream(int columnIndex) throws SQLException {
         log.debug("getAsciiStream: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "AsciiStream", InputStream.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "AsciiStream", InputStream.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public InputStream getUnicodeStream(int columnIndex) throws SQLException {
         log.debug("getUnicodeStream: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "UnicodeStream", InputStream.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "UnicodeStream", InputStream.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public InputStream getBinaryStream(int columnIndex) throws SQLException {
         log.debug("getBinaryStream: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "BinaryStream", InputStream.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "BinaryStream", InputStream.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public String getString(String columnLabel) throws SQLException {
         log.debug("getString: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "String", String.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "String", String.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public boolean getBoolean(String columnLabel) throws SQLException {
         log.debug("getBoolean: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Boolean", Boolean.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public byte getByte(String columnLabel) throws SQLException {
         log.debug("getByte: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Byte", Byte.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public short getShort(String columnLabel) throws SQLException {
         log.debug("getShort: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Short", Short.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Short", Short.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public int getInt(String columnLabel) throws SQLException {
         log.debug("getInt: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Int", Integer.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public long getLong(String columnLabel) throws SQLException {
         log.debug("getLong: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Long", Long.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Long", Long.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public float getFloat(String columnLabel) throws SQLException {
         log.debug("getFloat: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Float", Float.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Float", Float.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public double getDouble(String columnLabel) throws SQLException {
         log.debug("getDouble: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Double", Double.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Double", Double.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
         log.debug("getBigDecimal: {}, {}", columnLabel, scale);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public byte[] getBytes(String columnLabel) throws SQLException {
         log.debug("getBytes: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Bytes", byte[].class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public Date getDate(String columnLabel) throws SQLException {
         log.debug("getDate: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public Time getTime(String columnLabel) throws SQLException {
         log.debug("getTime: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Time", Time.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Time", Time.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public Timestamp getTimestamp(String columnLabel) throws SQLException {
         log.debug("getTimestamp: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public InputStream getAsciiStream(String columnLabel) throws SQLException {
         log.debug("getAsciiStream: {}", columnLabel);
-        return this.retrieveBinaryStream(CallType.CALL_GET, "AsciiStream", LobType.LT_ASCII_STREAM, List.of(columnLabel));
+        return this.retrieveBinaryStream(CallType.CALL_GET, "AsciiStream", LobType.LT_ASCII_STREAM, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public InputStream getUnicodeStream(String columnLabel) throws SQLException {
         log.debug("getUnicodeStream: {}", columnLabel);
-        return this.retrieveBinaryStream(CallType.CALL_GET, "AsciiStream", LobType.LT_UNICODE_STREAM, List.of(columnLabel));
+        return this.retrieveBinaryStream(CallType.CALL_GET, "AsciiStream", LobType.LT_UNICODE_STREAM, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public InputStream getBinaryStream(String columnLabel) throws SQLException {
         log.debug("getBinaryStream: {}", columnLabel);
-        return this.retrieveBinaryStream(CallType.CALL_GET, "BinaryStream", LobType.LT_BINARY_STREAM, List.of(columnLabel));
+        return this.retrieveBinaryStream(CallType.CALL_GET, "BinaryStream", LobType.LT_BINARY_STREAM, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
@@ -319,43 +319,43 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public Object getObject(int columnIndex) throws SQLException {
         log.debug("getObject: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Object getObject(String columnLabel) throws SQLException {
         log.debug("getObject: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public int findColumn(String columnLabel) throws SQLException {
         log.debug("findColumn: {}", columnLabel);
-        return this.callProxy(CallType.CALL_FIND, "Column", Integer.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_FIND, "Column", Integer.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public Reader getCharacterStream(int columnIndex) throws SQLException {
         log.debug("getCharacterStream: {}", columnIndex);
-        return this.retrieveReader(CallType.CALL_GET, "CharacterStream", LobType.LT_CHARACTER_STREAM, List.of(columnIndex));
+        return this.retrieveReader(CallType.CALL_GET, "CharacterStream", LobType.LT_CHARACTER_STREAM, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Reader getCharacterStream(String columnLabel) throws SQLException {
         log.debug("getCharacterStream: {}", columnLabel);
-        return this.retrieveReader(CallType.CALL_GET, "CharacterStream", LobType.LT_CHARACTER_STREAM, List.of(columnLabel));
+        return this.retrieveReader(CallType.CALL_GET, "CharacterStream", LobType.LT_CHARACTER_STREAM, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         log.debug("getBigDecimal: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
         log.debug("getBigDecimal: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "BigDecimal", BigDecimal.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
@@ -415,13 +415,13 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public boolean absolute(int row) throws SQLException {
         log.debug("absolute: {}", row);
-        return this.callProxy(CallType.CALL_ABSOLUTE, "", Boolean.class, List.of(row));
+        return this.callProxy(CallType.CALL_ABSOLUTE, "", Boolean.class, java.util.Arrays.asList(row));
     }
 
     @Override
     public boolean relative(int rows) throws SQLException {
         log.debug("relative: {}", rows);
-        return this.callProxy(CallType.CALL_RELATIVE, "", Boolean.class, List.of(rows));
+        return this.callProxy(CallType.CALL_RELATIVE, "", Boolean.class, java.util.Arrays.asList(rows));
     }
 
     @Override
@@ -433,7 +433,7 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void setFetchDirection(int direction) throws SQLException {
         log.debug("setFetchDirection: {}", direction);
-        this.callProxy(CallType.CALL_SET, "FetchDirection", Void.class, List.of(direction));
+        this.callProxy(CallType.CALL_SET, "FetchDirection", Void.class, java.util.Arrays.asList(direction));
     }
 
     @Override
@@ -445,7 +445,7 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void setFetchSize(int rows) throws SQLException {
         log.debug("setFetchSize: {}", rows);
-        this.callProxy(CallType.CALL_SET, "FetchSize", Void.class, List.of(rows));
+        this.callProxy(CallType.CALL_SET, "FetchSize", Void.class, java.util.Arrays.asList(rows));
     }
 
     @Override
@@ -487,85 +487,85 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void updateNull(int columnIndex) throws SQLException {
         log.debug("updateNull: {}", columnIndex);
-        this.callProxy(CallType.CALL_UPDATE, "Null", Void.class, List.of(columnIndex));
+        this.callProxy(CallType.CALL_UPDATE, "Null", Void.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public void updateBoolean(int columnIndex, boolean x) throws SQLException {
         log.debug("updateBoolean: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Boolean", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Boolean", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateByte(int columnIndex, byte x) throws SQLException {
         log.debug("updateByte: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateShort(int columnIndex, short x) throws SQLException {
         log.debug("updateShort: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateInt(int columnIndex, int x) throws SQLException {
         log.debug("updateInt: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Int", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Int", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateLong(int columnIndex, long x) throws SQLException {
         log.debug("updateLong: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Long", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Long", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateFloat(int columnIndex, float x) throws SQLException {
         log.debug("updateFloat: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Float", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Float", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateDouble(int columnIndex, double x) throws SQLException {
         log.debug("updateDouble: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Double", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Double", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
         log.debug("updateBigDecimal: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "BigDecimal", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "BigDecimal", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateString(int columnIndex, String x) throws SQLException {
         log.debug("updateString: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "String", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "String", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateBytes(int columnIndex, byte[] x) throws SQLException {
         log.debug("updateBytes: {}, <byte[]>", columnIndex);
-        this.callProxy(CallType.CALL_UPDATE, "Bytes", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Bytes", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateDate(int columnIndex, Date x) throws SQLException {
         log.debug("updateDate: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Date", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Date", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateTime(int columnIndex, Time x) throws SQLException {
         log.debug("updateTime: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Time", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Time", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
         log.debug("updateTimestamp: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Timestamp", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Timestamp", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
@@ -589,97 +589,97 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {
         log.debug("updateObject: {}, {}, {}", columnIndex, x, scaleOrLength);
-        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, List.of(columnIndex, x, scaleOrLength));
+        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, java.util.Arrays.asList(columnIndex, x, scaleOrLength));
     }
 
     @Override
     public void updateObject(int columnIndex, Object x) throws SQLException {
         log.debug("updateObject: {}, {}", columnIndex, x);
-        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateNull(String columnLabel) throws SQLException {
         log.debug("updateNull: {}", columnLabel);
-        this.callProxy(CallType.CALL_UPDATE, "Null", Void.class, List.of(columnLabel));
+        this.callProxy(CallType.CALL_UPDATE, "Null", Void.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public void updateBoolean(String columnLabel, boolean x) throws SQLException {
         log.debug("updateBoolean: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Boolean", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Boolean", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateByte(String columnLabel, byte x) throws SQLException {
         log.debug("updateByte: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Byte", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateShort(String columnLabel, short x) throws SQLException {
         log.debug("updateShort: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Short", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Short", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateInt(String columnLabel, int x) throws SQLException {
         log.debug("updateInt: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Int", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Int", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateLong(String columnLabel, long x) throws SQLException {
         log.debug("updateLong: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Long", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Long", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateFloat(String columnLabel, float x) throws SQLException {
         log.debug("updateFloat: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Float", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Float", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateDouble(String columnLabel, double x) throws SQLException {
         log.debug("updateDouble: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Double", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Double", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException {
         log.debug("updateBigDecimal: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "BigDecimal", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "BigDecimal", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateString(String columnLabel, String x) throws SQLException {
         log.debug("updateString: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "String", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "String", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateBytes(String columnLabel, byte[] x) throws SQLException {
         log.debug("updateBytes: {}, <byte[]>", columnLabel);
-        this.callProxy(CallType.CALL_UPDATE, "Bytes", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Bytes", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateDate(String columnLabel, Date x) throws SQLException {
         log.debug("updateDate: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Date", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Date", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateTime(String columnLabel, Time x) throws SQLException {
         log.debug("updateTime: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Time", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Time", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
     public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException {
         log.debug("updateTimestamp: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Timestamp", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Timestamp", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
@@ -703,13 +703,13 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {
         log.debug("updateObject: {}, {}, {}", columnLabel, x, scaleOrLength);
-        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, List.of(columnLabel, x, scaleOrLength));
+        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, java.util.Arrays.asList(columnLabel, x, scaleOrLength));
     }
 
     @Override
     public void updateObject(String columnLabel, Object x) throws SQLException {
         log.debug("updateObject: {}, {}", columnLabel, x);
-        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "Object", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
@@ -763,7 +763,7 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
         log.debug("getObject: {}, <Map>", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(columnIndex, map));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(columnIndex, map));
     }
 
     @Override
@@ -793,7 +793,7 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
         log.debug("getObject: {}, <Map>", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Object", Object.class, List.of(columnLabel, map));
+        return this.callProxy(CallType.CALL_GET, "Object", Object.class, java.util.Arrays.asList(columnLabel, map));
     }
 
     @Override
@@ -823,49 +823,49 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public Date getDate(int columnIndex, Calendar cal) throws SQLException {
         log.debug("getDate: {}, <Calendar>", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(columnIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(columnIndex, cal));
     }
 
     @Override
     public Date getDate(String columnLabel, Calendar cal) throws SQLException {
         log.debug("getDate: {}, <Calendar>", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Date", Date.class, List.of(columnLabel, cal));
+        return this.callProxy(CallType.CALL_GET, "Date", Date.class, java.util.Arrays.asList(columnLabel, cal));
     }
 
     @Override
     public Time getTime(int columnIndex, Calendar cal) throws SQLException {
         log.debug("getTime: {}, <Calendar>", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Time", Date.class, List.of(columnIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Time", Date.class, java.util.Arrays.asList(columnIndex, cal));
     }
 
     @Override
     public Time getTime(String columnLabel, Calendar cal) throws SQLException {
         log.debug("getTime: {}, <Calendar>", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Time", Date.class, List.of(columnLabel, cal));
+        return this.callProxy(CallType.CALL_GET, "Time", Date.class, java.util.Arrays.asList(columnLabel, cal));
     }
 
     @Override
     public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
         log.debug("getTimestamp: {}, <Calendar>", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(columnIndex, cal));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(columnIndex, cal));
     }
 
     @Override
     public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
         log.debug("getTimestamp: {}, <Calendar>", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, List.of(columnLabel, cal));
+        return this.callProxy(CallType.CALL_GET, "Timestamp", Timestamp.class, java.util.Arrays.asList(columnLabel, cal));
     }
 
     @Override
     public URL getURL(int columnIndex) throws SQLException {
         log.debug("getURL: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "URL", Timestamp.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "URL", Timestamp.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public URL getURL(String columnLabel) throws SQLException {
         log.debug("getURL: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "URL", Timestamp.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "URL", Timestamp.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
@@ -931,13 +931,13 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void updateRowId(int columnIndex, RowId x) throws SQLException {
         log.debug("updateRowId: {}, <RowId>", columnIndex);
-        this.callProxy(CallType.CALL_UPDATE, "RowId", Void.class, List.of(columnIndex, x));
+        this.callProxy(CallType.CALL_UPDATE, "RowId", Void.class, java.util.Arrays.asList(columnIndex, x));
     }
 
     @Override
     public void updateRowId(String columnLabel, RowId x) throws SQLException {
         log.debug("updateRowId: {}, <RowId>", columnLabel);
-        this.callProxy(CallType.CALL_UPDATE, "RowId", Void.class, List.of(columnLabel, x));
+        this.callProxy(CallType.CALL_UPDATE, "RowId", Void.class, java.util.Arrays.asList(columnLabel, x));
     }
 
     @Override
@@ -955,13 +955,13 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public void updateNString(int columnIndex, String nString) throws SQLException {
         log.debug("updateNString: {}, {}", columnIndex, nString);
-        this.callProxy(CallType.CALL_UPDATE, "NString", Void.class, List.of(columnIndex, nString));
+        this.callProxy(CallType.CALL_UPDATE, "NString", Void.class, java.util.Arrays.asList(columnIndex, nString));
     }
 
     @Override
     public void updateNString(String columnLabel, String nString) throws SQLException {
         log.debug("updateNString: {}, {}", columnLabel, nString);
-        this.callProxy(CallType.CALL_UPDATE, "NString", Void.class, List.of(columnLabel, nString));
+        this.callProxy(CallType.CALL_UPDATE, "NString", Void.class, java.util.Arrays.asList(columnLabel, nString));
     }
 
     @Override
@@ -1015,25 +1015,25 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public String getNString(int columnIndex) throws SQLException {
         log.debug("getNString: {}", columnIndex);
-        return this.callProxy(CallType.CALL_GET, "NString", String.class, List.of(columnIndex));
+        return this.callProxy(CallType.CALL_GET, "NString", String.class, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public String getNString(String columnLabel) throws SQLException {
         log.debug("getNString: {}", columnLabel);
-        return this.callProxy(CallType.CALL_GET, "NString", String.class, List.of(columnLabel));
+        return this.callProxy(CallType.CALL_GET, "NString", String.class, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
     public Reader getNCharacterStream(int columnIndex) throws SQLException {
         log.debug("getNCharacterStream: {}", columnIndex);
-        return this.retrieveReader(CallType.CALL_GET, "NCharacterStream", LobType.LT_CHARACTER_STREAM, List.of(columnIndex));
+        return this.retrieveReader(CallType.CALL_GET, "NCharacterStream", LobType.LT_CHARACTER_STREAM, java.util.Arrays.asList(columnIndex));
     }
 
     @Override
     public Reader getNCharacterStream(String columnLabel) throws SQLException {
         log.debug("getNCharacterStream: {}", columnLabel);
-        return this.retrieveReader(CallType.CALL_GET, "NCharacterStream", LobType.LT_CHARACTER_STREAM, List.of(columnLabel));
+        return this.retrieveReader(CallType.CALL_GET, "NCharacterStream", LobType.LT_CHARACTER_STREAM, java.util.Arrays.asList(columnLabel));
     }
 
     @Override
@@ -1207,13 +1207,13 @@ public class RemoteProxyResultSet implements java.sql.ResultSet {
     @Override
     public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
         log.debug("getObject: {}, {}", columnIndex, type);
-        return this.callProxy(CallType.CALL_GET, "Object", type, List.of(columnIndex, type));
+        return this.callProxy(CallType.CALL_GET, "Object", type, java.util.Arrays.asList(columnIndex, type));
     }
 
     @Override
     public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
         log.debug("getObject: {}, {}", columnLabel, type);
-        return this.callProxy(CallType.CALL_GET, "Object", type, List.of(columnLabel, type));
+        return this.callProxy(CallType.CALL_GET, "Object", type, java.util.Arrays.asList(columnLabel, type));
     }
 
     @Override

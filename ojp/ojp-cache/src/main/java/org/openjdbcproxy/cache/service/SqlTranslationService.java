@@ -46,7 +46,7 @@ public class SqlTranslationService {
             try {
                 processQuery(queryId, rule);
             } catch (Exception e) {
-                log.error("Failed to process translation for query {}", queryId, e);
+                log.error("查询 {} 的转换过程失败", queryId, e);
             }
         }
     }
@@ -85,10 +85,10 @@ public class SqlTranslationService {
                 // The requirement says "store to redis... behind use when needed".
                 // We'll store it without expiry for now, or maybe long expiry.
                 redisTemplate.opsForValue().set(cacheKey, translatedSql);
-                log.info("Translated SQL for query {} and stored in Redis", queryId);
+                log.info("已完成查询 {} 的 SQL 转换并存入 Redis", queryId);
             }
         } catch (Exception e) {
-            log.error("Error translating SQL for query {}", queryId, e);
+            log.error("转换查询 {} 的 SQL 时发生错误", queryId, e);
         }
     }
 
@@ -109,7 +109,7 @@ public class SqlTranslationService {
                 return (String) response.get("translated_sql");
             }
         } catch (Exception e) {
-            log.error("Failed to call translation service", e);
+            log.error("调用翻译服务失败", e);
             throw e;
         }
         return null;

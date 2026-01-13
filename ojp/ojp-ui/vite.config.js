@@ -29,11 +29,31 @@ export default defineConfig({
           })
         }
       },
+      // Prometheus Proxy (via Kong)
+      '/prometheus': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
       '/shopservice/': {
         target: 'http://localhost:8180',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/shopservice/, '/')
+      },
+      // Loki Proxy
+      '/loki': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/loki/, '/loki')
+      },
+      // Tempo Proxy
+      '/tempo': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/tempo/, '/tempo')
       }
     }
   },

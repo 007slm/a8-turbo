@@ -137,6 +137,11 @@ export const ruleApi = {
   deleteRule: (ruleId) => request(`/cache/rules/${ruleId}`, {
     method: 'DELETE',
   }),
+
+  // 同步所有缓存规则作业
+  syncAllRules: () => request('/cache/rules/sync', {
+    method: 'POST',
+  }),
 }
 
 // 商业授权管理相关接口

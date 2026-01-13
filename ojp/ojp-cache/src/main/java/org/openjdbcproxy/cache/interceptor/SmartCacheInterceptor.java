@@ -26,7 +26,7 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
 
     @Autowired
     private CacheInterceptorService cacheInterceptorService;
-    
+
     /**
      * executeQuery方法前置处理：根据缓存规则匹配情况设置上下文属性
      */
@@ -35,7 +35,7 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
     public void preProcessExecuteQuery(StatementServiceInterceptContext<?, ?> context) {
         StatementRequest request = context.requestToStatementRequest();
         SessionInfo session = request.getSession();
-        
+
         // 记录查询开始时间
         long startTime = System.currentTimeMillis();
         context.setAttribute("cache.startTime", startTime);
@@ -49,16 +49,25 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
 
         Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session, existingCacheConn);
         if (cacheConn != null) {
-            // Wrap the connection to emulate Oracle metadata behavior
-            Connection wrapperConn = new org.openjdbcproxy.cache.emulator.OracleCompatibleConnection(cacheConn);
-            
-            context.setCurrentInterceptedConnection(wrapperConn);
+            String connHash = session.getConnHash();
+            boolean isOracle = connHash != null && (connHash.contains("oracle:") || connHash.contains("jdbc:oracle:"));
+
+            Connection effectiveConn = cacheConn;
+            if (isOracle) {
+                // Wrap the connection to emulate Oracle metadata behavior only for Oracle
+                // clients
+                effectiveConn = new org.openjdbcproxy.cache.emulator.OracleCompatibleConnection(cacheConn);
+                log.info("缓存命中 (Oracle Metadata Emulator Enabled)");
+            } else {
+                log.info("缓存命中");
+            }
+
+            context.setCurrentInterceptedConnection(effectiveConn);
             context.setAttribute("cache.intercepted", true);
             if (sessionContext != null && existingCacheConn == null) {
-                // Store the WRAPPED connection so subsequent reused calls also get emulation
-                sessionContext.addAttr("cache.intercepted.conn", wrapperConn);
+                // Store the connection so subsequent reused calls also get it
+                sessionContext.addAttr("cache.intercepted.conn", effectiveConn);
             }
-            log.info("缓存命中 (Oracle Metadata Emulator Enabled)");
         }
     }
 
@@ -70,28 +79,28 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
         StatementRequest request = context.requestToStatementRequest();
         SessionInfo sessionInfo = request.getSession();
         // 计算执行时间
-        long startTime = (long)context.getAttribute("cache.startTime");
+        long startTime = (long) context.getAttribute("cache.startTime");
         long executionTime = System.currentTimeMillis() - startTime;
 
         boolean success = context.getError() == null;
-        
+
         // 使用缓存拦截器服务进行后处理
         cacheInterceptorService.postProcessQuery(request, executionTime, success);
 
         // 清理上下文中的缓存连接引用，由Session生命周期统一管理连接释放
         context.setCurrentInterceptedConnection(null);
 
-//        若使用了拦截连接，查询后关闭并复位
-//        boolean intercepted = (boolean)context.getAttribute("cache.intercepted");
-//        if (intercepted) {
-//            Connection conn = context.getCurrentInterceptedConnection();
-//            if (conn != null) {
-//                try {
-//                    conn.close();
-//                } catch (Exception ignore) {}
-//            }
-//            context.setCurrentInterceptedConnection(null);
-//        }
+        // 若使用了拦截连接，查询后关闭并复位
+        // boolean intercepted = (boolean)context.getAttribute("cache.intercepted");
+        // if (intercepted) {
+        // Connection conn = context.getCurrentInterceptedConnection();
+        // if (conn != null) {
+        // try {
+        // conn.close();
+        // } catch (Exception ignore) {}
+        // }
+        // context.setCurrentInterceptedConnection(null);
+        // }
     }
 
 }

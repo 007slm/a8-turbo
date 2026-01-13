@@ -17,8 +17,7 @@ public class ServerConfigurationTest {
         // Clear any system properties set during tests
         System.clearProperty("ojp.server.port");
         System.clearProperty("ojp.prometheus.port");
-        System.clearProperty("ojp.opentelemetry.enabled");
-        System.clearProperty("ojp.opentelemetry.endpoint");
+
         System.clearProperty("ojp.server.threadPoolSize");
         System.clearProperty("ojp.server.maxRequestSize");
         System.clearProperty("ojp.server.logLevel");
@@ -34,7 +33,7 @@ public class ServerConfigurationTest {
 
         assertEquals(ServerConfiguration.DEFAULT_SERVER_PORT, config.getServerPort());
         assertEquals(ServerConfiguration.DEFAULT_PROMETHEUS_PORT, config.getPrometheusPort());
-        assertEquals(ServerConfiguration.DEFAULT_OPENTELEMETRY_ENDPOINT, config.getOpenTelemetryEndpoint());
+
         assertEquals(ServerConfiguration.DEFAULT_THREAD_POOL_SIZE, config.getThreadPoolSize());
         assertEquals(ServerConfiguration.DEFAULT_MAX_REQUEST_SIZE, config.getMaxRequestSize());
         assertEquals(ServerConfiguration.DEFAULT_LOG_LEVEL, config.getLogLevel());
@@ -50,8 +49,7 @@ public class ServerConfigurationTest {
         // Set JVM system properties
         System.setProperty("ojp.server.port", "8010");
         System.setProperty("ojp.prometheus.port", "9091");
-        System.setProperty("ojp.opentelemetry.enabled", "false");
-        System.setProperty("ojp.opentelemetry.endpoint", "http://localhost:4317");
+
         System.setProperty("ojp.server.threadPoolSize", "100");
         System.setProperty("ojp.server.maxRequestSize", "8388608"); // 8MB
         System.setProperty("ojp.server.logLevel", "DEBUG");
@@ -64,7 +62,7 @@ public class ServerConfigurationTest {
 
         assertEquals(8080, config.getServerPort());
         assertEquals(9091, config.getPrometheusPort());
-        assertEquals("http://localhost:4317", config.getOpenTelemetryEndpoint());
+
         assertEquals(100, config.getThreadPoolSize());
         assertEquals(8388608, config.getMaxRequestSize());
         assertEquals("DEBUG", config.getLogLevel());

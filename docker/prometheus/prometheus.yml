@@ -59,4 +59,4 @@ scrape_configs:
   - job_name: 'ojp-server'
     metrics_path: /api/actuator/prometheus
     static_configs:
-      - targets: ['ojp-server:8010']
+      - targets: ['a8-dbproxy:8010']

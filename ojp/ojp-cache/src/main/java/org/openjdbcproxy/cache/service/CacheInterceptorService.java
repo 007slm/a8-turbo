@@ -53,7 +53,7 @@ public class CacheInterceptorService {
         String connHash = request.getSession().getConnHash();
         performanceMonitoringService.recordQueryExecution(connHash, sql, executionTimeMs, success);
 
-        log.debug("Post-processed query: {}, execution time: {}ms, success: {}", sql, executionTimeMs, success);
+        log.debug("查询后处理: {}, 执行时间: {}ms, 成功: {}", sql, executionTimeMs, success);
     }
     
     public Connection getCacheDataSourceConnection(SessionInfo sessionInfo) throws SQLException {

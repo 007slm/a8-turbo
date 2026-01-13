@@ -1,8 +1,0 @@
-org.openjdbcproxy.grpc.server.chain.spi.providers.CircuitBreakerProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.CrudOperationProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.DataPermissionProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.ShardingProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.SlowQuerySegregationProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.SmartCacheProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.SqlExecutionProcessorProvider
-org.openjdbcproxy.grpc.server.chain.spi.providers.TransactionProcessorProvider

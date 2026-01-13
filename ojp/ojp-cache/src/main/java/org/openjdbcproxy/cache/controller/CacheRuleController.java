@@ -73,14 +73,13 @@ public class CacheRuleController {
         // Trigger SQL translation if needed
         sqlTranslationService.processRule(persistedRule);
 
-        Map<String, String> updatedJobIds = seatunnelJobService.synchroniseRule(persistedRule, previousRule);
-        if (!Objects.equals(updatedJobIds, persistedRule.getSeatunnelJobIds())) {
-            persistedRule.setSeatunnelJobIds(updatedJobIds);
-            persistedRule.setUpdatedAt(LocalDateTime.now());
-            persistedRule = cacheRuleRepository.save(persistedRule);
-        }
+        // Trigger SQL translation if needed
+        sqlTranslationService.processRule(persistedRule);
 
-        return enrichRuleWithJobs(persistedRule);
+        // Reconcile global state and update this rule's job mappings
+        reconcileAll();
+
+        return enrichRuleWithJobs(cacheRuleRepository.findById(persistedRule.getId()).orElse(persistedRule));
     }
 
     @PutMapping("/{ruleId}")
@@ -96,14 +95,44 @@ public class CacheRuleController {
         // Trigger SQL translation if needed
         sqlTranslationService.processRule(persistedRule);
 
-        Map<String, String> updatedJobIds = seatunnelJobService.synchroniseRule(persistedRule, previousRule);
-        if (!Objects.equals(updatedJobIds, persistedRule.getSeatunnelJobIds())) {
-            persistedRule.setSeatunnelJobIds(updatedJobIds);
-            persistedRule.setUpdatedAt(LocalDateTime.now());
-            persistedRule = cacheRuleRepository.save(persistedRule);
-        }
+        // Trigger SQL translation if needed
+        sqlTranslationService.processRule(persistedRule);
 
-        return enrichRuleWithJobs(persistedRule);
+        // Reconcile global state
+        reconcileAll();
+
+        return enrichRuleWithJobs(cacheRuleRepository.findById(ruleId).orElse(persistedRule));
+    }
+
+
+
+    @PostMapping("/sync")
+    @Operation(summary = "同步所有缓存规则作业", description = "手动触发所有缓存规则的Seatunnel作业同步")
+    public List<CacheRule> syncAllRules() {
+        log.info("触发全量缓存规则同步与校准...");
+        reconcileAll();
+        return cacheRuleRepository.findAll().stream()
+                .map(this::enrichRuleWithJobs)
+                .toList();
+    }
+
+    /**
+     * Reconciles the state of all Seatunnel jobs against all active rules.
+     * Updates each rule's job mappings accordingly.
+     */
+    private void reconcileAll() {
+        List<CacheRule> allRules = cacheRuleRepository.findAll();
+        Map<String, String> globalActiveJobs = seatunnelJobService.reconcile(allRules);
+        
+        for (CacheRule rule : allRules) {
+            Map<String, String> jobIds = seatunnelJobService.resolveJobIds(rule, globalActiveJobs);
+            if (!Objects.equals(jobIds, rule.getSeatunnelJobIds())) {
+                rule.setSeatunnelJobIds(jobIds);
+                // Update timestamp only if jobs changed - or maybe valid to keep existing update time
+                // For now just save the mapping update
+                cacheRuleRepository.save(rule);
+            }
+        }
     }
 
 
@@ -112,7 +141,6 @@ public class CacheRuleController {
     public void deleteRule(
             @Parameter(description = "规则ID") @PathVariable("ruleId") String ruleId) {
         cacheRuleRepository.findById(ruleId).ifPresent(rule -> {
-            seatunnelJobService.removeRule(rule);
             tableSyncStateManager.removeForRule(rule);
             if (rule.getTables() != null && !rule.getTables().isEmpty()) {
                 for (String table : rule.getTables()) {
@@ -122,6 +150,8 @@ public class CacheRuleController {
             }
         });
         cacheRuleRepository.deleteById(ruleId);
+        // After deletion, reconcile to remove any now-unused jobs
+        reconcileAll();
     }
 
     private CacheRule enrichRuleWithJobs(CacheRule rule) {

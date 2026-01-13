@@ -1,6 +1,5 @@
 package org.openjdbcproxy.grpc.server;
 
-import org.openjdbcproxy.constants.CommonConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,42 +10,45 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Configuration class for the OJP Server that loads settings from Spring configuration.
- * Supports JVM arguments, environment variables, and application.properties/yml files.
+ * Configuration class for the OJP Server that loads settings from Spring
+ * configuration.
+ * Supports JVM arguments, environment variables, and application.properties/yml
+ * files.
  */
 @Component
 public class ServerConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(ServerConfiguration.class);
 
     // Default values
-    public static final int DEFAULT_SERVER_PORT = CommonConstants.DEFAULT_PORT_NUMBER;
+    public static final int DEFAULT_SERVER_PORT = org.openjdbcproxy.constants.CommonConstants.DEFAULT_PORT_NUMBER;
     public static final int DEFAULT_PROMETHEUS_PORT = 9090;
-    public static final String DEFAULT_OPENTELEMETRY_ENDPOINT = "";
+
     public static final int DEFAULT_THREAD_POOL_SIZE = 200;
     public static final int DEFAULT_MAX_REQUEST_SIZE = 4 * 1024 * 1024; // 4MB
     public static final String DEFAULT_LOG_LEVEL = "INFO";
     public static final boolean DEFAULT_ACCESS_LOGGING = false;
-    public static final List<String> DEFAULT_ALLOWED_IPS = List.of(IpWhitelistValidator.ALLOW_ALL_IPS); // Allow all by default
+    public static final List<String> DEFAULT_ALLOWED_IPS = List.of(IpWhitelistValidator.ALLOW_ALL_IPS); // Allow all by
+                                                                                                        // default
     public static final long DEFAULT_CONNECTION_IDLE_TIMEOUT = 30000; // 30 seconds
-    public static final List<String> DEFAULT_PROMETHEUS_ALLOWED_IPS = List.of(IpWhitelistValidator.ALLOW_ALL_IPS); // Allow all by default
+    public static final List<String> DEFAULT_PROMETHEUS_ALLOWED_IPS = List.of(IpWhitelistValidator.ALLOW_ALL_IPS); // Allow
+                                                                                                                   // all
+                                                                                                                   // by
+                                                                                                                   // default
     public static final long DEFAULT_CIRCUIT_BREAKER_TIMEOUT = 60000; // 60 seconds
     public static final int DEFAULT_CIRCUIT_BREAKER_THRESHOLD = 3; // 3 failures before opening the circuit breaker.
-    public static final boolean DEFAULT_SLOW_QUERY_SEGREGATION_ENABLED = true; // Enable slow query segregation by default
+    public static final boolean DEFAULT_SLOW_QUERY_SEGREGATION_ENABLED = true; // Enable slow query segregation by
+                                                                               // default
     public static final int DEFAULT_SLOW_QUERY_SLOT_PERCENTAGE = 20; // 20% of slots for slow queries
     public static final long DEFAULT_SLOW_QUERY_IDLE_TIMEOUT = 10000; // 10 seconds idle timeout
     public static final long DEFAULT_SLOW_QUERY_SLOW_SLOT_TIMEOUT = 120000; // 120 seconds slow slot timeout
     public static final long DEFAULT_SLOW_QUERY_FAST_SLOT_TIMEOUT = 60000; // 60 seconds fast slot timeout
 
     // Configuration values with Spring @Value injection
-    @Value("${ojp.server.port:" + CommonConstants.DEFAULT_PORT_NUMBER + "}")
+    @Value("${ojp.server.port:" + org.openjdbcproxy.constants.CommonConstants.DEFAULT_PORT_NUMBER + "}")
     private int serverPort;
 
     @Value("${ojp.prometheus.port:" + DEFAULT_PROMETHEUS_PORT + "}")
     private int prometheusPort;
-
-
-    @Value("${ojp.opentelemetry.endpoint:'" + DEFAULT_OPENTELEMETRY_ENDPOINT + "'}")
-    private String openTelemetryEndpoint;
 
     @Value("${ojp.server.threadPoolSize:" + DEFAULT_THREAD_POOL_SIZE + "}")
     private int threadPoolSize;
@@ -89,7 +91,6 @@ public class ServerConfiguration {
 
     public ServerConfiguration() {
         // Spring will automatically inject the values via @Value annotations
-        logConfigurationSummary();
     }
 
     /**
@@ -109,11 +110,12 @@ public class ServerConfiguration {
     /**
      * Logs a summary of the current configuration.
      */
+    @javax.annotation.PostConstruct
     private void logConfigurationSummary() {
         logger.info("OJP Server Configuration:");
         logger.info("  Server Port: {}", serverPort);
         logger.info("  Prometheus Port: {}", prometheusPort);
-        logger.info("  OpenTelemetry Endpoint: {}", openTelemetryEndpoint);
+
         logger.info("  Thread Pool Size: {}", threadPoolSize);
         logger.info("  Max Request Size: {} bytes", maxRequestSize);
         logger.info("  Log Level: {}", logLevel);
@@ -136,11 +138,6 @@ public class ServerConfiguration {
 
     public int getPrometheusPort() {
         return prometheusPort;
-    }
-
-
-    public String getOpenTelemetryEndpoint() {
-        return openTelemetryEndpoint;
     }
 
     public int getThreadPoolSize() {

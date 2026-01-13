@@ -14,13 +14,14 @@ public class TableSyncState {
     private String jobId;
     private String ruleId;
     private boolean ready;       // Stream 推送的最新状态
+    private boolean snapshotFinished; // 全量快照读取是否完成
     private long updateTime;
     
     /**
      * 判断状态是否过期 (超过60秒无更新视为 stale)
      */
     public boolean isStale() {
-        return System.currentTimeMillis() - updateTime > 60_000;
+        return System.currentTimeMillis() - updateTime > 300_000;
     }
     
     /**

@@ -101,3 +101,23 @@ services:
     - /sql-translator
     strip_path: true
     preserve_host: true
+
+
+
+- name: skywalking-ui
+  url: http://skywalking-ui:80
+  routes:
+  - name: skywalking-ui-route
+    paths:
+    - /skywalking
+    strip_path: true
+    preserve_host: true
+
+- name: skywalking-oap
+  url: http://skywalking-oap:12800
+  routes:
+  - name: skywalking-oap-route
+    paths:
+    - /skywalking-oap
+    strip_path: true
+    preserve_host: true

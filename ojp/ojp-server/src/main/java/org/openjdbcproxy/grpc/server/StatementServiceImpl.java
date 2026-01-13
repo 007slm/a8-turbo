@@ -2,6 +2,11 @@ package org.openjdbcproxy.grpc.server;
 
 import com.google.protobuf.ByteString;
 import org.openjdbcproxy.grpc.*;
+import org.apache.skywalking.apm.toolkit.trace.ActiveSpan; // SkyWalking Import
+import org.apache.skywalking.apm.toolkit.trace.TraceContext; // SkyWalking TraceContext
+import org.apache.skywalking.apm.toolkit.trace.Tracer; // SkyWalking Tracer for capture/continued
+import org.apache.skywalking.apm.toolkit.trace.ContextSnapshotRef; // SkyWalking ContextSnapshot
+import org.apache.skywalking.apm.toolkit.trace.SpanRef; // SkyWalking SpanRef
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.grpc.stub.ServerCallStreamObserver;
@@ -72,6 +77,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
 
     private final static String RESULT_SET_METADATA_ATTR_PREFIX = "rsMetadata|";
+    
+    // SkyWalking trace snapshot key for session attribute
+    private static final String SKYWALKING_TRACE_SNAPSHOT_KEY = "skywalking.trace.snapshot";
 
     static {
         DriverUtils.registerDrivers();
@@ -102,6 +110,11 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
         this.sessionManager.registerClientUUID(connHash, connectionDetails.getClientUUID());
 
+        // Manual SkyWalking Tracing Tags
+        ActiveSpan.tag("session_id", connHash);
+        ActiveSpan.tag("client_uuid", connectionDetails.getClientUUID());
+        ActiveSpan.tag("ojp.operation", "grpc_connect");
+
         responseObserver.onNext(SessionInfo.newBuilder()
                 .setConnHash(connHash)
                 .setClientUUID(connectionDetails.getClientUUID())
@@ -116,36 +129,55 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
      * Each datasource gets its own manager with pool size based on actual HikariCP configuration.
      */
     private void refreshSchemaCache(String connHash, HikariDataSource ds) {
+        // 获取当前线程的 trace context
+        String currentTraceId = TraceContext.traceId();
+        
         CompletableFuture.runAsync(() -> {
-            log.info("Starting schema cache refresh for {}", connHash);
-            try (Connection conn = ds.getConnection()) {
-                DatabaseMetaData meta = conn.getMetaData();
-                String catalog = conn.getCatalog();
-                try (ResultSet tables = meta.getTables(catalog, null, "%", new String[]{"TABLE"})) {
-                    Map<String, String> schemaMap = new HashMap<>(); // Collect all PKs to store in a single Hash
-                    while (tables.next()) {
-                        String tableName = tables.getString("TABLE_NAME");
-                        try (ResultSet pks = meta.getPrimaryKeys(catalog, null, tableName)) {
-                            Map<Short, String> pkMap = new TreeMap<>();
-                            while (pks.next()) {
-                                pkMap.put(pks.getShort("KEY_SEQ"), pks.getString("COLUMN_NAME"));
+            // 在异步任务中创建子 span，关联到父 trace
+            SpanRef asyncSpan = null;
+            try {
+                // 创建异步 span
+                asyncSpan = Tracer.createLocalSpan("schema-cache-refresh");
+                ActiveSpan.tag("connHash", connHash);
+                ActiveSpan.tag("component", "ojp-schema-cache");
+                
+                log.info("Starting schema cache refresh for {}", connHash);
+                try (Connection conn = ds.getConnection()) {
+                    DatabaseMetaData meta = conn.getMetaData();
+                    String catalog = conn.getCatalog();
+                    try (ResultSet tables = meta.getTables(catalog, null, "%", new String[]{"TABLE"})) {
+                        Map<String, String> schemaMap = new HashMap<>(); // Collect all PKs to store in a single Hash
+                        while (tables.next()) {
+                            String tableName = tables.getString("TABLE_NAME");
+                            try (ResultSet pks = meta.getPrimaryKeys(catalog, null, tableName)) {
+                                Map<Short, String> pkMap = new TreeMap<>();
+                                while (pks.next()) {
+                                    pkMap.put(pks.getShort("KEY_SEQ"), pks.getString("COLUMN_NAME"));
+                                }
+                                String pkStr = String.join(",", pkMap.values());
+                                // Store using lowercase table name to ensure case-insensitive lookup
+                                // If pkStr is empty/blank, we still store it to indicate "No PK" (as opposed to "Unknown table")
+                                schemaMap.put(tableName.toLowerCase(Locale.ROOT), StringUtils.defaultString(pkStr));
                             }
-                            String pkStr = String.join(",", pkMap.values());
-                            // Store using lowercase table name to ensure case-insensitive lookup
-                            // If pkStr is empty/blank, we still store it to indicate "No PK" (as opposed to "Unknown table")
-                            schemaMap.put(tableName.toLowerCase(Locale.ROOT), StringUtils.defaultString(pkStr));
+                        }
+                        
+                        if (!schemaMap.isEmpty()) {
+                            // Key: ojp:schema:{connHash}:pks
+                            String redisHashKey = "ojp:schema:" + connHash + ":pks";
+                            redisTemplate.opsForHash().putAll(redisHashKey, schemaMap);
                         }
                     }
-                    
-                    if (!schemaMap.isEmpty()) {
-                        // Key: ojp:schema:{connHash}:pks
-                        String redisHashKey = "ojp:schema:" + connHash + ":pks";
-                        redisTemplate.opsForHash().putAll(redisHashKey, schemaMap);
+                    log.info("Schema cache refresh completed for {}", connHash);
+                } catch (Exception e) {
+                    if (asyncSpan != null) {
+                        ActiveSpan.error(e);
                     }
+                    log.error("Failed to refresh schema cache for " + connHash, e);
                 }
-                log.info("Schema cache refresh completed for {}", connHash);
-            } catch (Exception e) {
-                log.error("Failed to refresh schema cache for " + connHash, e);
+            } finally {
+                if (asyncSpan != null) {
+                    Tracer.stopSpan();
+                }
             }
         });
     }
@@ -193,6 +225,15 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeUpdate(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing update {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
+        
+        // Continue SkyWalking trace if session has a captured snapshot
+        continueTraceFromSession(request.getSession());
+
+        // Manual SkyWalking Tracing Tags
+        ActiveSpan.tag("sql.hash", stmtHash);
+        ActiveSpan.tag("session_id", request.getSession().getConnHash());
+        ActiveSpan.tag("session_uuid", request.getSession().getSessionUUID());
+        ActiveSpan.tag("ojp.operation", "grpc_update");
 
         try {
             // Get the appropriate slow query segregation manager for this datasource
@@ -315,6 +356,15 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeQuery(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing query for {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
+        
+        // Continue SkyWalking trace if session has a captured snapshot
+        continueTraceFromSession(request.getSession());
+
+        // Manual SkyWalking Tracing Tags
+        ActiveSpan.tag("sql.hash", stmtHash);
+        ActiveSpan.tag("session_id", request.getSession().getConnHash());
+        ActiveSpan.tag("session_uuid", request.getSession().getSessionUUID());
+        ActiveSpan.tag("ojp.operation", "grpc_query");
 
         try {
 
@@ -544,8 +594,25 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             public void onCompleted() {
                 if (lobDataBlocksInputStream != null) {
                     CompletableFuture.runAsync(() -> {
-                        log.info("Finishing lob stream for lob ref {}", this.lobUUID);
-                        lobDataBlocksInputStream.finish(true);
+                        // 在异步任务中创建子 span
+                        SpanRef asyncSpan = null;
+                        try {
+                            asyncSpan = Tracer.createLocalSpan("lob-stream-finish");
+                            ActiveSpan.tag("lobUUID", this.lobUUID);
+                            ActiveSpan.tag("component", "ojp-lob-processor");
+                            
+                            log.info("Finishing lob stream for lob ref {}", this.lobUUID);
+                            lobDataBlocksInputStream.finish(true);
+                        } catch (Exception e) {
+                            if (asyncSpan != null) {
+                                ActiveSpan.error(e);
+                            }
+                            log.error("Error finishing lob stream for " + this.lobUUID, e);
+                        } finally {
+                            if (asyncSpan != null) {
+                                Tracer.stopSpan();
+                            }
+                        }
                     });
                 }
 
@@ -764,6 +831,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void terminateSession(SessionInfo sessionInfo, StreamObserver<SessionTerminationStatus> responseObserver) {
         try {
             log.info("Terminating session");
+            
+             // Manual SkyWalking Tracing Tags
+            ActiveSpan.tag("session_id", sessionInfo.getConnHash());
+            ActiveSpan.tag("session_uuid", sessionInfo.getSessionUUID());
+            ActiveSpan.tag("ojp.operation", "grpc_terminate_session");
+            
             this.sessionManager.terminateSession(sessionInfo);
             responseObserver.onNext(SessionTerminationStatus.newBuilder().setTerminated(true).build());
             responseObserver.onCompleted();
@@ -777,10 +850,24 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     @Override
     public void startTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Starting transaction");
+
         try {
             StatementServiceInterceptContext currentContext = this.acquireSessionContext(sessionInfo, true);
             Connection sessionConnection = currentContext.getCurrentConnection();
             sessionInfo = currentContext.getCurrentSessionInfo();
+
+            // Manual SkyWalking Tracing Tags
+            ActiveSpan.tag("session_id", sessionInfo.getConnHash());
+            ActiveSpan.tag("session_uuid", sessionInfo.getSessionUUID());
+            ActiveSpan.tag("ojp.operation", "grpc_start_transaction");
+            
+            // Capture SkyWalking trace snapshot and store in session for trace continuation
+            Session session = currentContext.getCurrentSession();
+            if (session != null) {
+                ContextSnapshotRef snapshot = Tracer.capture();
+                session.addAttr(SKYWALKING_TRACE_SNAPSHOT_KEY, snapshot);
+                log.debug("Captured SkyWalking trace snapshot for session: {}", sessionInfo.getSessionUUID());
+            }
 
             //Start a transaction
             sessionConnection.setAutoCommit(Boolean.FALSE);
@@ -805,8 +892,18 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     @Override
     public void commitTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Commiting transaction");
+
         try {
             StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
+            
+            // Continue SkyWalking trace if session has a captured snapshot
+            continueTraceFromSession(sessionInfo);
+            
+            // Manual SkyWalking Tracing Tags
+            ActiveSpan.tag("session_id", statementServiceInterceptContext.getCurrentSessionInfo().getConnHash());
+            ActiveSpan.tag("session_uuid", statementServiceInterceptContext.getCurrentSessionInfo().getSessionUUID());
+            ActiveSpan.tag("ojp.operation", "grpc_commit_transaction");;
+            
             Connection conn =  statementServiceInterceptContext.getCurrentConnection();
             conn.commit();
 
@@ -830,8 +927,18 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     @Override
     public void rollbackTransaction(SessionInfo sessionInfo, StreamObserver<SessionInfo> responseObserver) {
         log.info("Rollback transaction");
+
         try {
             StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
+            
+            // Continue SkyWalking trace if session has a captured snapshot
+            continueTraceFromSession(sessionInfo);
+
+            // Manual SkyWalking Tracing Tags
+            ActiveSpan.tag("session_id", statementServiceInterceptContext.getCurrentSessionInfo().getConnHash());
+            ActiveSpan.tag("session_uuid", statementServiceInterceptContext.getCurrentSessionInfo().getSessionUUID());
+            ActiveSpan.tag("ojp.operation", "grpc_rollback_transaction");
+
             Connection conn =  statementServiceInterceptContext.getCurrentConnection();
             conn.rollback();
 
@@ -1049,6 +1156,30 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     private StatementServiceInterceptContext acquireSessionContext(SessionInfo sessionInfo, boolean startSessionIfNone) throws SQLException {
         StatementServiceInterceptContext currentContext = StatementServiceGrpcInterceptor.getCurrentContext();
         return currentContext.acquireSessionContext(this.sessionManager, this.datasourceMap, sessionInfo, startSessionIfNone);
+    }
+    
+    /**
+     * Continue SkyWalking trace from session's captured snapshot.
+     * This allows multiple gRPC requests within the same session to be linked in the same trace.
+     * 
+     * @param sessionInfo the session info containing session UUID
+     */
+    private void continueTraceFromSession(SessionInfo sessionInfo) {
+        if (StringUtils.isEmpty(sessionInfo.getSessionUUID())) {
+            return;
+        }
+        try {
+            Session session = this.sessionManager.getSession(sessionInfo);
+            if (session != null) {
+                ContextSnapshotRef snapshot = (ContextSnapshotRef) session.getAttr(SKYWALKING_TRACE_SNAPSHOT_KEY);
+                if (snapshot != null) {
+                    Tracer.continued(snapshot);
+                    log.debug("Continued SkyWalking trace for session: {}", sessionInfo.getSessionUUID());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to continue SkyWalking trace for session: {}", sessionInfo.getSessionUUID(), e);
+        }
     }
 
     private void handleResultSet(SessionInfo session, String resultSetUUID, StreamObserver<OpResult> responseObserver)

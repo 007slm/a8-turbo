@@ -1,3 +1,4 @@
+# IP Range: 172.24.0.2 - 172.24.0.19 (Infrastructure Core)
 services:
   kong:
     build:
@@ -14,7 +15,7 @@ services:
       - "8445:8445" # Kong Manager SSL
     networks:
       a8:
-        ipv4_address: 172.24.0.30
+        ipv4_address: 172.24.0.10
 
     depends_on:
       - a8-dbproxy

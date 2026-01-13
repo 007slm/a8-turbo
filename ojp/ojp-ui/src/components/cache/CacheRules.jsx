@@ -5,6 +5,7 @@ import {
   ReloadOutlined,
   DeleteOutlined,
   EditOutlined,
+  SyncOutlined,
 } from '@ant-design/icons'
 import { PageContainer, ProTable, ProCard } from '@ant-design/pro-components'
 import { useMutation, useQuery } from 'react-query'
@@ -59,6 +60,16 @@ const CacheRules = () => {
     },
     onError: (error) => {
       message.error(`删除缓存规则失败: ${error.message}`)
+    },
+  })
+
+  const syncAllMutation = useMutation(() => ruleApi.syncAllRules(), {
+    onSuccess: () => {
+      message.success('全量同步作业已触发')
+      refetch()
+    },
+    onError: (error) => {
+      message.error(`同步作业失败: ${error.message}`)
     },
   })
 
@@ -227,6 +238,15 @@ const CacheRules = () => {
         subTitle: '配置和管理数据库查询缓存策略',
         extra: [
           <Button key="refresh" icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching}>刷新</Button>,
+          <Popconfirm
+            key="sync-all"
+            title="确定要同步所有规则的 Seatunnel 作业吗？这可能需要一些时间。"
+            onConfirm={() => syncAllMutation.mutate()}
+            okText="确认"
+            cancelText="取消"
+          >
+            <Button key="sync" icon={<SyncOutlined />} loading={syncAllMutation.isLoading}>同步所有作业</Button>
+          </Popconfirm>,
           <Button key="create" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/cache/rules/new')}>
             新建规则
           </Button>

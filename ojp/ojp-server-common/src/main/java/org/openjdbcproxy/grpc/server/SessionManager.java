@@ -33,5 +33,13 @@ public interface SessionManager {
     void waitLobStreamsConsumption(SessionInfo sessionInfo);
     void registerAttr(SessionInfo sessionInfo, String key, Object value);
     Object getAttr(SessionInfo sessionInfo, String key);
+    
+    /**
+     * 获取指定 session 的 trace context，用于关联同一 session 的所有操作
+     * 返回 null 表示该 session 没有关联的 trace context
+     */
+    default Object getSessionTraceContext(String sessionUUID) {
+        return null;
+    }
 
 }

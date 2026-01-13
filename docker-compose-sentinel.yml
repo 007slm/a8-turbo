@@ -1,5 +1,4 @@
-version: '3.8'
-
+# IP Range: 172.24.0.120 - 172.24.0.139 (Commercial Modules - Reserved, currently using 'host' network)
 services:
   # OJP 内核级授权哨兵 (Commercial Sentinel)
   # 该组件负责在内核层监控并执行授权策略

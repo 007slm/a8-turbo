@@ -34,7 +34,7 @@ public class CacheDecisionService {
         Set<String> involvedTables = JSqlParserUtil.extractTableNames(sql);
         
         if (involvedTables.isEmpty()) {
-            log.debug("No tables extracted from SQL, fallback to source");
+            log.debug("无法从 SQL 提取表名，回源查询");
             recordDecision(startTime, false);
             return false;
         }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { ConfigProvider, App as AntdApp } from 'antd'
 import { ProLayout } from '@ant-design/pro-components'
@@ -11,38 +11,41 @@ import {
   BulbOutlined,
   ShopOutlined,
   ApiOutlined,
-  UserOutlined,
   SafetyCertificateOutlined,
-  SettingOutlined,
-  SyncOutlined
+  SyncOutlined,
+  RocketOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import Monitoring from './components/Monitoring'
 
 import MonitoringOverview from './components/MonitoringOverview'
 import ServiceMonitoring from './components/ServiceMonitoring'
+import ServicePortal from './pages/ServicePortal.jsx'
+
 import MonitorDashboard from './pages/monitor/index.jsx'
-import ServerNativeMonitor from './pages/monitor/server/index.jsx'
 import CacheNativeMonitor from './pages/monitor/cache/index.jsx'
 import RedisNativeMonitor from './pages/monitor/redis/index.jsx'
 import StarrocksNativeMonitor from './pages/monitor/starrocks/index.jsx'
 import PrometheusNativeMonitor from './pages/monitor/prometheus/index.jsx'
+import TableSyncStatus from './components/cache/TableSyncStatus'
 import PrometheusTest from './pages/monitor/test/PrometheusTest.jsx'
 import SqlTranslatorTest from './pages/test/SqlTranslatorTest.jsx'
 import SystemConnectivityTest from './pages/test/SystemConnectivityTest.jsx'
 
 import LicenseManager from './pages/LicenseManager'
-import { getAllServices } from './config/monitoringConfig'
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
 import QueryCache from './components/cache/QueryCache'
 import CacheRecommendations from './components/cache/CacheRecommendations'
 import ShopService from './components/shopservice/ShopService'
 
-import { fetchSystemStatus } from './services/api'
+import { fetchSystemStatus, licenseApi } from './services/api'
 import './App.css'
 import './components/magicui/styles.css'
 import { StatusPill } from './components/magicui'
+
+
 
 function AppContent() {
   const navigate = useNavigate()
@@ -100,6 +103,11 @@ function AppContent() {
             name: '监控服务',
             icon: <MonitorOutlined />,
           },
+          {
+            path: '/monitor/skywalking',
+            name: '链路追踪',
+            icon: <RocketOutlined />,
+          },
         ]
       },
       {
@@ -119,6 +127,10 @@ function AppContent() {
           {
             path: '/cache/queries',
             name: '慢查询列表',
+          },
+          {
+            path: '/cache/sync-status',
+            name: '同步状态',
           }
         ]
       },
@@ -168,19 +180,30 @@ function AppContent() {
       },
 
       {
-        path: '/admin',
-        name: '系统设置',
-        icon: <SettingOutlined />,
-        routes: [
-          {
-            path: '/admin/license',
-            name: '商业授权',
-            icon: <SafetyCertificateOutlined />,
-          },
-        ],
+        path: '/license',
+        name: '商业授权',
+        icon: <SafetyCertificateOutlined />,
+      },
+      {
+        path: '/service-portal',
+        name: '服务导航',
+        icon: <AppstoreOutlined />,
       },
     ],
   };
+
+
+
+  // 获取授权信息
+  const { data: licenseInfo } = useQuery(
+    'licenseInfo',
+    () => licenseApi.getLicense(),
+    {
+      staleTime: 300000, // 5分钟缓存
+      retry: 3,          // 允许失败重试
+      refetchOnWindowFocus: false
+    }
+  )
 
   return (
     <ConfigProvider
@@ -219,7 +242,7 @@ function AppContent() {
           )}
           avatarProps={{
             src: 'https://gw.alipayobjects.com/zos/antfincdn/efFD%24IOql2/weixintupian_20170331104822.jpg',
-            title: 'Admin User',
+            title: licenseInfo?.valid ? licenseInfo.customer : 'Admin User',
             size: 'small',
           }}
           actionsRender={() => [
@@ -249,6 +272,13 @@ function AppContent() {
             <Route path="/monitor/redis" element={<RedisNativeMonitor />} />
             <Route path="/monitor/starrocks" element={<StarrocksNativeMonitor />} />
             <Route path="/monitor/prometheus" element={<PrometheusNativeMonitor />} />
+            <Route path="/monitor/skywalking" element={
+              <iframe
+                src="/skywalking/"
+                style={{ width: '100%', height: 'calc(100vh - 56px)', border: 'none' }}
+                title="SkyWalking"
+              />
+            } />
             <Route path="/monitoring" element={<MonitoringOverview />} />
             <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
             <Route path="/cache" element={<CacheRules />} />
@@ -257,15 +287,19 @@ function AppContent() {
             <Route path="/cache/queries" element={<QueryCache />} />
             <Route path="/cache/rules/new" element={<CacheRuleEditor />} />
             <Route path="/cache/rules/:ruleId/edit" element={<CacheRuleEditor />} />
+            <Route path="/cache/sync-status" element={<TableSyncStatus />} />
 
-            <Route path="/shopservice" element={<ShopService />} />
             <Route path="/shopservice" element={<ShopService />} />
             <Route path="/shopservice/*" element={<ShopService />} />
             <Route path="/test/sql-translator" element={<SqlTranslatorTest />} />
             <Route path="/test/connectivity" element={<SystemConnectivityTest />} />
 
+            <Route path="/service-portal" element={<ServicePortal />} />
 
-            <Route path="/admin/license" element={<LicenseManager />} />
+
+
+
+            <Route path="/license" element={<LicenseManager />} />
           </Routes>
         </ProLayout>
       </AntdApp>

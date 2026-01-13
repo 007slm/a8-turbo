@@ -1,3 +1,4 @@
+# IP Range: 172.24.0.100 - 172.24.0.119 (Sidecars & Utilities)
 services:
   a8-sql-translator:
     build:
@@ -9,4 +10,5 @@ services:
     environment:
       - TZ=Asia/Shanghai
     networks:
-      - a8
+      a8:
+        ipv4_address: 172.24.0.100

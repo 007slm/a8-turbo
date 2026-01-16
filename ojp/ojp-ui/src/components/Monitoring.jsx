@@ -56,7 +56,7 @@ const { TabPane } = Tabs
 const Monitoring = () => {
   const navigate = useNavigate()
   const [refreshKey, setRefreshKey] = useState(0)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('jvm')
   const [selectedMetric, setSelectedMetric] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [availableMetrics, setAvailableMetrics] = useState([])
@@ -421,9 +421,7 @@ const Monitoring = () => {
           </div>
         ) : (
           <Tabs activeKey={activeTab} onChange={setActiveTab} className="monitoring-tabs" destroyInactiveTabPane>
-            <TabPane tab="系统概览" key="overview">
-              <SystemOverview resources={resources} healthInfo={healthInfo} loading={resourcesLoading || healthLoading} />
-            </TabPane>
+
 
             <TabPane tab="JVM 信息" key="jvm">
               <JvmInfo jvmInfo={jvmInfo} loading={jvmLoading} />

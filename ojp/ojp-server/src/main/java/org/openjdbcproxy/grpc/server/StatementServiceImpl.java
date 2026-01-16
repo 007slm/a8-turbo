@@ -59,9 +59,9 @@ import static org.openjdbcproxy.grpc.server.GrpcExceptionHandler.sendSQLExceptio
 
 @Slf4j
 @RequiredArgsConstructor
-@GrpcService(interceptors = {StatementServiceGrpcInterceptor.class})
+@GrpcService(interceptors = { StatementServiceGrpcInterceptor.class })
 public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceImplBase {
-    
+
     private final Map<String, HikariDataSource> datasourceMap = new ConcurrentHashMap<>();
     private final SessionManager sessionManager;
     // Per-datasource slow query segregation managers
@@ -69,7 +69,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     // Server configuration for creating segregation managers
     private final ServerConfiguration serverConfiguration;
-    
+
     // Connection pool configurer with Micrometer support
     private final ConnectionPoolConfigurer connectionPoolConfigurer;
     private final StringRedisTemplate redisTemplate;
@@ -77,7 +77,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     private static final List<String> INPUT_STREAM_TYPES = Arrays.asList("RAW", "BINARY VARYING", "BYTEA");
 
     private final static String RESULT_SET_METADATA_ATTR_PREFIX = "rsMetadata|";
-    
+
     // SkyWalking trace snapshot key for session attribute
     private static final String SKYWALKING_TRACE_SNAPSHOT_KEY = "skywalking.trace.snapshot";
 
@@ -97,7 +97,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             config.setUsername(connectionDetails.getUser());
             config.setPassword(connectionDetails.getPassword());
 
-            // Configure HikariCP using client properties or defaults with Micrometer support
+            // Configure HikariCP using client properties or defaults with Micrometer
+            // support
             connectionPoolConfigurer.configureHikariPool(config, connectionDetails);
 
             ds = new HikariDataSource(config);
@@ -118,20 +119,20 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         responseObserver.onNext(SessionInfo.newBuilder()
                 .setConnHash(connHash)
                 .setClientUUID(connectionDetails.getClientUUID())
-                .build()
-        );
+                .build());
 
         responseObserver.onCompleted();
     }
 
     /**
      * Creates a slow query segregation manager for a specific datasource.
-     * Each datasource gets its own manager with pool size based on actual HikariCP configuration.
+     * Each datasource gets its own manager with pool size based on actual HikariCP
+     * configuration.
      */
     private void refreshSchemaCache(String connHash, HikariDataSource ds) {
         // 获取当前线程的 trace context
         String currentTraceId = TraceContext.traceId();
-        
+
         CompletableFuture.runAsync(() -> {
             // 在异步任务中创建子 span，关联到父 trace
             SpanRef asyncSpan = null;
@@ -140,12 +141,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 asyncSpan = Tracer.createLocalSpan("schema-cache-refresh");
                 ActiveSpan.tag("connHash", connHash);
                 ActiveSpan.tag("component", "ojp-schema-cache");
-                
+
                 log.info("Starting schema cache refresh for {}", connHash);
                 try (Connection conn = ds.getConnection()) {
                     DatabaseMetaData meta = conn.getMetaData();
                     String catalog = conn.getCatalog();
-                    try (ResultSet tables = meta.getTables(catalog, null, "%", new String[]{"TABLE"})) {
+                    try (ResultSet tables = meta.getTables(catalog, null, "%", new String[] { "TABLE" })) {
                         Map<String, String> schemaMap = new HashMap<>(); // Collect all PKs to store in a single Hash
                         while (tables.next()) {
                             String tableName = tables.getString("TABLE_NAME");
@@ -156,11 +157,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                                 }
                                 String pkStr = String.join(",", pkMap.values());
                                 // Store using lowercase table name to ensure case-insensitive lookup
-                                // If pkStr is empty/blank, we still store it to indicate "No PK" (as opposed to "Unknown table")
+                                // If pkStr is empty/blank, we still store it to indicate "No PK" (as opposed to
+                                // "Unknown table")
                                 schemaMap.put(tableName.toLowerCase(Locale.ROOT), StringUtils.defaultString(pkStr));
                             }
                         }
-                        
+
                         if (!schemaMap.isEmpty()) {
                             // Key: ojp:schema:{connHash}:pks
                             String redisHashKey = "ojp:schema:" + connHash + ":pks";
@@ -185,21 +187,19 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     private void createSlowQuerySegregationManagerForDatasource(String connHash, int actualPoolSize) {
         if (serverConfiguration.isSlowQuerySegregationEnabled()) {
             SlowQuerySegregationManager manager = new SlowQuerySegregationManager(
-                actualPoolSize,
-                serverConfiguration.getSlowQuerySlotPercentage(),
-                serverConfiguration.getSlowQueryIdleTimeout(),
-                serverConfiguration.getSlowQuerySlowSlotTimeout(),
-                serverConfiguration.getSlowQueryFastSlotTimeout(),
-                true
-            );
+                    actualPoolSize,
+                    serverConfiguration.getSlowQuerySlotPercentage(),
+                    serverConfiguration.getSlowQueryIdleTimeout(),
+                    serverConfiguration.getSlowQuerySlowSlotTimeout(),
+                    serverConfiguration.getSlowQueryFastSlotTimeout(),
+                    true);
             slowQuerySegregationManagers.put(connHash, manager);
             log.info("Created SlowQuerySegregationManager for datasource {} with pool size {}",
                     connHash, actualPoolSize);
         } else {
             // Create disabled manager for consistency
             SlowQuerySegregationManager manager = new SlowQuerySegregationManager(
-                1, 0, 0, 0, 0, false
-            );
+                    1, 0, 0, 0, 0, false);
             slowQuerySegregationManagers.put(connHash, manager);
             log.info("Created disabled SlowQuerySegregationManager for datasource {}", connHash);
         }
@@ -212,7 +212,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     private SlowQuerySegregationManager getSlowQuerySegregationManagerForConnection(String connHash) {
         SlowQuerySegregationManager manager = slowQuerySegregationManagers.get(connHash);
         if (manager == null) {
-            log.warn("No SlowQuerySegregationManager found for connection hash {}, creating disabled fallback", connHash);
+            log.warn("No SlowQuerySegregationManager found for connection hash {}, creating disabled fallback",
+                    connHash);
             // Create a disabled manager as fallback
             manager = new SlowQuerySegregationManager(1, 0, 0, 0, 0, false);
             slowQuerySegregationManagers.put(connHash, manager);
@@ -225,7 +226,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeUpdate(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing update {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
+
         // Continue SkyWalking trace if session has a captured snapshot
         continueTraceFromSession(request.getSession());
 
@@ -277,23 +278,32 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         OpResult.Builder opResultBuilder = OpResult.newBuilder();
 
         try {
-            StatementServiceInterceptContext statementServiceInterceptContext = acquireSessionContext(sessionInfo, StatementRequestValidator.isAddBatchOperation(request) || StatementRequestValidator.hasAutoGeneratedKeysFlag(request));
+            StatementServiceInterceptContext statementServiceInterceptContext = acquireSessionContext(sessionInfo,
+                    StatementRequestValidator.isAddBatchOperation(request)
+                            || StatementRequestValidator.hasAutoGeneratedKeysFlag(request));
             sessionInfo = statementServiceInterceptContext.getCurrentSessionInfo();
 
             List<Parameter> params = deserialize(request.getParameters().toByteArray(), List.class);
             PreparedStatement ps = sessionInfo != null && StringUtils.isNotBlank(sessionInfo.getSessionUUID())
-                    && StringUtils.isNoneBlank(request.getStatementUUID()) ?
-                    sessionManager.getPreparedStatement(sessionInfo, request.getStatementUUID()) : null;
+                    && StringUtils.isNoneBlank(request.getStatementUUID())
+                            ? sessionManager.getPreparedStatement(sessionInfo, request.getStatementUUID())
+                            : null;
             if (CollectionUtils.isNotEmpty(params) || ps != null) {
                 if (StringUtils.isNotEmpty(request.getStatementUUID())) {
                     Collection<Object> lobs = sessionManager.getLobs(sessionInfo);
                     for (Object o : lobs) {
                         LobDataBlocksInputStream lobIS = (LobDataBlocksInputStream) o;
-                        Map<String, Object> metadata = (Map<String, Object>) sessionManager.getAttr(sessionInfo, lobIS.getUuid());
-                        Integer parameterIndex = (Integer) metadata.get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_INDEX);
+                        Map<String, Object> metadata = (Map<String, Object>) sessionManager.getAttr(sessionInfo,
+                                lobIS.getUuid());
+                        Integer parameterIndex = (Integer) metadata
+                                .get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_INDEX);
                         ps.setBinaryStream(parameterIndex, lobIS);
                     }
-                    if (DbName.POSTGRES.equals(statementServiceInterceptContext.getCurrentDbName())) {//Postgres requires check if the lob streams are fully consumed.
+                    if (DbName.POSTGRES.equals(statementServiceInterceptContext.getCurrentDbName())) {// Postgres
+                                                                                                      // requires check
+                                                                                                      // if the lob
+                                                                                                      // streams are
+                                                                                                      // fully consumed.
                         sessionManager.waitLobStreamsConsumption(sessionInfo);
                     }
                     if (ps != null) {
@@ -334,7 +344,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         .setValue(ByteString.copyFrom(serialize(updated))).build();
             }
         } finally {
-            //If there is no session, close statement and connection
+            // If there is no session, close statement and connection
             if (sessionInfo == null || StringUtils.isEmpty(sessionInfo.getSessionUUID())) {
                 if (stmt != null) {
                     try {
@@ -356,7 +366,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void executeQuery(StatementRequest request, StreamObserver<OpResult> responseObserver) {
         log.info("Executing query for {}", request.getSql());
         String stmtHash = SqlStatementXXHash.hashSqlQuery(request.getSql());
-        
+
         // Continue SkyWalking trace if session has a captured snapshot
         continueTraceFromSession(request.getSession());
 
@@ -391,22 +401,31 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             }
         }
     }
-    
+
     /**
      * Internal method for executing queries without segregation logic.
      */
-    private void executeQueryInternal(StatementRequest request, StreamObserver<OpResult> responseObserver) throws SQLException {
-        StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(request.getSession(), true);
+    private void executeQueryInternal(StatementRequest request, StreamObserver<OpResult> responseObserver)
+            throws SQLException {
+        StatementServiceInterceptContext statementServiceInterceptContext = this
+                .acquireSessionContext(request.getSession(), true);
         SessionInfo sessionInfo = statementServiceInterceptContext.getCurrentSessionInfo();
         List<Parameter> params = deserialize(request.getParameters().toByteArray(), List.class);
         if (CollectionUtils.isNotEmpty(params)) {
-            PreparedStatement ps = StatementFactory.createPreparedStatement(sessionManager, request.getSql(), params, request);
+            PreparedStatement ps = StatementFactory.createPreparedStatement(sessionManager, request.getSql(), params,
+                    request);
             String resultSetUUID = this.sessionManager.registerResultSet(sessionInfo, ps.executeQuery());
             this.handleResultSet(sessionInfo, resultSetUUID, responseObserver);
         } else {
             Statement stmt = StatementFactory.createStatement(sessionManager, request);
+            String effectiveSql = request.getSql();
+            String translatedSql = (String) statementServiceInterceptContext.getAttribute("translated.sql");
+            if (StringUtils.isNotEmpty(translatedSql)) {
+                effectiveSql = translatedSql;
+                log.debug("Using translated SQL for Statement execution: {}", effectiveSql);
+            }
             String resultSetUUID = this.sessionManager.registerResultSet(sessionInfo,
-                    stmt.executeQuery(request.getSql()));
+                    stmt.executeQuery(effectiveSql));
             this.handleResultSet(sessionInfo, resultSetUUID, responseObserver);
         }
     }
@@ -415,8 +434,10 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void fetchNextRows(ResultSetFetchRequest request, StreamObserver<OpResult> responseObserver) {
         log.debug("Executing fetch next rows for result set  {}", request.getResultSetUUID());
         try {
-            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(request.getSession(), false);
-            this.handleResultSet(statementServiceInterceptContext.getCurrentSessionInfo(), request.getResultSetUUID(), responseObserver);
+            StatementServiceInterceptContext statementServiceInterceptContext = this
+                    .acquireSessionContext(request.getSession(), false);
+            this.handleResultSet(statementServiceInterceptContext.getCurrentSessionInfo(), request.getResultSetUUID(),
+                    responseObserver);
         } catch (SQLException e) {
             log.error("Failure fetch next rows for result set: {}", e.getMessage(), e);
             sendSQLExceptionMetadata(e, responseObserver);
@@ -480,10 +501,10 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 try {
                     this.lobType = lobDataBlock.getLobType();
                     log.info("lob data block received, lob type {}", this.lobType);
-                    StatementServiceInterceptContext currentContext = acquireSessionContext(lobDataBlock.getSession(), true);
+                    StatementServiceInterceptContext currentContext = acquireSessionContext(lobDataBlock.getSession(),
+                            true);
                     Connection conn = currentContext.getCurrentConnection();
                     sessionInfo = currentContext.getCurrentSessionInfo();
-
 
                     if (StringUtils.isEmpty(lobDataBlock.getSession().getSessionUUID()) || this.lobUUID == null) {
                         if (LobType.LT_BLOB.equals(this.lobType)) {
@@ -502,8 +523,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         case LT_BLOB: {
                             Blob blob = sessionManager.getLob(sessionInfo, this.lobUUID);
                             if (blob == null) {
-                                throw new SQLException("Unable to write LOB of type " + this.lobType + ": Blob object is null for UUID " + this.lobUUID + 
-                                    ". This may indicate a race condition or session management issue.");
+                                throw new SQLException("Unable to write LOB of type " + this.lobType
+                                        + ": Blob object is null for UUID " + this.lobUUID +
+                                        ". This may indicate a race condition or session management issue.");
                             }
                             byte[] byteArrayData = lobDataBlock.getData().toByteArray();
                             bytesWritten = blob.setBytes(lobDataBlock.getPosition(), byteArrayData);
@@ -512,8 +534,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         case LT_CLOB: {
                             Clob clob = sessionManager.getLob(sessionInfo, this.lobUUID);
                             if (clob == null) {
-                                throw new SQLException("Unable to write LOB of type " + this.lobType + ": Clob object is null for UUID " + this.lobUUID + 
-                                    ". This may indicate a race condition or session management issue.");
+                                throw new SQLException("Unable to write LOB of type " + this.lobType
+                                        + ": Clob object is null for UUID " + this.lobUUID +
+                                        ". This may indicate a race condition or session management issue.");
                             }
                             byte[] byteArrayData = lobDataBlock.getData().toByteArray();
                             Writer writer = clob.setCharacterStream(lobDataBlock.getPosition());
@@ -528,9 +551,11 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                                     throw new SQLException("Metadata empty for binary stream type.");
                                 }
                                 Map<Integer, Object> metadata = deserialize(metadataBytes, Map.class);
-                                String sql = (String) metadata.get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_SQL);
+                                String sql = (String) metadata
+                                        .get(CommonConstants.PREPARED_STATEMENT_BINARY_STREAM_SQL);
                                 PreparedStatement ps;
-                                String preparedStatementUUID = (String) metadata.get(CommonConstants.PREPARED_STATEMENT_UUID_BINARY_STREAM);
+                                String preparedStatementUUID = (String) metadata
+                                        .get(CommonConstants.PREPARED_STATEMENT_UUID_BINARY_STREAM);
                                 if (StringUtils.isNotEmpty(preparedStatementUUID)) {
                                     stmtUUID = preparedStatementUUID;
                                 } else {
@@ -538,13 +563,16 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                                     stmtUUID = sessionManager.registerPreparedStatement(sessionInfo, ps);
                                 }
 
-                                //Add bite stream as parameter to the prepared statement
+                                // Add bite stream as parameter to the prepared statement
                                 lobDataBlocksInputStream = new LobDataBlocksInputStream(lobDataBlock);
                                 this.lobUUID = lobDataBlocksInputStream.getUuid();
-                                //Only needs to be registered so we can wait it to receive all bytes before performing the update.
-                                sessionManager.registerLob(sessionInfo, lobDataBlocksInputStream, lobDataBlocksInputStream.getUuid());
+                                // Only needs to be registered so we can wait it to receive all bytes before
+                                // performing the update.
+                                sessionManager.registerLob(sessionInfo, lobDataBlocksInputStream,
+                                        lobDataBlocksInputStream.getUuid());
                                 sessionManager.registerAttr(sessionInfo, lobDataBlocksInputStream.getUuid(), metadata);
-                                //Need to first send the ref to the client before adding the stream as a parameter
+                                // Need to first send the ref to the client before adding the stream as a
+                                // parameter
                                 sendLobRef(sessionInfo, lobDataBlock.getData().toByteArray().length);
                             } else {
                                 lobDataBlocksInputStream.addBlock(lobDataBlock);
@@ -561,13 +589,15 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 } catch (SQLException e) {
                     sendSQLExceptionMetadata(e, responseObserver);
                 } catch (Exception e) {
-                    sendSQLExceptionMetadata(new SQLException("Unable to write data: " + e.getMessage(), e), responseObserver);
+                    sendSQLExceptionMetadata(new SQLException("Unable to write data: " + e.getMessage(), e),
+                            responseObserver);
                 }
             }
 
             private void sendLobRef(SessionInfo sessionInfo, int bytesWritten) {
                 log.info("Returning lob ref {}", this.lobUUID);
-                //Send one flag response to indicate that the Blob has been created successfully and the first
+                // Send one flag response to indicate that the Blob has been created
+                // successfully and the first
                 // block fo data has been written successfully.
                 LobReference.Builder lobRefBuilder = LobReference.newBuilder()
                         .setSession(sessionInfo)
@@ -600,7 +630,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                             asyncSpan = Tracer.createLocalSpan("lob-stream-finish");
                             ActiveSpan.tag("lobUUID", this.lobUUID);
                             ActiveSpan.tag("component", "ojp-lob-processor");
-                            
+
                             log.info("Finishing lob stream for lob ref {}", this.lobUUID);
                             lobDataBlocksInputStream.finish(true);
                         } catch (Exception e) {
@@ -625,7 +655,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                     lobRefBuilder.setStmtUUID(this.stmtUUID);
                 }
 
-                //Send the final Lob reference with total count of written bytes.
+                // Send the final Lob reference with total count of written bytes.
                 responseObserver.onNext(lobRefBuilder.build());
                 responseObserver.onCompleted();
             }
@@ -648,8 +678,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 responseObserver.onCompleted();
                 return;
             }
-            //If the lob length is known the exact size of the next block is also known.
-            boolean exactSizeKnown = readLobContext.getLobLength().isPresent() && readLobContext.getAvailableLength().isPresent();
+            // If the lob length is known the exact size of the next block is also known.
+            boolean exactSizeKnown = readLobContext.getLobLength().isPresent()
+                    && readLobContext.getAvailableLength().isPresent();
             int nextByte = inputStream.read();
             int nextBlockSize = nextByte == -1 ? 1 : this.nextBlockSize(readLobContext, request.getPosition());
             byte[] nextBlock = new byte[nextBlockSize];
@@ -662,15 +693,14 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 if (idx == nextBlockSize - 1) {
                     currentPos += (idx + 1);
                     log.info("Sending block of data size {} pos {}", idx + 1, currentPos);
-                    //Send data to client in limited size blocks to safeguard server memory.
+                    // Send data to client in limited size blocks to safeguard server memory.
                     responseObserver.onNext(LobDataBlock.newBuilder()
                             .setSession(lobRef.getSession())
                             .setPosition(currentPos)
                             .setData(ByteString.copyFrom(nextBlock))
-                            .build()
-                    );
+                            .build());
                     nextBlockSize = this.nextBlockSize(readLobContext, currentPos - 1);
-                    if (nextBlockSize > 0) {//Might be a single small block then nextBlockSize will return negative.
+                    if (nextBlockSize > 0) {// Might be a single small block then nextBlockSize will return negative.
                         nextBlock = new byte[nextBlockSize];
                     } else {
                         nextBlock = new byte[0];
@@ -681,13 +711,14 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 nextByte = inputStream.read();
             }
 
-            //Send leftover bytes
+            // Send leftover bytes
             if (!nextBlockFullyEmpty && nextBlock.length > 0 && nextBlock[0] != -1) {
 
-                byte[] adjustedSizeArray = (idx % MAX_LOB_DATA_BLOCK_SIZE != 0 && !exactSizeKnown) ?
-                        trim(nextBlock) : nextBlock;
+                byte[] adjustedSizeArray = (idx % MAX_LOB_DATA_BLOCK_SIZE != 0 && !exactSizeKnown) ? trim(nextBlock)
+                        : nextBlock;
                 if (nextByte == -1 && adjustedSizeArray.length == 1 && adjustedSizeArray[0] != nextByte) {
-                    // For cases where the amount of bytes is a multiple of the block size and last read only reads the end of the stream.
+                    // For cases where the amount of bytes is a multiple of the block size and last
+                    // read only reads the end of the stream.
                     adjustedSizeArray = new byte[0];
                 }
                 currentPos = (int) request.getPosition() + idx;
@@ -696,8 +727,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         .setSession(lobRef.getSession())
                         .setPosition(currentPos)
                         .setData(ByteString.copyFrom(adjustedSizeArray))
-                        .build()
-                );
+                        .build());
             }
 
             responseObserver.onCompleted();
@@ -749,10 +779,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 readLobContextBuilder.availableLength(Optional.empty());
                 Object lobObj = sessionManager.getLob(lobReference.getSession(), lobReference.getUuid());
                 if (lobObj instanceof Blob) {
-                    inputStream = this.inputStreamFromBlob(sessionManager, lobReference, request, readLobContextBuilder);
+                    inputStream = this.inputStreamFromBlob(sessionManager, lobReference, request,
+                            readLobContextBuilder);
                 } else if (lobObj instanceof InputStream) {
                     inputStream = sessionManager.getLob(lobReference.getSession(), lobReference.getUuid());
-                    inputStream.reset();//Might be a second read of the same stream, this guarantees that the position is at the start.
+                    inputStream.reset();// Might be a second read of the same stream, this guarantees that the position
+                                        // is at the start.
                     if (inputStream instanceof ByteArrayInputStream) {// Only used in SQL Server
                         ByteArrayInputStream bais = (ByteArrayInputStream) inputStream;
                         bais.reset();
@@ -774,13 +806,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     @SneakyThrows
     private InputStream inputStreamFromClob(SessionManager sessionManager, LobReference lobReference,
-                                            ReadLobRequest request,
-                                            ReadLobContext.ReadLobContextBuilder readLobContextBuilder) {
+            ReadLobRequest request,
+            ReadLobContext.ReadLobContextBuilder readLobContextBuilder) {
         Clob clob = sessionManager.getLob(lobReference.getSession(), lobReference.getUuid());
         long lobLength = clob.length();
         readLobContextBuilder.lobLength(Optional.of(lobLength));
-        int availableLength = (request.getPosition() + request.getLength()) < lobLength ? request.getLength() :
-                (int) (lobLength - request.getPosition() + 1);
+        int availableLength = (request.getPosition() + request.getLength()) < lobLength ? request.getLength()
+                : (int) (lobLength - request.getPosition() + 1);
         readLobContextBuilder.availableLength(Optional.of(availableLength));
         Reader reader = clob.getCharacterStream(request.getPosition(), availableLength);
         return ReaderInputStream.builder()
@@ -791,20 +823,21 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     @SneakyThrows
     private InputStream inputStreamFromBlob(SessionManager sessionManager, LobReference lobReference,
-                                            ReadLobRequest request,
-                                            ReadLobContext.ReadLobContextBuilder readLobContextBuilder) {
+            ReadLobRequest request,
+            ReadLobContext.ReadLobContextBuilder readLobContextBuilder) {
         Blob blob = sessionManager.getLob(lobReference.getSession(), lobReference.getUuid());
         long lobLength = blob.length();
         readLobContextBuilder.lobLength(Optional.of(lobLength));
-        int availableLength = (request.getPosition() + request.getLength()) < lobLength ? request.getLength() :
-                (int) (lobLength - request.getPosition() + 1);
+        int availableLength = (request.getPosition() + request.getLength()) < lobLength ? request.getLength()
+                : (int) (lobLength - request.getPosition() + 1);
         readLobContextBuilder.availableLength(Optional.of(availableLength));
         return blob.getBinaryStream(request.getPosition(), availableLength);
     }
 
     private int nextBlockSize(ReadLobContext readLobContext, long position) {
 
-        //BinaryStreams do not have means to know the size of the lob like Blobs or Clobs.
+        // BinaryStreams do not have means to know the size of the lob like Blobs or
+        // Clobs.
         if (readLobContext.getAvailableLength().isEmpty() || readLobContext.getLobLength().isEmpty()) {
             return MAX_LOB_DATA_BLOCK_SIZE;
         }
@@ -812,7 +845,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         long lobLength = readLobContext.getLobLength().get();
         int length = readLobContext.getAvailableLength().get();
 
-        //Single read situations
+        // Single read situations
         int nextBlockSize = Math.min(MAX_LOB_DATA_BLOCK_SIZE, length);
         if ((int) lobLength == length && position == 1) {
             return length;
@@ -831,19 +864,20 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
     public void terminateSession(SessionInfo sessionInfo, StreamObserver<SessionTerminationStatus> responseObserver) {
         try {
             log.info("Terminating session");
-            
-             // Manual SkyWalking Tracing Tags
+
+            // Manual SkyWalking Tracing Tags
             ActiveSpan.tag("session_id", sessionInfo.getConnHash());
             ActiveSpan.tag("session_uuid", sessionInfo.getSessionUUID());
             ActiveSpan.tag("ojp.operation", "grpc_terminate_session");
-            
+
             this.sessionManager.terminateSession(sessionInfo);
             responseObserver.onNext(SessionTerminationStatus.newBuilder().setTerminated(true).build());
             responseObserver.onCompleted();
         } catch (SQLException se) {
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
-            sendSQLExceptionMetadata(new SQLException("Unable to terminate session: " + e.getMessage()), responseObserver);
+            sendSQLExceptionMetadata(new SQLException("Unable to terminate session: " + e.getMessage()),
+                    responseObserver);
         }
     }
 
@@ -860,7 +894,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             ActiveSpan.tag("session_id", sessionInfo.getConnHash());
             ActiveSpan.tag("session_uuid", sessionInfo.getSessionUUID());
             ActiveSpan.tag("ojp.operation", "grpc_start_transaction");
-            
+
             // Capture SkyWalking trace snapshot and store in session for trace continuation
             Session session = currentContext.getCurrentSession();
             if (session != null) {
@@ -869,7 +903,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 log.debug("Captured SkyWalking trace snapshot for session: {}", sessionInfo.getSessionUUID());
             }
 
-            //Start a transaction
+            // Start a transaction
             sessionConnection.setAutoCommit(Boolean.FALSE);
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
@@ -885,7 +919,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         } catch (SQLException se) {
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
-            sendSQLExceptionMetadata(new SQLException("Unable to start transaction: " + e.getMessage()), responseObserver);
+            sendSQLExceptionMetadata(new SQLException("Unable to start transaction: " + e.getMessage()),
+                    responseObserver);
         }
     }
 
@@ -894,17 +929,19 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         log.info("Commiting transaction");
 
         try {
-            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
-            
+            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo,
+                    false);
+
             // Continue SkyWalking trace if session has a captured snapshot
             continueTraceFromSession(sessionInfo);
-            
+
             // Manual SkyWalking Tracing Tags
             ActiveSpan.tag("session_id", statementServiceInterceptContext.getCurrentSessionInfo().getConnHash());
             ActiveSpan.tag("session_uuid", statementServiceInterceptContext.getCurrentSessionInfo().getSessionUUID());
-            ActiveSpan.tag("ojp.operation", "grpc_commit_transaction");;
-            
-            Connection conn =  statementServiceInterceptContext.getCurrentConnection();
+            ActiveSpan.tag("ojp.operation", "grpc_commit_transaction");
+            ;
+
+            Connection conn = statementServiceInterceptContext.getCurrentConnection();
             conn.commit();
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
@@ -920,7 +957,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         } catch (SQLException se) {
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
-            sendSQLExceptionMetadata(new SQLException("Unable to commit transaction: " + e.getMessage()), responseObserver);
+            sendSQLExceptionMetadata(new SQLException("Unable to commit transaction: " + e.getMessage()),
+                    responseObserver);
         }
     }
 
@@ -929,8 +967,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         log.info("Rollback transaction");
 
         try {
-            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
-            
+            StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo,
+                    false);
+
             // Continue SkyWalking trace if session has a captured snapshot
             continueTraceFromSession(sessionInfo);
 
@@ -939,7 +978,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             ActiveSpan.tag("session_uuid", statementServiceInterceptContext.getCurrentSessionInfo().getSessionUUID());
             ActiveSpan.tag("ojp.operation", "grpc_rollback_transaction");
 
-            Connection conn =  statementServiceInterceptContext.getCurrentConnection();
+            Connection conn = statementServiceInterceptContext.getCurrentConnection();
             conn.rollback();
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
@@ -955,7 +994,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         } catch (SQLException se) {
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
-            sendSQLExceptionMetadata(new SQLException("Unable to rollback transaction: " + e.getMessage()), responseObserver);
+            sendSQLExceptionMetadata(new SQLException("Unable to rollback transaction: " + e.getMessage()),
+                    responseObserver);
         }
     }
 
@@ -965,11 +1005,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         log.info("Setting read only to {}", request.getReadOnly());
         try {
             String sessionUUID = sessionInfo.getSessionUUID();
-            if(StringUtils.isNotBlank(sessionUUID)){
-                StatementServiceInterceptContext statementServiceInterceptContext = this.acquireSessionContext(sessionInfo, false);
+            if (StringUtils.isNotBlank(sessionUUID)) {
+                StatementServiceInterceptContext statementServiceInterceptContext = this
+                        .acquireSessionContext(sessionInfo, false);
 
                 Connection conn = statementServiceInterceptContext.getCurrentConnection();
-                //conn.setReadOnly(request.getReadOnly());
+                // conn.setReadOnly(request.getReadOnly());
             }
 
             SessionInfo.Builder sessionInfoBuilder = SessionInfoUtils.newBuilderFrom(sessionInfo);
@@ -992,7 +1033,6 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             }
 
             CallResourceResponse.Builder responseBuilder = CallResourceResponse.newBuilder();
-
 
             Object resource;
             switch (request.getResourceType()) {
@@ -1032,7 +1072,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         if (!request.getProperties().isEmpty()) {
                             mapProperties = deserialize(request.getProperties().toByteArray(), Map.class);
                         }
-                        ps = connection.prepareStatement((String) mapProperties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY));
+                        ps = connection.prepareStatement(
+                                (String) mapProperties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY));
                         String uuid = sessionManager.registerPreparedStatement(sessionInfo, ps);
                         responseBuilder.setResourceUUID(uuid);
                     }
@@ -1057,19 +1098,19 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                     throw new RuntimeException("Resource type invalid");
             }
 
-            if (responseBuilder.getSession() == null || StringUtils.isBlank(responseBuilder.getSession().getSessionUUID())) {
+            if (responseBuilder.getSession() == null
+                    || StringUtils.isBlank(responseBuilder.getSession().getSessionUUID())) {
                 responseBuilder.setSession(request.getSession());
             }
 
-            List<Object> paramsReceived = (request.getTarget().getParams().size() > 0) ?
-                    deserialize(request.getTarget().getParams().toByteArray(), List.class) : EMPTY_LIST;
+            List<Object> paramsReceived = (request.getTarget().getParams().size() > 0)
+                    ? deserialize(request.getTarget().getParams().toByteArray(), List.class)
+                    : EMPTY_LIST;
             Class<?> clazz = resource.getClass();
             if ((paramsReceived != null && paramsReceived.size() > 0) &&
                     ((CallType.CALL_RELEASE.equals(request.getTarget().getCallType()) &&
                             "Savepoint".equalsIgnoreCase(request.getTarget().getResourceName())) ||
-                            (CallType.CALL_ROLLBACK.equals(request.getTarget().getCallType()))
-                    )
-            ) {
+                            (CallType.CALL_ROLLBACK.equals(request.getTarget().getCallType())))) {
                 Savepoint savepoint = (Savepoint) this.sessionManager.getAttr(request.getSession(),
                         (String) paramsReceived.get(0));
                 paramsReceived.set(0, savepoint);
@@ -1103,12 +1144,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 this.sessionManager.registerAttr(responseBuilder.getSession(), uuid, sp);
             }
             if (request.getTarget().hasNextCall()) {
-                //Second level calls, for cases like getMetadata().isAutoIncrement(int column)
+                // Second level calls, for cases like getMetadata().isAutoIncrement(int column)
                 Class<?> clazzNext = resultFirstLevel.getClass();
-                List<Object> paramsReceived2 = (request.getTarget().getNextCall().getParams().size() > 0) ?
-                        deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class) :
-                        EMPTY_LIST;
-                Method methodNext = MethodReflectionUtils.findMethodByName(JavaSqlInterfacesConverter.interfaceClass(clazzNext),
+                List<Object> paramsReceived2 = (request.getTarget().getNextCall().getParams().size() > 0)
+                        ? deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class)
+                        : EMPTY_LIST;
+                Method methodNext = MethodReflectionUtils.findMethodByName(
+                        JavaSqlInterfacesConverter.interfaceClass(clazzNext),
                         MethodNameGenerator.methodName(request.getTarget().getNextCall()),
                         paramsReceived2);
                 params = methodNext.getParameters();
@@ -1136,31 +1178,39 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 SQLException sqlException = (SQLException) e.getTargetException();
                 sendSQLExceptionMetadata(sqlException, responseObserver);
             } else {
-                sendSQLExceptionMetadata(new SQLException("Unable to call resource: " + e.getTargetException().getMessage()),
+                sendSQLExceptionMetadata(
+                        new SQLException("Unable to call resource: " + e.getTargetException().getMessage()),
                         responseObserver);
             }
         } catch (Exception e) {
-            sendSQLExceptionMetadata(new SQLException("Unable to call resource: " + e.getMessage(), e), responseObserver);
+            sendSQLExceptionMetadata(new SQLException("Unable to call resource: " + e.getMessage(), e),
+                    responseObserver);
         }
     }
 
     /**
      * Finds a suitable connection for the current sessionInfo.
-     * If there is a connection already in the sessionInfo reuse it, if not get a fresh one from the data source.
+     * If there is a connection already in the sessionInfo reuse it, if not get a
+     * fresh one from the data source.
      *
      * @param sessionInfo        - current sessionInfo object.
-     * @param startSessionIfNone - if true will start a new sessionInfo if none exists.
+     * @param startSessionIfNone - if true will start a new sessionInfo if none
+     *                           exists.
      * @return ConnectionSessionDTO
-     * @throws SQLException if connection not found or closed (by timeout or other reason)
+     * @throws SQLException if connection not found or closed (by timeout or other
+     *                      reason)
      */
-    private StatementServiceInterceptContext acquireSessionContext(SessionInfo sessionInfo, boolean startSessionIfNone) throws SQLException {
+    private StatementServiceInterceptContext acquireSessionContext(SessionInfo sessionInfo, boolean startSessionIfNone)
+            throws SQLException {
         StatementServiceInterceptContext currentContext = StatementServiceGrpcInterceptor.getCurrentContext();
-        return currentContext.acquireSessionContext(this.sessionManager, this.datasourceMap, sessionInfo, startSessionIfNone);
+        return currentContext.acquireSessionContext(this.sessionManager, this.datasourceMap, sessionInfo,
+                startSessionIfNone);
     }
-    
+
     /**
      * Continue SkyWalking trace from session's captured snapshot.
-     * This allows multiple gRPC requests within the same session to be linked in the same trace.
+     * This allows multiple gRPC requests within the same session to be linked in
+     * the same trace.
      * 
      * @param sessionInfo the session info containing session UUID
      */
@@ -1197,13 +1247,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         int row = 0;
         boolean justSent = false;
         DbName dbName = DatabaseUtils.resolveDbName(rs.getStatement().getConnection().getMetaData().getURL());
-        //Only used if result set contains LOBs in SQL Server and DB2 (if LOB's present), so cursor is not read in advance,
+        // Only used if result set contains LOBs in SQL Server and DB2 (if LOB's
+        // present), so cursor is not read in advance,
         // every row has to be requested by the jdbc client.
         String resultSetMode = "";
         boolean resultSetMetadataCollected = false;
 
-        forEachRow:
-        while (rs.next()) {
+        forEachRow: while (rs.next()) {
             justSent = false;
             row++;
             Object[] rowValues = new Object[columnCount];
@@ -1211,7 +1261,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 int colType = rs.getMetaData().getColumnType(i + 1);
                 String colTypeName = rs.getMetaData().getColumnTypeName(i + 1);
                 Object currentValue = null;
-                //Postgres uses type BYTEA which translates to type VARBINARY
+                // Postgres uses type BYTEA which translates to type VARBINARY
                 switch (colType) {
                     case Types.VARBINARY: {
                         if (DbName.SQL_SERVER.equals(dbName)) {
@@ -1220,12 +1270,13 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         if ("BLOB".equalsIgnoreCase(colTypeName)) {
                             currentValue = LobProcessor.treatAsBlob(sessionManager, session, rs, i);
                         } else {
-                            currentValue = LobProcessor.treatAsBinary(sessionManager, session, dbName, rs, i, INPUT_STREAM_TYPES);
+                            currentValue = LobProcessor.treatAsBinary(sessionManager, session, dbName, rs, i,
+                                    INPUT_STREAM_TYPES);
                         }
                         break;
                     }
                     case Types.BLOB, Types.LONGVARBINARY: {
-                        if (DbName.SQL_SERVER.equals(dbName) ) {
+                        if (DbName.SQL_SERVER.equals(dbName)) {
                             resultSetMode = CommonConstants.RESULT_SET_ROW_BY_ROW_MODE;
                         }
                         currentValue = LobProcessor.treatAsBlob(sessionManager, session, rs, i);
@@ -1240,7 +1291,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                             currentValue = null;
                         } else {
                             String clobUUID = UUID.randomUUID().toString();
-                            //CLOB needs to be prefixed as per it can be read in the JDBC driver by getString method and it would be valid to return just a UUID as string
+                            // CLOB needs to be prefixed as per it can be read in the JDBC driver by
+                            // getString method and it would be valid to return just a UUID as string
                             currentValue = CommonConstants.OJP_CLOB_PREFIX + clobUUID;
                             this.sessionManager.registerLob(session, clob, clobUUID);
                         }
@@ -1250,7 +1302,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                         if (DbName.SQL_SERVER.equals(dbName)) {
                             resultSetMode = CommonConstants.RESULT_SET_ROW_BY_ROW_MODE;
                         }
-                        currentValue = LobProcessor.treatAsBinary(sessionManager, session, dbName, rs, i, INPUT_STREAM_TYPES);
+                        currentValue = LobProcessor.treatAsBinary(sessionManager, session, dbName, rs, i,
+                                INPUT_STREAM_TYPES);
                         break;
                     }
                     case Types.DATE: {
@@ -1268,7 +1321,8 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                     }
                     default: {
                         currentValue = rs.getObject(i + 1);
-                        //com.microsoft.sqlserver.jdbc.DateTimeOffset special case as per it does not implement any standar java.sql interface.
+                        // com.microsoft.sqlserver.jdbc.DateTimeOffset special case as per it does not
+                        // implement any standar java.sql interface.
                         if ("datetimeoffset".equalsIgnoreCase(colTypeName) && colType == -155) {
                             currentValue = DateTimeUtils.extractOffsetDateTime(currentValue);
                         }
@@ -1280,22 +1334,25 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             }
             results.add(rowValues);
 
-            if (DbName.SQL_SERVER.equals(dbName) && CommonConstants.RESULT_SET_ROW_BY_ROW_MODE.equalsIgnoreCase(resultSetMode)) {
+            if (DbName.SQL_SERVER.equals(dbName)
+                    && CommonConstants.RESULT_SET_ROW_BY_ROW_MODE.equalsIgnoreCase(resultSetMode)) {
                 break forEachRow;
             }
 
             if (row % CommonConstants.ROWS_PER_RESULT_SET_DATA_BLOCK == 0) {
                 justSent = true;
-                //Send a block of records
-                responseObserver.onNext(ResultSetWrapper.wrapResults(session, results, queryResultBuilder, resultSetUUID, resultSetMode));
+                // Send a block of records
+                responseObserver.onNext(ResultSetWrapper.wrapResults(session, results, queryResultBuilder,
+                        resultSetUUID, resultSetMode));
                 queryResultBuilder = OpQueryResult.builder();// Recreate the builder to not send labels in every block.
                 results = new ArrayList<>();
             }
         }
 
         if (!justSent) {
-            //Send a block of remaining records
-            responseObserver.onNext(ResultSetWrapper.wrapResults(session, results, queryResultBuilder, resultSetUUID, resultSetMode));
+            // Send a block of remaining records
+            responseObserver.onNext(
+                    ResultSetWrapper.wrapResults(session, results, queryResultBuilder, resultSetUUID, resultSetMode));
         }
 
         responseObserver.onCompleted();
@@ -1310,10 +1367,11 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
     /**
      * Backward compatibility wrapper for configureHikariPool method.
-     * This method was moved to ConnectionPoolConfigurer but tests still access it via reflection.
+     * This method was moved to ConnectionPoolConfigurer but tests still access it
+     * via reflection.
      * Uses static method to avoid circular dependency.
      * 
-     * @param config The HikariConfig to configure
+     * @param config            The HikariConfig to configure
      * @param connectionDetails The connection details containing properties
      */
     private void configureHikariPool(HikariConfig config, ConnectionDetails connectionDetails) {

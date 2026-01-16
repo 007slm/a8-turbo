@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.codehaus.plexus.util.IOUtil;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -27,7 +28,8 @@ public class BinaryStreamIntegrationTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/h2_postgres_connections.csv")
-    public void createAndReadingBinaryStreamSuccessful(String driverClass, String url, String user, String pwd) throws SQLException, ClassNotFoundException, IOException {
+    public void createAndReadingBinaryStreamSuccessful(String driverClass, String url, String user, String pwd)
+            throws SQLException, ClassNotFoundException, IOException {
         if (isPostgresTestDisabled && url.contains("postgresql")) {
             return;
         }
@@ -39,22 +41,21 @@ public class BinaryStreamIntegrationTest {
         try {
             executeUpdate(conn, "drop table binary_stream_test_blob");
         } catch (Exception e) {
-            //If fails disregard as per the table is most possibly not created yet
+            // If fails disregard as per the table is most possibly not created yet
         }
 
         // Create table with database-specific binary types
         String createTableSql = "create table binary_stream_test_blob(" +
-                    " val_blob1 BYTEA," +
-                    " val_blob2 BYTEA" +
-                    ")";
+                " val_blob1 BYTEA," +
+                " val_blob2 BYTEA" +
+                ")";
 
         executeUpdate(conn, createTableSql);
 
         conn.setAutoCommit(false);
 
         PreparedStatement psInsert = conn.prepareStatement(
-                "insert into binary_stream_test_blob (val_blob1, val_blob2) values (?, ?)"
-        );
+                "insert into binary_stream_test_blob (val_blob1, val_blob2) values (?, ?)");
 
         String testString = "BLOB VIA INPUT STREAM";
         InputStream inputStream = new ByteArrayInputStream(testString.getBytes());
@@ -70,21 +71,20 @@ public class BinaryStreamIntegrationTest {
         ResultSet resultSet = psSelect.executeQuery();
         resultSet.next();
         InputStream blobResult = resultSet.getBinaryStream(1);
-        String fromBlobByIdx = new String(blobResult.readAllBytes());
+        String fromBlobByIdx = new String(IOUtil.toByteArray(blobResult));
 
         Assert.assertEquals(testString, fromBlobByIdx);
 
         InputStream blobResultByName = resultSet.getBinaryStream("val_blob1");
-        byte[] allBytes = blobResultByName.readAllBytes();
+        byte[] allBytes = IOUtil.toByteArray(blobResultByName);
         String fromBlobByName = new String(allBytes);
         Assert.assertEquals(testString, fromBlobByName);
 
         InputStream blobResult2 = resultSet.getBinaryStream(2);
-        String fromBlobByIdx2 = new String(blobResult2.readAllBytes());
+        String fromBlobByIdx2 = new String(IOUtil.toByteArray(blobResult2));
         Assert.assertEquals(testString.substring(0, 5), fromBlobByIdx2);
 
-        executeUpdate(conn, "delete from binary_stream_test_blob"
-        );
+        executeUpdate(conn, "delete from binary_stream_test_blob");
 
         resultSet.close();
         psSelect.close();
@@ -93,7 +93,8 @@ public class BinaryStreamIntegrationTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/h2_postgres_connections.csv")
-    public void createAndReadingLargeBinaryStreamSuccessful(String driverClass, String url, String user, String pwd) throws SQLException, ClassNotFoundException, IOException {
+    public void createAndReadingLargeBinaryStreamSuccessful(String driverClass, String url, String user, String pwd)
+            throws SQLException, ClassNotFoundException, IOException {
         if (isPostgresTestDisabled && url.contains("postgresql")) {
             return;
         }
@@ -105,20 +106,18 @@ public class BinaryStreamIntegrationTest {
         try {
             executeUpdate(conn, "drop table binary_stream_test_blob");
         } catch (Exception e) {
-            //If fails disregard as per the table is most possibly not created yet
+            // If fails disregard as per the table is most possibly not created yet
         }
 
         // Create table with database-specific binary types for large data
         String createTableSql = "create table binary_stream_test_blob(" +
-                    " val_blob  BYTEA" +
-                    ")";
+                " val_blob  BYTEA" +
+                ")";
 
         executeUpdate(conn, createTableSql);
 
         PreparedStatement psInsert = conn.prepareStatement(
-                "insert into binary_stream_test_blob (val_blob) values (?)"
-        );
-
+                "insert into binary_stream_test_blob (val_blob) values (?)");
 
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("largeTextFile.txt");
         psInsert.setBinaryStream(1, inputStream);

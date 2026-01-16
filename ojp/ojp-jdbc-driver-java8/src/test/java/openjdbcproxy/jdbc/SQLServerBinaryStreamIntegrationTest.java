@@ -9,6 +9,8 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.codehaus.plexus.util.IOUtil;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -20,7 +22,8 @@ import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * SQL Server-specific binary stream integration tests.
- * Tests SQL Server-specific binary data types (VARBINARY, IMAGE) and stream handling.
+ * Tests SQL Server-specific binary data types (VARBINARY, IMAGE) and stream
+ * handling.
  */
 public class SQLServerBinaryStreamIntegrationTest {
 
@@ -33,7 +36,8 @@ public class SQLServerBinaryStreamIntegrationTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/sqlserver_connections.csv")
-    public void createAndReadingBinaryStreamSuccessful(String driverClass, String url, String user, String pwd) throws SQLException, ClassNotFoundException, IOException {
+    public void createAndReadingBinaryStreamSuccessful(String driverClass, String url, String user, String pwd)
+            throws SQLException, ClassNotFoundException, IOException {
         assumeFalse(isTestDisabled, "Skipping SQL Server tests");
 
         Connection conn = DriverManager.getConnection(url, user, pwd);
@@ -41,22 +45,22 @@ public class SQLServerBinaryStreamIntegrationTest {
         System.out.println("Testing SQL Server binary stream for url -> " + url);
 
         try {
-            executeUpdate(conn, "IF OBJECT_ID('sqlserver_binary_stream_test', 'U') IS NOT NULL DROP TABLE sqlserver_binary_stream_test");
+            executeUpdate(conn,
+                    "IF OBJECT_ID('sqlserver_binary_stream_test', 'U') IS NOT NULL DROP TABLE sqlserver_binary_stream_test");
         } catch (Exception e) {
-            //If fails disregard as per the table is most possibly not created yet
+            // If fails disregard as per the table is most possibly not created yet
         }
 
         // Create table with SQL Server-specific binary types
         executeUpdate(conn, "create table sqlserver_binary_stream_test(" +
-                " val_varbinary1 VARBINARY(2000)," +  // SQL Server VARBINARY for binary data
+                " val_varbinary1 VARBINARY(2000)," + // SQL Server VARBINARY for binary data
                 " val_varbinary2 VARBINARY(2000)" +
                 ")");
 
         conn.setAutoCommit(false);
 
         PreparedStatement psInsert = conn.prepareStatement(
-                "insert into sqlserver_binary_stream_test (val_varbinary1, val_varbinary2) values (?, ?)"
-        );
+                "insert into sqlserver_binary_stream_test (val_varbinary1, val_varbinary2) values (?, ?)");
 
         String testString = "SQLSERVER VARBINARY VIA INPUT STREAM";
         InputStream inputStream = new ByteArrayInputStream(testString.getBytes());
@@ -68,21 +72,22 @@ public class SQLServerBinaryStreamIntegrationTest {
 
         conn.commit();
 
-        PreparedStatement psSelect = conn.prepareStatement("select val_varbinary1, val_varbinary2 from sqlserver_binary_stream_test ");
+        PreparedStatement psSelect = conn
+                .prepareStatement("select val_varbinary1, val_varbinary2 from sqlserver_binary_stream_test ");
         ResultSet resultSet = psSelect.executeQuery();
         resultSet.next();
-        
+
         InputStream blobResult = resultSet.getBinaryStream(1);
-        String fromBlobByIdx = new String(blobResult.readAllBytes());
+        String fromBlobByIdx = new String(IOUtil.toByteArray(blobResult));
         Assert.assertEquals(testString, fromBlobByIdx);
 
         InputStream blobResultByName = resultSet.getBinaryStream("val_varbinary1");
-        byte[] allBytes = blobResultByName.readAllBytes();
+        byte[] allBytes = IOUtil.toByteArray(blobResultByName);
         String fromBlobByName = new String(allBytes);
         Assert.assertEquals(testString, fromBlobByName);
 
         InputStream blobResult2 = resultSet.getBinaryStream(2);
-        String fromBlobByIdx2 = new String(blobResult2.readAllBytes());
+        String fromBlobByIdx2 = new String(IOUtil.toByteArray(blobResult2));
         Assert.assertEquals(testString.substring(0, 7), fromBlobByIdx2);
 
         executeUpdate(conn, "delete from sqlserver_binary_stream_test");
@@ -94,7 +99,8 @@ public class SQLServerBinaryStreamIntegrationTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/sqlserver_connections.csv")
-    public void createAndReadingLargeBinaryStreamSuccessful(String driverClass, String url, String user, String pwd) throws SQLException, ClassNotFoundException, IOException {
+    public void createAndReadingLargeBinaryStreamSuccessful(String driverClass, String url, String user, String pwd)
+            throws SQLException, ClassNotFoundException, IOException {
         assumeFalse(isTestDisabled, "Skipping SQL Server tests");
 
         Connection conn = DriverManager.getConnection(url, user, pwd);
@@ -102,9 +108,10 @@ public class SQLServerBinaryStreamIntegrationTest {
         System.out.println("Testing SQL Server large binary stream for url -> " + url);
 
         try {
-            executeUpdate(conn, "IF OBJECT_ID('sqlserver_large_binary_test', 'U') IS NOT NULL DROP TABLE sqlserver_large_binary_test");
+            executeUpdate(conn,
+                    "IF OBJECT_ID('sqlserver_large_binary_test', 'U') IS NOT NULL DROP TABLE sqlserver_large_binary_test");
         } catch (Exception e) {
-            //If fails disregard as per the table is most possibly not created yet
+            // If fails disregard as per the table is most possibly not created yet
         }
 
         // Create table with SQL Server VARBINARY(MAX) for large binary data
@@ -113,15 +120,15 @@ public class SQLServerBinaryStreamIntegrationTest {
                 ")");
 
         PreparedStatement psInsert = conn.prepareStatement(
-                "insert into sqlserver_large_binary_test (val_varbinary_max) values (?)"
-        );
+                "insert into sqlserver_large_binary_test (val_varbinary_max) values (?)");
 
         InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("largeTextFile.txt");
         psInsert.setBinaryStream(1, inputStream);
 
         psInsert.executeUpdate();
 
-        PreparedStatement psSelect = conn.prepareStatement("select val_varbinary_max from sqlserver_large_binary_test ");
+        PreparedStatement psSelect = conn
+                .prepareStatement("select val_varbinary_max from sqlserver_large_binary_test ");
         ResultSet resultSet = psSelect.executeQuery();
         resultSet.next();
         InputStream inputStreamBlob = resultSet.getBinaryStream(1);
@@ -144,7 +151,8 @@ public class SQLServerBinaryStreamIntegrationTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/sqlserver_connections.csv")
-    public void testSqlServerSpecificBinaryHandling(String driverClass, String url, String user, String pwd) throws SQLException, ClassNotFoundException, IOException {
+    public void testSqlServerSpecificBinaryHandling(String driverClass, String url, String user, String pwd)
+            throws SQLException, ClassNotFoundException, IOException {
         assumeFalse(isTestDisabled, "Skipping SQL Server tests");
 
         Connection conn = DriverManager.getConnection(url, user, pwd);
@@ -152,9 +160,10 @@ public class SQLServerBinaryStreamIntegrationTest {
         System.out.println("Testing SQL Server-specific binary handling for url -> " + url);
 
         try {
-            executeUpdate(conn, "IF OBJECT_ID('sqlserver_binary_types_test', 'U') IS NOT NULL DROP TABLE sqlserver_binary_types_test");
+            executeUpdate(conn,
+                    "IF OBJECT_ID('sqlserver_binary_types_test', 'U') IS NOT NULL DROP TABLE sqlserver_binary_types_test");
         } catch (Exception e) {
-            //If fails disregard as per the table is most possibly not created yet
+            // If fails disregard as per the table is most possibly not created yet
         }
 
         // Test different SQL Server binary types
@@ -165,13 +174,12 @@ public class SQLServerBinaryStreamIntegrationTest {
                 ")");
 
         PreparedStatement psInsert = conn.prepareStatement(
-                "insert into sqlserver_binary_types_test (small_varbinary, medium_varbinary, large_varbinary_max) values (?, ?, ?)"
-        );
+                "insert into sqlserver_binary_types_test (small_varbinary, medium_varbinary, large_varbinary_max) values (?, ?, ?)");
 
         // Test different sizes
         String smallData = "Small VARBINARY data";
-        String mediumData = "M".repeat(1000); // 1000 characters
-        String largeData = "L".repeat(10000); // 10000 characters
+        String mediumData = StringUtils.repeat("M", 1000); // 1000 characters
+        String largeData = StringUtils.repeat("L", 10000); // 10000 characters
 
         psInsert.setBinaryStream(1, new ByteArrayInputStream(smallData.getBytes()));
         psInsert.setBinaryStream(2, new ByteArrayInputStream(mediumData.getBytes()));
@@ -179,20 +187,21 @@ public class SQLServerBinaryStreamIntegrationTest {
 
         psInsert.executeUpdate();
 
-        PreparedStatement psSelect = conn.prepareStatement("select small_varbinary, medium_varbinary, large_varbinary_max from sqlserver_binary_types_test");
+        PreparedStatement psSelect = conn.prepareStatement(
+                "select small_varbinary, medium_varbinary, large_varbinary_max from sqlserver_binary_types_test");
         ResultSet resultSet = psSelect.executeQuery();
         resultSet.next();
 
         // Verify small VARBINARY
-        String retrievedSmall = new String(resultSet.getBinaryStream(1).readAllBytes());
+        String retrievedSmall = new String(IOUtil.toByteArray(resultSet.getBinaryStream(1)));
         Assert.assertEquals(smallData, retrievedSmall);
 
         // Verify medium VARBINARY
-        String retrievedMedium = new String(resultSet.getBinaryStream(2).readAllBytes());
+        String retrievedMedium = new String(IOUtil.toByteArray(resultSet.getBinaryStream(2)));
         Assert.assertEquals(mediumData, retrievedMedium);
 
         // Verify large VARBINARY(MAX)
-        String retrievedLarge = new String(resultSet.getBinaryStream(3).readAllBytes());
+        String retrievedLarge = new String(IOUtil.toByteArray(resultSet.getBinaryStream(3)));
         Assert.assertEquals(largeData, retrievedLarge);
 
         executeUpdate(conn, "delete from sqlserver_binary_types_test");

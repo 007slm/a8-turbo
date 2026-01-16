@@ -1,0 +1,61 @@
+# OJP 日志收集和链路追踪系统
+# 集成到主 Docker Compose 体系中
+
+version: '3.8'
+
+services:
+  # Loki 日志存储服务
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: ojp-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./docker/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    networks:
+      a8:
+        ipv4_address: 172.24.0.50
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      # 禁用 Jaeger 追踪（避免干扰）
+      - JAEGER_AGENT_HOST=
+      - JAEGER_ENDPOINT=
+      - JAEGER_SAMPLER_TYPE=
+      - JAEGER_SAMPLER_PARAM=
+
+  # Vector 日志收集服务
+  vector:
+    image: timberio/vector:0.34.0-alpine
+    container_name: ojp-vector
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./docker/vector/vector.toml:/etc/vector/vector.toml:ro
+      - vector-data:/var/lib/vector
+    networks:
+      a8:
+        ipv4_address: 172.24.0.51
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "vector", "validate", "/etc/vector/vector.toml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    environment:
+      - VECTOR_LOG=info
+      - VECTOR_REQUIRE_HEALTHY=true
+
+volumes:
+  loki-data:
+    driver: local
+  vector-data:
+    driver: local

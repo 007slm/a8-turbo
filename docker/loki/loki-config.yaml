@@ -1,0 +1,106 @@
+# Loki 日志存储配置
+# 用于 OJP 日志收集和链路追踪系统
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: info
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+# 数据库模式配置
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+# 存储配置
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/boltdb-shipper-active
+    cache_location: /loki/boltdb-shipper-cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+# 限制配置（针对 OJP 轻量级需求优化）
+limits_config:
+  # 日志保留期：7天
+  retention_period: 168h
+  # 摄入速率限制：16MB/s
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 32
+  # 查询并发限制
+  max_query_parallelism: 32
+  # 流数量限制
+  max_streams_per_user: 10000
+  # 单行日志大小限制
+  max_line_size: 256KB
+  # 查询超时
+  query_timeout: 300s
+  # 每个查询的最大样本数
+  max_samples_per_query: 1000000
+  # 每个查询的最大系列数
+  max_series_per_query: 100000
+
+# 块存储配置
+chunk_store_config:
+  max_look_back_period: 168h
+
+# 表管理器配置（自动清理）
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 168h
+
+# 压缩器配置
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
+# 查询范围配置
+query_range:
+  # 启用结果缓存
+  results_cache:
+    cache:
+      enable_fifocache: true
+      fifocache:
+        max_size_items: 1024
+        validity: 24h
+
+# 前端配置
+frontend:
+  max_outstanding_per_tenant: 256
+  compress_responses: true
+
+# 查询调度器配置
+query_scheduler:
+  max_outstanding_requests_per_tenant: 256
+
+# 运行时配置
+runtime_config:
+  file: /etc/loki/runtime-config.yaml
+
+# 成员列表配置
+memberlist:
+  join_members: []

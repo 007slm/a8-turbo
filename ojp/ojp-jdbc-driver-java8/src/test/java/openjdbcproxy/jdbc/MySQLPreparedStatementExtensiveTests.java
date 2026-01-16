@@ -22,6 +22,7 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.sql.ParameterMetaData;
 
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
@@ -46,7 +47,8 @@ public class MySQLPreparedStatementExtensiveTests {
         Statement stmt = connection.createStatement();
         try {
             stmt.execute("DROP TABLE mysql_prepared_stmt_test");
-        } catch (SQLException ignore) {}
+        } catch (SQLException ignore) {
+        }
         stmt.execute("CREATE TABLE mysql_prepared_stmt_test (" +
                 "id INT PRIMARY KEY, " +
                 "name VARCHAR(255), " +
@@ -66,7 +68,8 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testBasicParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testBasicParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, age) VALUES (?, ?, ?)");
@@ -90,7 +93,8 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testNumericParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testNumericParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, age) VALUES (?, ?, ?)");
@@ -119,10 +123,12 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testDateTimeParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testDateTimeParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
-        ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, dt, tm, ts) VALUES (?, ?, ?, ?, ?)");
+        ps = connection
+                .prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, dt, tm, ts) VALUES (?, ?, ?, ?, ?)");
 
         Date testDate = Date.valueOf("2024-12-01");
         Time testTime = Time.valueOf("10:30:45");
@@ -148,7 +154,8 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testBinaryParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testBinaryParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, data) VALUES (?, ?, ?)");
@@ -177,7 +184,8 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testTextParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testTextParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, info) VALUES (?, ?, ?)");
@@ -205,10 +213,12 @@ public class MySQLPreparedStatementExtensiveTests {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/mysql_mariadb_connection.csv")
-    public void testNullParameterSetters(String driverClass, String url, String user, String password) throws Exception {
+    public void testNullParameterSetters(String driverClass, String url, String user, String password)
+            throws Exception {
         this.setUp(driverClass, url, user, password);
 
-        ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, age, data, info) VALUES (?, ?, ?, ?, ?)");
+        ps = connection.prepareStatement(
+                "INSERT INTO mysql_prepared_stmt_test (id, name, age, data, info) VALUES (?, ?, ?, ?, ?)");
 
         ps.setInt(1, 40);
         ps.setNull(2, Types.VARCHAR);
@@ -307,7 +317,7 @@ public class MySQLPreparedStatementExtensiveTests {
         this.setUp(driverClass, url, user, password);
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, age) VALUES (?, ?, ?)");
-        
+
         ps.setInt(1, 80);
         ps.setString(2, "Batch1");
         ps.setInt(3, 25);
@@ -376,10 +386,10 @@ public class MySQLPreparedStatementExtensiveTests {
 
         ps = connection.prepareStatement("INSERT INTO mysql_prepared_stmt_test (id, name, age) VALUES (?, ?, ?)");
         try {
-            var paramMetaData = ps.getParameterMetaData();
+            ParameterMetaData paramMetaData = ps.getParameterMetaData();
             Assert.assertNotNull(paramMetaData);
-            //TODO implement the ParameterMetaData using remote proxy
-            //Assert.assertEquals(3, paramMetaData.getParameterCount());
+            // TODO implement the ParameterMetaData using remote proxy
+            // Assert.assertEquals(3, paramMetaData.getParameterCount());
         } catch (SQLException e) {
             // Some MySQL drivers/versions may not fully support parameter metadata
             // This is acceptable
@@ -395,12 +405,14 @@ public class MySQLPreparedStatementExtensiveTests {
         Statement stmt = connection.createStatement();
         try {
             stmt.execute("DROP TABLE mysql_auto_increment_ps_test");
-        } catch (SQLException ignore) {}
-        stmt.execute("CREATE TABLE mysql_auto_increment_ps_test (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100))");
+        } catch (SQLException ignore) {
+        }
+        stmt.execute(
+                "CREATE TABLE mysql_auto_increment_ps_test (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100))");
         stmt.close();
 
-        ps = connection.prepareStatement("INSERT INTO mysql_auto_increment_ps_test (name) VALUES (?)", 
-                                        Statement.RETURN_GENERATED_KEYS);
+        ps = connection.prepareStatement("INSERT INTO mysql_auto_increment_ps_test (name) VALUES (?)",
+                Statement.RETURN_GENERATED_KEYS);
         ps.setString(1, "GeneratedKeyTest");
         Assert.assertEquals(1, ps.executeUpdate());
 

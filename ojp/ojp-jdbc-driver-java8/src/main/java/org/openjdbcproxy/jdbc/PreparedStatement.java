@@ -1,5 +1,7 @@
 package org.openjdbcproxy.jdbc;
 
+import org.codehaus.plexus.util.IOUtil;
+
 import com.google.protobuf.ByteString;
 import org.openjdbcproxy.grpc.CallResourceRequest;
 import org.openjdbcproxy.grpc.CallResourceResponse;
@@ -98,7 +100,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     public PreparedStatement(Connection connection, String sql, StatementService statementService,
-                             Map<String, Object> properties) {
+            Map<String, Object> properties) {
         super(connection, statementService, properties, ResourceType.RES_PREPARED_STATEMENT);
         log.debug("PreparedStatement: constructor(connection, sql, statementService, properties) called");
         this.connection = connection;
@@ -114,7 +116,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
         this.checkClosed();
         log.info("Executing query for -> {}", this.sql);
         Iterator<OpResult> itOpResult = this.statementService
-                .executeQuery(this.connection.getSession(), this.sql, new ArrayList<>(this.paramsMap.values()), this.properties);
+                .executeQuery(this.connection.getSession(), this.sql, new ArrayList<>(this.paramsMap.values()),
+                        this.properties);
         return new ResultSet(itOpResult, this.statementService, this);
     }
 
@@ -182,7 +185,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
                 Parameter.builder()
                         .type(BYTE)
                         .index(parameterIndex)
-                        .values(Arrays.asList(new byte[]{x}))//Transform to byte array as it becomes an Object facilitating serialization.
+                        .values(Arrays.asList(new byte[] { x }))// Transform to byte array as it becomes an Object
+                                                                // facilitating serialization.
                         .build());
     }
 
@@ -403,7 +407,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
         log.debug("setCharacterStream: {}, <Reader>, {}", parameterIndex, length);
         this.checkClosed();
-        //TODO this will require an implementation of Reader that communicates across GRPC or maybe a conversion to InputStream
+        // TODO this will require an implementation of Reader that communicates across
+        // GRPC or maybe a conversion to InputStream
         this.paramsMap.put(parameterIndex,
                 Parameter.builder()
                         .type(CHARACTER_READER)
@@ -436,7 +441,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
                 Parameter.builder()
                         .type(BLOB)
                         .index(parameterIndex)
-                        .values(Arrays.asList(blobUUID)) //Only send the Id as per the blob has been streamed in advance.
+                        .values(Arrays.asList(blobUUID)) // Only send the Id as per the blob has been streamed in
+                                                         // advance.
                         .build());
     }
 
@@ -573,7 +579,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
         log.debug("setNCharacterStream: {}, <Reader>, {}", parameterIndex, length);
         this.checkClosed();
-        //TODO see if can use similar/same reader communication layer as other methods that require reader
+        // TODO see if can use similar/same reader communication layer as other methods
+        // that require reader
         this.paramsMap.put(parameterIndex,
                 Parameter.builder()
                         .type(N_CHARACTER_STREAM)
@@ -614,8 +621,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
                             .type(CLOB)
                             .index(parameterIndex)
                             .values(Arrays.asList(clob.getUUID()))
-                            .build()
-            );
+                            .build());
         } catch (IOException e) {
             throw new SQLException("Unable to write CLOB bytes: " + e.getMessage(), e);
         }
@@ -641,8 +647,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
                             .type(BLOB)
                             .index(parameterIndex)
                             .values(Arrays.asList(blob.getUUID()))
-                            .build()
-            );
+                            .build());
         } catch (IOException e) {
             throw new SQLException("Unable to write BLOB bytes: " + e.getMessage(), e);
         }
@@ -652,7 +657,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
         log.debug("setNClob: {}, <Reader>, {}", parameterIndex, length);
         this.checkClosed();
-        //TODO see if can use similar/same reader communication layer as other methods that require reader
+        // TODO see if can use similar/same reader communication layer as other methods
+        // that require reader
         this.paramsMap.put(parameterIndex,
                 Parameter.builder()
                         .type(N_CLOB)
@@ -705,7 +711,20 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
         try {
             if (DbName.DB2.equals(this.getConnection().getDbName())) {
                 int readLength = (length > 0) ? (int) length : Integer.MAX_VALUE;
-                byte[] allBytes = is.readNBytes((int) readLength);
+                byte[] allBytes;
+                if (readLength == Integer.MAX_VALUE) {
+                    allBytes = IOUtil.toByteArray(is);
+                } else {
+                    allBytes = new byte[readLength];
+                    int bytesRead = 0;
+                    int n;
+                    while (bytesRead < readLength && (n = is.read(allBytes, bytesRead, readLength - bytesRead)) != -1) {
+                        bytesRead += n;
+                    }
+                    if (bytesRead < readLength) {
+                        allBytes = Arrays.copyOf(allBytes, bytesRead);
+                    }
+                }
                 this.paramsMap.put(parameterIndex,
                         Parameter.builder()
                                 .type(BINARY_STREAM)
@@ -754,7 +773,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
                             .values(Arrays.asList(x))
                             .build());
         } else {
-            this.setBinaryStream(parameterIndex, x, -1); //-1 means not provided.
+            this.setBinaryStream(parameterIndex, x, -1); // -1 means not provided.
         }
     }
 
@@ -796,7 +815,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Has to override the Statement implementation because PreparedStatement has to send extra properties like the SQL
+     * Has to override the Statement implementation because PreparedStatement has to
+     * send extra properties like the SQL
      * being executed, which Statement does not.
      *
      * @return RemoteProxyResultSet
@@ -811,7 +831,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Has to override the Statement implementation because PreparedStatement has to send extra properties like the SQL
+     * Has to override the Statement implementation because PreparedStatement has to
+     * send extra properties like the SQL
      * being executed, which Statement does not.
      *
      * @return int Query Timeout.
@@ -825,7 +846,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Has to override the Statement implementation because PreparedStatement has to send extra properties like the SQL
+     * Has to override the Statement implementation because PreparedStatement has to
+     * send extra properties like the SQL
      * being executed, which Statement does not.
      *
      * @throws SQLException
@@ -838,7 +860,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Has to override the Statement implementation because PreparedStatement has to send extra properties like the SQL
+     * Has to override the Statement implementation because PreparedStatement has to
+     * send extra properties like the SQL
      * being executed, which Statement does not.
      *
      * @throws SQLException
@@ -851,7 +874,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Has to override the Statement implementation because PreparedStatement has to send extra properties like the SQL
+     * Has to override the Statement implementation because PreparedStatement has to
+     * send extra properties like the SQL
      * being executed, which Statement does not.
      *
      * @return int max field size
@@ -865,12 +889,14 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Guarantees that the properties map has the sql statement set in this prepared statement.
+     * Guarantees that the properties map has the sql statement set in this prepared
+     * statement.
      */
     private void propertiesHaveSqlStatement() {
         String sqlProperty = (this.properties != null &&
-                this.properties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY) != null) ?
-                this.properties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY).toString() : null;
+                this.properties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY) != null)
+                        ? this.properties.get(CommonConstants.PREPARED_STATEMENT_SQL_KEY).toString()
+                        : null;
         if (StringUtils.isBlank(sqlProperty) && StringUtils.isNotBlank(this.sql)) {
             if (this.properties == null) {
                 this.properties = new HashMap<>();
@@ -899,16 +925,17 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
         return this.callProxy(callType, targetName, returnType, Constants.EMPTY_OBJECT_LIST);
     }
 
-    private <T> T callProxy(CallType callType, String targetName, Class<?> returnType, List<Object> params) throws SQLException {
-        log.debug("callProxy: {}, {}, {}, params.size={}", callType, targetName, returnType, params != null ? params.size() : 0);
+    private <T> T callProxy(CallType callType, String targetName, Class<?> returnType, List<Object> params)
+            throws SQLException {
+        log.debug("callProxy: {}, {}, {}, params.size={}", callType, targetName, returnType,
+                params != null ? params.size() : 0);
         CallResourceRequest.Builder reqBuilder = this.newCallBuilder();
         reqBuilder.setTarget(
                 TargetCall.newBuilder()
                         .setCallType(callType)
                         .setResourceName(targetName)
                         .setParams(ByteString.copyFrom(serialize(params)))
-                        .build()
-        );
+                        .build());
         CallResourceResponse response = this.statementService.callResource(reqBuilder.build());
         this.connection.setSession(response.getSession());
         if (this.getStatementUUID() == null && StringUtils.isNotBlank(response.getResourceUUID())) {

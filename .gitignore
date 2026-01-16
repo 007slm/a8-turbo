@@ -205,4 +205,8 @@ dist-ssr
 *.sw?
 /docker/flink/cdc/log/*
 /docker/nats/data/
+/docker/oracle/data/
+/docker/redis/data/
+/docker/seatunnel/data/
 
+SA_TASK.7z

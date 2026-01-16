@@ -42,13 +42,18 @@ const query: { [key: string]: string } = {
     ...ebpf,
     ...demandLog,
 };
+interface SkywalkingResponse {
+    errors?: any;
+    [key: string]: any;
+}
+
 class Graphql {
     private queryData = "";
     public query(queryData: string) {
         this.queryData = queryData;
         return this;
     }
-    public params(variablesData: unknown): AxiosPromise<void> {
+    public params(variablesData: unknown): Promise<any> {
         return axios
             .post(
                 "/skywalking-oap/graphql",
@@ -58,11 +63,12 @@ class Graphql {
                 },
                 { cancelToken: cancelToken() },
             )
-            .then((res: AxiosResponse) => {
-                if (res.data.errors) {
-                    res.data.errors = res.data.errors.map((e: { message: string }) => e.message).join(" ");
+            .then((res: AxiosResponse<any>) => {
+                const data = res.data;
+                if (data.errors) {
+                    data.errors = data.errors.map((e: { message: string }) => e.message).join(" ");
                 }
-                return res;
+                return data as any;
             })
             .catch((err: Error) => {
                 throw err;

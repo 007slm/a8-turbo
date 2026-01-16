@@ -18,16 +18,22 @@ import type { AxiosResponse } from "axios";
 import axios from "axios";
 import { cancelToken } from "@/utils/cancelToken";
 
-async function query(param: { queryStr: string; conditions: { [key: string]: unknown } }) {
-    const res: AxiosResponse = await axios.post(
+interface SkywalkingResponse {
+    errors?: any;
+    [key: string]: any;
+}
+
+async function query(param: { queryStr: string; conditions: { [key: string]: unknown } }): Promise<any> {
+    const res: AxiosResponse<any> = await axios.post(
         "/skywalking-oap/graphql",
         { query: param.queryStr, variables: { ...param.conditions } },
         { cancelToken: cancelToken() },
     );
-    if (res.data.errors) {
-        res.data.errors = res.data.errors.map((e: { message: string }) => e.message).join(" ");
+    const data = res.data;
+    if (data.errors) {
+        data.errors = data.errors.map((e: { message: string }) => e.message).join(" ");
     }
-    return res;
+    return data as any;
 }
 
 export default query;

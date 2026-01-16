@@ -27,6 +27,9 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
     @Autowired
     private CacheInterceptorService cacheInterceptorService;
 
+    @Autowired
+    private org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
+
     /**
      * executeQuery方法前置处理：根据缓存规则匹配情况设置上下文属性
      */
@@ -57,6 +60,27 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
                 // Wrap the connection to emulate Oracle metadata behavior only for Oracle
                 // clients
                 effectiveConn = new org.openjdbcproxy.cache.emulator.OracleCompatibleConnection(cacheConn);
+
+                // [FIX] Try to fetch translated SQL if available
+                try {
+                    // Generate ID consistent with SlowQueryLoggingInterceptor
+                    String queryId = org.openjdbcproxy.cache.util.JSqlParserUtil.generateSlowQueryId(connHash,
+                            request.getSql());
+                    String translationKey = "ojp:cache:sql:translated:" + queryId;
+                    String translatedSql = stringRedisTemplate.opsForValue().get(translationKey);
+
+                    if (translatedSql != null && !translatedSql.isEmpty()) {
+                        log.info("从Redis中获取到翻译后的SQL: ID={}, Original={}, Translated={}", queryId, request.getSql(),
+                                translatedSql);
+                        // Store in context for StatementFactory to pick up
+                        context.setAttribute("translated.sql", translatedSql);
+                    } else {
+                        log.debug("未找到翻译后的SQL: ID={}", queryId);
+                    }
+                } catch (Exception e) {
+                    log.warn("尝试获取翻译SQL时失败", e);
+                }
+
                 log.info("缓存命中 (Oracle Metadata Emulator Enabled)");
             } else {
                 log.info("缓存命中");
@@ -69,6 +93,17 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
                 sessionContext.addAttr("cache.intercepted.conn", effectiveConn);
             }
         }
+    }
+
+    /**
+     * createPreparedStatement方法前置处理：尝试获取翻译后的SQL
+     */
+    @Override
+    @SneakyThrows
+    public void preProcessCreatePreparedStatement(StatementServiceInterceptContext<?, ?> context) {
+        // Reuse the logic from preProcessExecuteQuery as the context and request
+        // structure are similar
+        preProcessExecuteQuery(context);
     }
 
     /**

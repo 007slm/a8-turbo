@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
 import java.sql.Types;
+import java.sql.ResultSetMetaData;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -53,7 +54,7 @@ public class Db2ResultSetTest {
         // Create a scrollable and updatable Statement
         statement = connection.createStatement(
                 ResultSet.TYPE_SCROLL_INSENSITIVE, // Scrollable ResultSet
-                ResultSet.CONCUR_UPDATABLE         // Updatable ResultSet
+                ResultSet.CONCUR_UPDATABLE // Updatable ResultSet
         );
 
         // Create test table with DB2-compatible syntax
@@ -98,7 +99,8 @@ public class Db2ResultSetTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/db2_connection.csv")
-    public void testDb2ResultSetNavigation(String driverClass, String url, String user, String pwd) throws SQLException {
+    public void testDb2ResultSetNavigation(String driverClass, String url, String user, String pwd)
+            throws SQLException {
         setUp(driverClass, url, user, pwd);
 
         resultSet = statement.executeQuery("SELECT id, name, age FROM DB2INST1.db2_resultset_test ORDER BY id");
@@ -190,8 +192,8 @@ public class Db2ResultSetTest {
         setUp(driverClass, url, user, pwd);
 
         resultSet = statement.executeQuery("SELECT * FROM DB2INST1.db2_resultset_test LIMIT 1");
-        
-        var metaData = resultSet.getMetaData();
+
+        ResultSetMetaData metaData = resultSet.getMetaData();
         assertNotNull(metaData);
 
         // Test column count
@@ -214,7 +216,8 @@ public class Db2ResultSetTest {
 
     @ParameterizedTest
     @CsvFileSource(resources = "/db2_connection.csv")
-    public void testDb2ResultSetConcurrency(String driverClass, String url, String user, String pwd) throws SQLException {
+    public void testDb2ResultSetConcurrency(String driverClass, String url, String user, String pwd)
+            throws SQLException {
         setUp(driverClass, url, user, pwd);
 
         resultSet = statement.executeQuery("SELECT * FROM DB2INST1.db2_resultset_test WHERE id = 1");
@@ -234,14 +237,14 @@ public class Db2ResultSetTest {
         setUp(driverClass, url, user, pwd);
 
         resultSet = statement.executeQuery("SELECT * FROM DB2INST1.db2_resultset_test LIMIT 1");
-        
+
         // Test warnings (initially should be null)
         SQLWarning warning = resultSet.getWarnings();
         // Don't assert null as some drivers may have warnings
-        
+
         // Clear warnings
         resultSet.clearWarnings();
-        
+
         // After clearing, warnings should be null
         warning = resultSet.getWarnings();
         assertNull(warning);

@@ -55,7 +55,7 @@ springdoc:
 grpc:
   server:
     # 不指定独立端口，使用 HTTP 服务器端口
-    # port: 1059  # 注释掉独立端口
+    port: 8330
     max-inbound-message-size: 4194304 # 4MB
     # 启用HTTP/2支持
     http2:

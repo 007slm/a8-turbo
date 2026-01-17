@@ -18,9 +18,10 @@ public class GrpcExceptionHandler {
 
     /**
      * Handles the reporting or SQLExceptions.
-     * @param e SQLException
+     * 
+     * @param e              SQLException
      * @param streamObserver target stream observer.
-     * @param <T> Stream observer generic type.
+     * @param <T>            Stream observer generic type.
      */
     public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver) {
         sendSQLExceptionMetadata(e, streamObserver, SqlErrorType.SQL_EXCEPTION);
@@ -28,15 +29,22 @@ public class GrpcExceptionHandler {
 
     /**
      * Handles the reporting or SQLExceptions.
-     * @param e SQLException
+     * 
+     * @param e              SQLException
      * @param streamObserver target stream observer.
-     * @param <T> Stream observer generic type.
-     * @param sqlErrorType Indicates the type of error.
+     * @param <T>            Stream observer generic type.
+     * @param sqlErrorType   Indicates the type of error.
      */
-    public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver, SqlErrorType sqlErrorType) {
+    public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver,
+            SqlErrorType sqlErrorType) {
+        sendSQLExceptionMetadata(e, streamObserver, sqlErrorType, Status.CANCELLED);
+    }
+
+    public static <T> void sendSQLExceptionMetadata(SQLException e, StreamObserver<T> streamObserver,
+            SqlErrorType sqlErrorType, Status status) {
         try {
             Metadata metadata = new Metadata();
-            
+
             SqlErrorResponse.Builder responseBuilder = SqlErrorResponse.newBuilder()
                     .setReason(e.getMessage())
                     .setSqlErrorType(sqlErrorType)
@@ -46,14 +54,20 @@ public class GrpcExceptionHandler {
             }
 
             SqlErrorResponse sqlErrorResponse = responseBuilder.build();
-            Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils.keyForProto(SqlErrorResponse.getDefaultInstance());
+            Metadata.Key<SqlErrorResponse> errorResponseKey = ProtoUtils
+                    .keyForProto(SqlErrorResponse.getDefaultInstance());
             metadata.put(errorResponseKey, sqlErrorResponse);
-            
-            streamObserver.onError(Status.CANCELLED.asRuntimeException(metadata));
+
+            // Important: Use description to prevent "Received unexpected EOS" error on some
+            // clients
+            // when just Metadata is sent with certain statuses.
+            //streamObserver.onError(Status.CANCELLED.asRuntimeException(metadata));
+            streamObserver.onError(status.withDescription(e.getMessage()).asRuntimeException(metadata));
         } catch (RuntimeException re) {
             log.error("Failed while sending error to client: " + re.getMessage() + ": " + e.getMessage(), e);
             // Fallback to simple error if metadata construction fails
-            streamObserver.onError(Status.INTERNAL.withDescription("Failed to report SQL Exception: " + e.getMessage()).asRuntimeException());
+            streamObserver.onError(Status.INTERNAL.withDescription("Failed to report SQL Exception: " + e.getMessage())
+                    .asRuntimeException());
         }
     }
 }

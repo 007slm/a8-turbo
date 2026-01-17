@@ -31,8 +31,9 @@ import org.openjdbcproxy.grpc.server.resultset.ResultSetWrapper;
 import org.openjdbcproxy.grpc.server.statement.ParameterHandler;
 import org.openjdbcproxy.grpc.server.statement.StatementFactory;
 import org.openjdbcproxy.grpc.server.utils.*;
+import org.openjdbcproxy.grpc.server.utils.DriverUtils;
 import org.openjdbcproxy.grpc.server.utils.JdbcUrlUtil;
-import org.springframework.grpc.server.service.GrpcService;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -90,38 +91,56 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         String connHash = JdbcUrlUtil.connHash(connectionDetails);
         log.info("connect connHash = " + connHash);
 
-        HikariDataSource ds = this.datasourceMap.get(connHash);
-        if (ds == null) {
-            HikariConfig config = new HikariConfig();
-            config.setJdbcUrl(UrlParser.parseUrl(connectionDetails.getUrl()));
-            config.setUsername(connectionDetails.getUser());
-            config.setPassword(connectionDetails.getPassword());
+        try {
+            HikariDataSource ds = this.datasourceMap.get(connHash);
+            if (ds == null) {
+                HikariConfig config = new HikariConfig();
+                config.setJdbcUrl(UrlParser.parseUrl(connectionDetails.getUrl()));
+                config.setUsername(connectionDetails.getUser());
+                config.setPassword(connectionDetails.getPassword());
 
-            // Configure HikariCP using client properties or defaults with Micrometer
-            // support
-            connectionPoolConfigurer.configureHikariPool(config, connectionDetails);
+                // Configure HikariCP using client properties or defaults with Micrometer
+                // support
+                connectionPoolConfigurer.configureHikariPool(config, connectionDetails);
 
-            ds = new HikariDataSource(config);
-            this.datasourceMap.put(connHash, ds);
+                ds = new HikariDataSource(config);
+                this.datasourceMap.put(connHash, ds);
 
-            // Create a slow query segregation manager for this datasource
-            createSlowQuerySegregationManagerForDatasource(connHash, config.getMaximumPoolSize());
-            refreshSchemaCache(connHash, ds);
+                // Create a slow query segregation manager for this datasource
+                createSlowQuerySegregationManagerForDatasource(connHash, config.getMaximumPoolSize());
+                refreshSchemaCache(connHash, ds);
+            }
+
+            this.sessionManager.registerClientUUID(connHash, connectionDetails.getClientUUID());
+
+            // Manual SkyWalking Tracing Tags
+            ActiveSpan.tag("session_id", connHash);
+            ActiveSpan.tag("client_uuid", connectionDetails.getClientUUID());
+            ActiveSpan.tag("ojp.operation", "grpc_connect");
+
+            responseObserver.onNext(SessionInfo.newBuilder()
+                    .setConnHash(connHash)
+                    .setClientUUID(connectionDetails.getClientUUID())
+                    .build());
+
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Unexpected failure during connection execution: " + e.getMessage(), e);
+            ActiveSpan.error(e);
+
+            SQLException sqlEx;
+            if (e.getCause() instanceof SQLException) {
+                sqlEx = (SQLException) e.getCause();
+            } else if (e instanceof SQLException) {
+                sqlEx = (SQLException) e;
+            } else {
+                sqlEx = new SQLException("Unexpected error: " + e.getMessage(), e);
+            }
+
+            // Using CANCELLED status with description to ensure error propagation
+            sendSQLExceptionMetadata(sqlEx, responseObserver, SqlErrorType.SQL_EXCEPTION,
+                    io.grpc.Status.CANCELLED.withDescription(e.getMessage()));
         }
-
-        this.sessionManager.registerClientUUID(connHash, connectionDetails.getClientUUID());
-
-        // Manual SkyWalking Tracing Tags
-        ActiveSpan.tag("session_id", connHash);
-        ActiveSpan.tag("client_uuid", connectionDetails.getClientUUID());
-        ActiveSpan.tag("ojp.operation", "grpc_connect");
-
-        responseObserver.onNext(SessionInfo.newBuilder()
-                .setConnHash(connHash)
-                .setClientUUID(connectionDetails.getClientUUID())
-                .build());
-
-        responseObserver.onCompleted();
     }
 
     /**

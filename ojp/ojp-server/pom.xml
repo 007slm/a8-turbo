@@ -26,6 +26,18 @@
         <spring.boot.version>3.3.3</spring.boot.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-bom</artifactId>
+                <version>${grpc.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.openjdbcproxy</groupId>
@@ -53,13 +65,11 @@
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty</artifactId>
-            <version>${grpc.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-services</artifactId>
-            <version>${grpc.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.h2database/h2 -->
@@ -154,19 +164,11 @@
             <version>${spring.boot.version}</version>
         </dependency>
 
-        <!-- Spring gRPC Server Web Starter - 同时支持HTTP和gRPC -->
+        <!-- gRPC Spring Boot Starter - 支持服务端和客户端 -->
         <dependency>
-            <groupId>org.springframework.grpc</groupId>
-            <artifactId>spring-grpc-server-web-spring-boot-starter</artifactId>
-            <version>0.10.0</version>
-        </dependency>
-
-
-        <!-- Spring gRPC Server Starter - 原生gRPC支持 -->
-        <dependency>
-            <groupId>org.springframework.grpc</groupId>
-            <artifactId>spring-grpc-spring-boot-starter</artifactId>
-            <version>0.10.0</version>
+            <groupId>net.devh</groupId>
+            <artifactId>grpc-server-spring-boot-starter</artifactId>
+            <version>3.1.0.RELEASE</version>
         </dependency>
 
         <!-- Spring Boot Validation Starter -->

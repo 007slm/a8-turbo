@@ -6,6 +6,7 @@ import com.example.shopservice.chinook.dto.ChinookQueryResponse;
 import com.example.shopservice.chinook.dto.ChinookSampleQuery;
 import com.example.shopservice.chinook.dto.ChinookTable;
 import com.example.shopservice.chinook.dto.ChinookTableColumn;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 /**
  * Executes ad-hoc SQL queries against the Chinook dataset.
  */
+@Slf4j
 @Service
 public class ChinookQueryService {
 
@@ -130,12 +132,14 @@ public class ChinookQueryService {
                 }
             }
         } catch (SQLException ex) {
+            log.error("执行 SQL 失败: ",ex);
             throw new ResponseStatusException(
                     BAD_REQUEST,
                     "执行 SQL 失败: " + ex.getMessage(),
                     ex
             );
         } catch (Exception ex) {
+            log.error("执行 Chinook 查询时出现异常",ex);
             throw new ResponseStatusException(
                     INTERNAL_SERVER_ERROR,
                     "执行 Chinook 查询时出现异常",

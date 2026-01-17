@@ -4,7 +4,7 @@ import io.grpc.ServerInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.grpc.server.GlobalServerInterceptor;
+
 
 /**
  * gRPC 服务配置类

@@ -15,7 +15,7 @@ set CLEAN=false
 set LOGS=false
 set HELP=false
 set DOWN=false
-set SKIP_MAVEN=false
+set SKIP_MAVEN=true
 set DEBUG=false
 
 :parse_args

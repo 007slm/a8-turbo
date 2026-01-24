@@ -1,7 +1,7 @@
 .magic-aurora {
   position: relative;
   border-radius: 24px;
-  padding: 32px;
+  padding: 24px;
   overflow: hidden;
   background: radial-gradient(circle at 20% 20%, rgba(91, 141, 239, 0.25), transparent 55%),
     radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.25), transparent 45%),
@@ -86,11 +86,11 @@
 .magic-card .ant-card-head {
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
   background: rgba(255, 255, 255, 0.88);
-  padding: 18px 24px;
+  padding: 12px 16px;
 }
 
 .magic-card .ant-card-body {
-  padding: 24px;
+  padding: 16px;
   backdrop-filter: blur(2px);
 }
 

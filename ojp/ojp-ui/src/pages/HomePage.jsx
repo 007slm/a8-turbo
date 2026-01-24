@@ -190,9 +190,9 @@ const HomePage = () => {
                 <Space direction="vertical" size={16}>
                     <StatusPill label={`状态 · ${heroStatusLabel}`} status={heroStatus} subtle />
                     <div>
-                        <h1 className="monitoring-hero-title">A8 Turbo 监控控制塔</h1>
+                        <h1 className="monitoring-hero-title">A8 平台 · Turbo 工作台</h1>
                         <p className="monitoring-hero-subtitle">
-                            统一调度应用性能、HTTP 与业务指标，快速定位异常、联动排障
+                            聚合展示 Turbo 引擎核心指标，实时监控智能缓存、SQL 转换与运行环境，确保系统全速运行。
                         </p>
                     </div>
                     <div className="monitoring-hero-footer">
@@ -227,7 +227,7 @@ const HomePage = () => {
                 extra={<StatusPill label={`最新采样 · ${lastUpdatedLabel}`} status="default" />}
             >
                 {/* 核心指标卡片 - 毛玻璃渐变效果 */}
-                <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                     <Col xs={24} sm={12} md={8}>
                         <Card
                             className="stats-card"
@@ -316,10 +316,10 @@ const HomePage = () => {
 
                 {/* JVM 信息 */}
                 {(memoryInfo || threadInfo || gcInfo) && (
-                    <Row gutter={[24, 24]}>
+                    <Row gutter={[16, 16]}>
                         <Col xs={24} sm={12}>
                             <div style={{
-                                padding: '24px',
+                                padding: '16px',
                                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 borderRadius: '12px',
                                 color: '#fff',
@@ -343,7 +343,7 @@ const HomePage = () => {
                         </Col>
                         <Col xs={24} sm={12}>
                             <div style={{
-                                padding: '24px',
+                                padding: '16px',
                                 background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                                 borderRadius: '12px',
                                 color: '#fff',
@@ -367,7 +367,7 @@ const HomePage = () => {
                         </Col>
                         <Col xs={24} sm={12}>
                             <div style={{
-                                padding: '24px',
+                                padding: '16px',
                                 background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
                                 borderRadius: '12px',
                                 textAlign: 'center',
@@ -386,7 +386,7 @@ const HomePage = () => {
                         </Col>
                         <Col xs={24} sm={12}>
                             <div style={{
-                                padding: '24px',
+                                padding: '16px',
                                 background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                                 borderRadius: '12px',
                                 textAlign: 'center',

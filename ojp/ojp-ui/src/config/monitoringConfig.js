@@ -2,10 +2,10 @@
 export const monitoringServices = [
   {
     key: 'a8-turbo',
-    name: 'A8 Turbo 系统',
+    name: 'A8 平台 · Turbo',
     icon: '🔥',
     dashboardFile: 'a8-turbo-dashboard.json',
-    description: 'A8 Turbo 系统总体监控'
+    description: 'A8 平台 · Turbo 模块监控'
   },
   {
     key: 'ojp-server',

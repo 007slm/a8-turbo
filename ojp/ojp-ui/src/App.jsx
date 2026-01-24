@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { ConfigProvider, App as AntdApp } from 'antd'
+import { ConfigProvider, App as AntdApp, Dropdown } from 'antd'
 import { ProLayout } from '@ant-design/pro-components'
 import {
   DashboardOutlined,
@@ -32,10 +32,10 @@ import {
   BarChartOutlined,
   ClusterOutlined,
   UserOutlined,
-  ShoppingOutlined,
-  ShoppingCartOutlined,
-  CommentOutlined,
-  CodeOutlined,
+  BarcodeOutlined,
+  OrderedListOutlined,
+  StarOutlined,
+  ConsoleSqlOutlined,
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import Monitoring from './components/Monitoring'
@@ -54,7 +54,7 @@ import PrometheusTest from './pages/monitor/test/PrometheusTest.jsx'
 import SqlTranslatorTest from './pages/test/SqlTranslatorTest.jsx'
 import SystemConnectivityTest from './pages/test/SystemConnectivityTest.jsx'
 
-import LicenseManager from './pages/LicenseManager'
+
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
 import QueryCache from './components/cache/QueryCache'
@@ -71,13 +71,19 @@ import OjpBusinessMetrics from './components/monitoring/OjpBusinessMetrics'
 import { fetchSystemStatus, licenseApi } from './services/api'
 import './App.css'
 import './components/magicui/styles.css'
+import LicenseLockScreen from './components/LicenseLockScreen'
 import { StatusPill } from './components/magicui'
+import LicenseModal from './components/LicenseModal'
+import { Spin } from 'antd'
+
 
 
 
 function AppContent() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [licenseModalOpen, setLicenseModalOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
 
   // 获取系统状态
   const { data: systemStatus, isLoading: statusLoading, isError } = useQuery(
@@ -104,33 +110,30 @@ function AppContent() {
       {
         path: '/home',
         name: '工作台',
-        icon: <DashboardOutlined />,
+        icon: <span role="img" aria-label="home" style={{ fontSize: '18px' }}>💻</span>,
       },
 
       {
         path: '/core',
         name: '数据业务',
-        icon: <SolutionOutlined />,
+        icon: <span role="img" aria-label="core" style={{ fontSize: '18px' }}>💎</span>,
         routes: [
           {
             path: '/cache',
             name: '智能加速',
-            icon: <RocketOutlined />,
+            icon: <span role="img" aria-label="rocket" style={{ fontSize: '18px' }}>🚀</span>,
             routes: [
               {
                 path: '/cache/rules',
                 name: '加速策略',
-                icon: <FileTextOutlined />,
               },
               {
                 path: '/cache/queries',
                 name: '提速成效',
-                icon: <ClockCircleOutlined />,
               },
               {
                 path: '/cache/sync-status',
                 name: '就绪监控',
-                icon: <SyncOutlined />,
               }
             ]
           },
@@ -139,155 +142,152 @@ function AppContent() {
       {
         path: '/assurance',
         name: '运维监控',
-        icon: <SafetyOutlined />,
+        icon: <span role="img" aria-label="shield" style={{ fontSize: '18px' }}>🛡️</span>,
         routes: [
           {
             path: '/monitor',
             name: '状态监控',
-            icon: <MonitorOutlined />,
+            icon: <span role="img" aria-label="monitor" style={{ fontSize: '18px' }}>🩺</span>,
             routes: [
               {
                 path: '/monitor/jvm',
                 name: '运行环境',
-                icon: <ThunderboltOutlined />,
               },
               {
                 path: '/monitor/memory',
                 name: '内存深度分析',
-                icon: <PieChartOutlined />,
               },
               {
                 path: '/monitor/threads',
                 name: '执行线程堆栈',
-                icon: <ClusterOutlined />,
               },
               {
                 path: '/monitor/gc',
                 name: '资源回收详情',
-                icon: <RestOutlined />,
               },
               {
                 path: '/monitor/dbpool',
                 name: '连接池状态',
-                icon: <LinkOutlined />,
               },
               {
                 path: '/monitor/cache',
                 name: '加速实例',
-                icon: <CloudServerOutlined />,
               },
               {
                 path: '/monitor/redis',
                 name: '同步节点',
-                icon: <NodeIndexOutlined />,
               },
               {
                 path: '/monitor/starrocks',
                 name: '数仓节点',
-                icon: <GoldOutlined />,
               },
               {
                 path: '/monitor/prometheus',
                 name: '指标采集',
-                icon: <MonitorOutlined />,
               },
               {
                 path: '/monitor/skywalking',
                 name: '全链路追踪',
-                icon: <RocketOutlined />,
               },
             ]
           },
           {
             path: '/service-portal',
             name: '服务入口',
-            icon: <AppstoreOutlined />,
+            icon: <span role="img" aria-label="compass" style={{ fontSize: '18px' }}>🧭</span>,
           },
         ]
       },
       {
         path: '/tools',
         name: '实验室',
-        icon: <ToolOutlined />,
+        icon: <span role="img" aria-label="lab" style={{ fontSize: '18px' }}>🧪</span>,
         routes: [
           {
             path: '/test',
             name: '开发测试',
-            icon: <BulbOutlined />,
+            icon: <span role="img" aria-label="puzzle" style={{ fontSize: '18px' }}>🧩</span>,
             routes: [
               {
                 path: '/shopservice',
                 name: '示例业务',
-                icon: <ShopOutlined />,
+                icon: <span role="img" aria-label="shop" style={{ fontSize: '18px' }}>🏪</span>,
                 routes: [
                   {
                     path: '/shopservice/users',
                     name: '用户管理',
-                    icon: <UserOutlined />,
                   },
                   {
                     path: '/shopservice/products',
                     name: '商品管理',
-                    icon: <ShoppingOutlined />,
                   },
                   {
                     path: '/shopservice/orders',
                     name: '订单管理',
-                    icon: <ShoppingCartOutlined />,
                   },
                   {
                     path: '/shopservice/reviews',
                     name: '评价管理',
-                    icon: <CommentOutlined />,
                   },
                   {
                     path: '/shopservice/chinook',
                     name: 'Chinook SQL',
-                    icon: <CodeOutlined />,
                   }
                 ]
               },
               {
                 path: '/test/sql-translator',
                 name: 'SQL 实验室',
-                icon: <SyncOutlined />,
               },
               {
                 path: '/test/connectivity',
                 name: '连通性验证',
-                icon: <ApiOutlined />,
               }
             ]
           },
         ]
       },
-      {
-        path: '/settings',
-        name: '系统设置',
-        icon: <SettingOutlined />,
-        routes: [
-          {
-            path: '/license',
-            name: '许可证管理',
-            icon: <SafetyCertificateOutlined />,
-          },
-        ]
-      },
+
     ],
   };
 
 
 
+
   // 获取授权信息
-  const { data: licenseInfo } = useQuery(
+  const { data: licenseInfo, isLoading: licenseLoading } = useQuery(
     'licenseInfo',
     () => licenseApi.getLicense(),
     {
-      staleTime: 300000, // 5分钟缓存
-      retry: 3,          // 允许失败重试
+      staleTime: 300000,
+      retry: 3,
       refetchOnWindowFocus: false
     }
   )
+
+  // 如果正在加载授权信息，显示全屏 Loading
+  if (licenseLoading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: '#f0f2f5'
+      }}>
+        <Spin size="large" tip="系统启动中..." />
+      </div>
+    )
+  }
+
+  // 如果授权无效，显示锁定屏幕
+  if (!licenseInfo?.valid) {
+    return (
+      <ConfigProvider theme={{ token: { colorPrimary: '#1677ff' } }}>
+        <LicenseLockScreen />
+      </ConfigProvider>
+    )
+  }
 
   return (
     <ConfigProvider
@@ -303,31 +303,68 @@ function AppContent() {
     >
       <AntdApp>
         <ProLayout
-          title="A8 Turbo"
+          title="A8 平台 · Turbo"
           logo="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
           layout="mix"
           splitMenus={false}
           contentWidth="Fluid"
           fixedHeader
           fixSiderbar
+          siderWidth={256}
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
           route={route}
           location={{
             pathname: location.pathname,
           }}
-          menuItemRender={(item, dom) => (
-            <div
-              onClick={() => {
-                navigate(item.path || '/');
-              }}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}
-            >
-              {dom}
-            </div>
-          )}
+          menuItemRender={(item, dom) => {
+            const isTopLevel = ['/home', '/core', '/assurance', '/tools'].includes(item.path)
+            return (
+              <div
+                onClick={() => {
+                  navigate(item.path || '/');
+                }}
+                style={{
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
+                }}
+              >
+                {item.icon}
+                {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
+              </div>
+            )
+          }}
+          subMenuItemRender={(item, dom) => {
+            const isTopLevel = ['/home', '/core', '/assurance', '/tools'].includes(item.path)
+            return (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
+              }}>
+                {item.icon}
+                {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
+              </div>
+            )
+          }}
           avatarProps={{
             src: 'https://gw.alipayobjects.com/zos/antfincdn/efFD%24IOql2/weixintupian_20170331104822.jpg',
             title: licenseInfo?.valid ? licenseInfo.customer : 'Admin User',
             size: 'small',
+            render: (props, dom) => {
+              return (
+                <div
+                  onClick={() => setLicenseModalOpen(true)}
+                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                >
+                  {dom}
+                </div>
+              );
+            },
           }}
           actionsRender={() => [
             <div key="status" style={{ display: 'flex', alignItems: 'center', marginRight: 8 }}>
@@ -387,10 +424,11 @@ function AppContent() {
 
 
 
+
             <Route path="/core/metrics" element={<OjpBusinessMetrics businessMetrics={null} loading={false} standalone />} />
-            <Route path="/license" element={<LicenseManager />} />
           </Routes>
         </ProLayout>
+        <LicenseModal open={licenseModalOpen} onClose={() => setLicenseModalOpen(false)} />
       </AntdApp>
     </ConfigProvider>
   )

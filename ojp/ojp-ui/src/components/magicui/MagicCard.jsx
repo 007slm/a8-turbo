@@ -11,7 +11,7 @@ const MagicCard = ({
   extra,
   children,
   loading = false,
-  bodyPadding = 20,
+  bodyPadding = 16,
   className = '',
   actions,
   size = 'default',

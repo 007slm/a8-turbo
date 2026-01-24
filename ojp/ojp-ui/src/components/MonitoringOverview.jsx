@@ -46,22 +46,22 @@ const MonitoringOverview = () => {
             </div>
           </Col>
           <Col>
-            <Button 
-                type="primary" 
-                icon={<LinkOutlined />} 
-                onClick={handleOpenGrafana}
-                size="large"
-                style={{ marginRight: '12px' }}
-              >
-                打开 Grafana 控制台
-              </Button>
-              <Button 
-                icon={<ShareAltOutlined />} 
-                onClick={() => handleShowShareUrl({ key: 'a8-turbo', name: 'A8 Turbo 系统' })}
-                size="large"
-              >
-                获取分享链接
-              </Button>
+            <Button
+              type="primary"
+              icon={<LinkOutlined />}
+              onClick={handleOpenGrafana}
+              size="large"
+              style={{ marginRight: '12px' }}
+            >
+              打开 Grafana 控制台
+            </Button>
+            <Button
+              icon={<ShareAltOutlined />}
+              onClick={() => handleShowShareUrl({ key: 'a8-turbo', name: 'A8 平台 · Turbo' })}
+              size="large"
+            >
+              获取分享链接
+            </Button>
           </Col>
         </Row>
       </Card>
@@ -117,13 +117,13 @@ const MonitoringOverview = () => {
             <Card
               hoverable
               className="service-card"
-              style={{ 
+              style={{
                 height: '100%',
                 cursor: 'pointer'
               }}
-              bodyStyle={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
+              bodyStyle={{
+                display: 'flex',
+                flexDirection: 'column',
                 height: '160px',
                 justifyContent: 'space-between'
               }}
@@ -140,9 +140,9 @@ const MonitoringOverview = () => {
                   {service.description}
                 </p>
               </div>
-              <Button 
-                type="primary" 
-                size="small" 
+              <Button
+                type="primary"
+                size="small"
                 block
                 style={{ marginTop: '12px' }}
               >
@@ -184,7 +184,7 @@ const MonitoringOverview = () => {
         width={600}
       >
         {selectedService && (
-          <GrafanaShareUrl 
+          <GrafanaShareUrl
             service={selectedService}
             onClose={handleCloseShareModal}
           />

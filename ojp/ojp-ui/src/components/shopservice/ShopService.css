@@ -1,8 +1,9 @@
 /* ShopService 样式文件 */
 
 .shop-service-container {
-  height: 100vh;
+  /* height: 100vh;  Removed to prevent scrollbar issues */
   background: #f5f5f5;
+  /* padding: 24px; Removed to fix spacing issues */
 }
 
 .shop-service-sider {
@@ -152,6 +153,8 @@
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin: 24px;
+  /* Add margin to create spacing from edges since wrapper padding is gone */
 }
 
 .management-header {
@@ -184,7 +187,7 @@
 }
 
 /* 表格样式优化 */
-.ant-table-thead > tr > th {
+.ant-table-thead>tr>th {
   background: #fafafa;
   font-weight: 600;
   color: #262626;
@@ -192,11 +195,11 @@
   padding: 8px 8px;
 }
 
-.ant-table-tbody > tr:hover > td {
+.ant-table-tbody>tr:hover>td {
   background: #f5f5f5;
 }
 
-.ant-table-tbody > tr > td {
+.ant-table-tbody>tr>td {
   border-bottom: 1px solid #f5f5f5;
   padding: 8px 8px;
 }
@@ -236,18 +239,22 @@
 }
 
 /* 表单样式 */
-.ant-form-item-label > label {
+.ant-form-item-label>label {
   font-weight: 500;
   color: #262626;
   font-size: 13px;
 }
 
-.ant-input, .ant-select-selector, .ant-input-number {
+.ant-input,
+.ant-select-selector,
+.ant-input-number {
   border-radius: 4px;
   font-size: 13px;
 }
 
-.ant-input:focus, .ant-select-focused .ant-select-selector, .ant-input-number-focused {
+.ant-input:focus,
+.ant-select-focused .ant-select-selector,
+.ant-input-number-focused {
   border-color: #1890ff;
   box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
 }
@@ -281,33 +288,33 @@
   .shop-service-container {
     flex-direction: column;
   }
-  
+
   .shop-service-sider {
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
     flex: none;
   }
-  
+
   .shop-service-content {
     padding: 12px;
   }
-  
+
   .stats-cards .ant-col {
     margin-bottom: 8px;
   }
-  
+
   .action-cards .ant-col {
     margin-bottom: 8px;
   }
-  
+
   .management-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 12px;
   }
-  
+
   .management-actions {
     width: 100%;
     justify-content: flex-end;

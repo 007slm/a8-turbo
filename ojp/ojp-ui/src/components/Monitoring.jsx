@@ -194,9 +194,9 @@ const Monitoring = () => {
         <Space direction="vertical" size={16}>
           <StatusPill label={`状态 · ${heroStatusLabel}`} status={heroStatus} subtle />
           <div>
-            <h1 className="monitoring-hero-title">A8 Turbo 监控控制塔</h1>
+            <h1 className="monitoring-hero-title">A8 平台 · Turbo 工作台</h1>
             <p className="monitoring-hero-subtitle">
-              统一调度服务导航、JVM、缓存与业务指标，快速定位异常、联动排障。
+              聚合展示 Turbo 引擎核心指标，实时监控智能缓存、SQL 转换与运行环境，确保系统全速运行。
             </p>
           </div>
           <div className="monitoring-hero-footer">

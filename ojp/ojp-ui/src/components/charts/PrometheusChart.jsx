@@ -10,7 +10,7 @@ const { Text, Title } = Typography;
 
 // 格式化数值
 const formatValue = (value, unit) => {
-    if (value === null || value === undefined) return '-';
+    if (value === null || value === undefined || isNaN(value) || !isFinite(value)) return '-';
 
     if (unit === 'bytes') {
         const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -92,19 +92,35 @@ const PrometheusChart = ({
     const seriesNames = useMemo(() => {
         if (!data || !data.result) return [];
         return data.result.map((series, index) => {
-            // 这里的命名逻辑可以更智能，比如接受一个 labelFormatter prop
             let name;
             if (legendFunc) {
                 name = legendFunc(series.metric);
             } else {
-                name = Object.values(series.metric).filter(v => v !== 'job' && v !== 'instance').join(' ') || 'Value';
+                // 默认过滤掉 job 和 instance 标签
+                // 如果只剩下值，则使用 'Value'
+                // 如果有 instance 且包含 localhost 或 ip，尝试简化
+                const filteredKeys = Object.entries(series.metric)
+                    .filter(([k, v]) => k !== 'job' && k !== '__name__')
+                    // 过滤掉包含 localhost 的 instance，除非它是唯一的标签
+                    .filter(([k, v]) => !(k === 'instance' && (v.includes('localhost') || v.includes('127.0.0.1'))));
+
+                if (filteredKeys.length > 0) {
+                    name = filteredKeys.map(([k, v]) => `${k}=${v}`).join(' ');
+                    // 再次尝试简化：如果 key 是 instance，只显示 value
+                    name = filteredKeys.map(([k, v]) => k === 'instance' ? v : v).join(' ');
+                } else {
+                    // 如果没有其他标签，尝试使用 metric name 的最后一部分
+                    const metricName = series.metric.__name__ || '';
+                    const parts = metricName.split('_');
+                    // 翻译常用指标名后缀
+                    const lastPart = parts[parts.length - 1];
+                    if (lastPart === 'total') name = '总数';
+                    else if (lastPart === 'count') name = '计数';
+                    else if (lastPart === 'bucket') name = '分布';
+                    else if (lastPart === 'sum') name = '总和';
+                    else name = '数值';
+                }
             }
-            // 确保唯一性：如果名字已存在或为空，追加索引
-            // 简单处理：直接追加不可见字符或使用特定格式，这里为了简单，我们始终带上一些唯一标识如果重名严重
-            // 但更好的做法是让 transformRangeData 也感知这个唯一性。
-            // 实际上，为了完全避免 key 冲突，我们可以直接使用 series 的 fingerprint 或 index 作为 dataKey
-            // 但为了 tooltip 显示友好，我们需要 name。
-            // 让我们在 transformRangeData 中使用 `series-${index}` 作为 dataKey，而 name 仅用于展示。
             return {
                 id: `series-${index}`,
                 name: name,
@@ -217,6 +233,7 @@ const PrometheusChart = ({
             size="small"
             bodyStyle={{ padding: '16px 8px 8px 0' }}
             className="prometheus-chart-card"
+            style={{ height: height + 70 }}
         >
             <div style={{ height }}>
                 {loading && !data ? (

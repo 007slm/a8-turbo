@@ -1,30 +1,33 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Card, 
-  Row, 
-  Col, 
-  Statistic, 
-  Progress, 
-  Table, 
-  Tag, 
-  Button, 
+import {
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Table,
+  Tag,
+  Button,
   Space,
   Alert,
   Spin,
   Empty,
   Typography
 } from 'antd'
-import { 
-  CloudServerOutlined, 
-  DatabaseOutlined, 
-  UserOutlined, 
+import {
+  CloudServerOutlined,
+  DatabaseOutlined,
+  UserOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ReloadOutlined
 } from '@ant-design/icons'
+import { PageContainer } from '@ant-design/pro-components'
 import { useQuery } from 'react-query'
 import { systemApi, monitoringApi } from '../services/api'
+import { MagicCard } from './magicui'
+
 const { Title, Text } = Typography
 
 const Dashboard = ({ systemStatus }) => {
@@ -201,14 +204,14 @@ const Dashboard = ({ systemStatus }) => {
       {
         title: '服务器状态',
         value: systemStatus?.status === 'UP' ? '正常' : '异常',
-        icon: <CloudServerOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+        icon: <CloudServerOutlined />,
         color: systemStatus?.status === 'UP' ? '#52c41a' : '#ff4d4f',
       },
       {
         title: '内存使用率',
         value: resources?.memory?.usagePercent || 0,
         suffix: '%',
-        icon: <DatabaseOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+        icon: <DatabaseOutlined />,
         color: '#1890ff',
         progress: true,
       },
@@ -216,14 +219,14 @@ const Dashboard = ({ systemStatus }) => {
         title: 'CPU 使用率',
         value: resources?.cpu?.usagePercent || 0,
         suffix: '%',
-        icon: <ClockCircleOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+        icon: <ClockCircleOutlined />,
         color: '#1890ff',
         progress: true,
       },
       {
         title: '活跃用户',
         value: resources?.users?.active || 0,
-        icon: <UserOutlined style={{ fontSize: 24, color: '#1890ff' }} />,
+        icon: <UserOutlined />,
         color: '#1890ff',
       },
     ]
@@ -232,27 +235,23 @@ const Dashboard = ({ systemStatus }) => {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         {stats.map((stat, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
-            <Card className="stats-card" hoverable>
+            <MagicCard title={stat.title} icon={stat.icon}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div className="stats-number" style={{ color: stat.color }}>
-                    {stat.progress ? (
-                      <Progress
-                        type="circle"
-                        percent={stat.value}
-                        size={60}
-                        strokeColor={stat.color}
-                        format={percent => `${percent}%`}
-                      />
-                    ) : (
-                      `${stat.value}${stat.suffix || ''}`
-                    )}
-                  </div>
-                  <div className="stats-label">{stat.title}</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: stat.color }}>
+                  {stat.progress ? (
+                    <Progress
+                      type="circle"
+                      percent={stat.value}
+                      size={50}
+                      strokeColor={stat.color}
+                      format={percent => `${percent}%`}
+                    />
+                  ) : (
+                    `${stat.value}${stat.suffix || ''}`
+                  )}
                 </div>
-                {stat.icon}
               </div>
-            </Card>
+            </MagicCard>
           </Col>
         ))}
       </Row>
@@ -406,12 +405,17 @@ const Dashboard = ({ systemStatus }) => {
   }
 
   return (
-    <div className="dashboard">
-      <div style={{ marginBottom: 24 }}>
-        <Title level={2}>系统仪表盘</Title>
-        <Text type="secondary">实时监控系统运行状态和关键指标</Text>
-      </div>
-
+    <PageContainer
+      header={{
+        title: '系统仪表盘',
+        subTitle: '实时监控系统运行状态和关键指标',
+        extra: [
+          <Button key="refresh" icon={<ReloadOutlined />} onClick={handleRefresh}>
+            刷新
+          </Button>
+        ]
+      }}
+    >
       {/* 系统状态提示 */}
       {renderSystemStatus()}
 
@@ -426,7 +430,7 @@ const Dashboard = ({ systemStatus }) => {
 
       {/* 最近活动 */}
       {renderRecentActivity()}
-    </div>
+    </PageContainer>
   )
 }
 

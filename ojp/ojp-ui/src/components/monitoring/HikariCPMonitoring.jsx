@@ -1,31 +1,50 @@
-import React from 'react';
-import { 
-  Card, 
-  Row, 
-  Col, 
-  Statistic, 
-  Progress, 
-  Table, 
-  Tag, 
-  Space, 
-  Typography, 
+import React, { useState } from 'react';
+import {
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Table,
+  Tag,
+  Space,
+  Typography,
   Divider,
   Alert,
   Empty,
-  Tooltip
+  Tooltip,
+  Button
 } from 'antd';
-import { 
-  DatabaseOutlined, 
-  ThunderboltOutlined, 
+import {
+  DatabaseOutlined,
+  ThunderboltOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
   CheckCircleOutlined,
-  WarningOutlined
+  WarningOutlined,
+  ReloadOutlined,
+  ApiOutlined
 } from '@ant-design/icons';
+import { useQuery } from 'react-query';
+import { monitoringApi } from '../../services/api';
+import { MagicCard, StatusPill } from '../magicui';
 
 const { Title, Text } = Typography;
 
-const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
+const HikariCPMonitoring = ({ dbPoolInfo: propDbPoolInfo, loading: propLoading, standalone = false }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const { data: fetchedDbPoolInfo, isLoading, refetch } = useQuery(
+    ['dbpool', refreshKey],
+    monitoringApi.getDbPoolInfo,
+    {
+      enabled: standalone,
+    }
+  );
+
+  const data = standalone ? fetchedDbPoolInfo : propDbPoolInfo;
+  const loading = standalone ? isLoading : propLoading;
+
   // 安全获取数据的辅助函数
   const safeGet = (obj, path, defaultValue = 0) => {
     try {
@@ -63,48 +82,29 @@ const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
       key: 'poolName',
       render: (text) => (
         <Space>
-          <DatabaseOutlined />
+          <DatabaseOutlined style={{ color: '#1677ff' }} />
           <Text strong>{text}</Text>
         </Space>
       ),
     },
     {
-      title: '连接状态',
+      title: '连接详情',
       key: 'status',
       render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <Space>
-            <Text>活跃:</Text>
-            <Tag color="blue">{record.activeConnections}</Tag>
-          </Space>
-          <Space>
-            <Text>空闲:</Text>
-            <Tag color="green">{record.idleConnections}</Tag>
-          </Space>
-          <Space>
-            <Text>等待:</Text>
-            <Tag color="orange">{record.pendingConnections}</Tag>
-          </Space>
+        <Space size="middle">
+          <Statistic value={record.activeConnections} title={<Text type="secondary" style={{ fontSize: 12 }}>活跃</Text>} valueStyle={{ fontSize: 16, color: '#1890ff' }} />
+          <Statistic value={record.idleConnections} title={<Text type="secondary" style={{ fontSize: 12 }}>空闲</Text>} valueStyle={{ fontSize: 16, color: '#52c41a' }} />
+          <Statistic value={record.pendingConnections} title={<Text type="secondary" style={{ fontSize: 12 }}>等待</Text>} valueStyle={{ fontSize: 16, color: '#faad14' }} />
         </Space>
       ),
     },
     {
-      title: '连接池配置',
+      title: '容量配置',
       key: 'config',
       render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <Space>
-            <Text>最大:</Text>
-            <Tag>{record.maxConnections}</Tag>
-          </Space>
-          <Space>
-            <Text>最小:</Text>
-            <Tag>{record.minConnections}</Tag>
-          </Space>
-          <Space>
-            <Text>总计:</Text>
-            <Tag>{record.connections}</Tag>
-          </Space>
+        <Space size="middle">
+          <Statistic value={record.maxConnections} title={<Text type="secondary" style={{ fontSize: 12 }}>最大</Text>} valueStyle={{ fontSize: 16 }} />
+          <Statistic value={record.connections} title={<Text type="secondary" style={{ fontSize: 12 }}>当前</Text>} valueStyle={{ fontSize: 16, color: '#722ed1' }} />
         </Space>
       ),
     },
@@ -113,163 +113,149 @@ const HikariCPMonitoring = ({ dbPoolInfo, loading }) => {
       dataIndex: 'usagePercent',
       key: 'usagePercent',
       render: (percent) => (
-        <Space direction="vertical" size="small" style={{ width: '100%' }}>
-          <Space>
-            {getStatusIcon(percent)}
-            <Text>{percent}%</Text>
-          </Space>
-          <Progress 
-            percent={percent} 
-            size="small" 
+        <div style={{ width: 120 }}>
+          <Progress
+            percent={percent}
+            size="small"
             status={getStatusColor(percent)}
-            showInfo={false}
+            strokeWidth={10}
           />
-        </Space>
+        </div>
       ),
     },
     {
-      title: '性能指标',
+      title: '平均性能 (Avg)',
       key: 'performance',
       render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <Tooltip title="连接获取时间">
-            <Space>
-              <ThunderboltOutlined />
-              <Text>获取: {formatTime(record.acquireTime.average)}</Text>
-            </Space>
-          </Tooltip>
-          <Tooltip title="连接创建时间">
-            <Space>
-              <ClockCircleOutlined />
-              <Text>创建: {formatTime(record.creationTime.average)}</Text>
-            </Space>
-          </Tooltip>
-          <Tooltip title="连接使用时间">
-            <Space>
-              <DatabaseOutlined />
-              <Text>使用: {formatTime(record.usageTime.average)}</Text>
-            </Space>
-          </Tooltip>
+        <Space direction="vertical" size={2}>
+          <Text type="secondary" style={{ fontSize: 12 }}>获取: <Text strong>{formatTime(record.acquireTime.average)}</Text></Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>创建: <Text strong>{formatTime(record.creationTime.average)}</Text></Text>
+          <Text type="secondary" style={{ fontSize: 12 }}>使用: <Text strong>{formatTime(record.usageTime.average)}</Text></Text>
         </Space>
       ),
     },
     {
-      title: '超时次数',
+      title: '超时',
       dataIndex: 'timeoutCount',
       key: 'timeoutCount',
       render: (count) => (
-        <Tag color={count > 0 ? 'red' : 'green'}>
+        <Tag color={count > 0 ? 'red' : 'green'} style={{ borderRadius: 10 }}>
           {count}
         </Tag>
       ),
     },
   ];
 
-  if (loading) {
+  if (loading && !data) {
     return (
-      <Card title="HikariCP 连接池监控" loading={true}>
-        <div style={{ textAlign: 'center', padding: '50px 0' }}>
-          <Text type="secondary">正在加载连接池数据...</Text>
-        </div>
+      <Card loading={true} style={{ borderRadius: 12 }} />
+    );
+  }
+
+  if (!data || !data.pools || data.pools.length === 0) {
+    return (
+      <Card title="数据库连接池" style={{ borderRadius: 12 }}>
+        <Empty description="暂无连接池数据" />
       </Card>
     );
   }
 
-  if (!dbPoolInfo || !dbPoolInfo.pools || dbPoolInfo.pools.length === 0) {
-    return (
-      <Card title="HikariCP 连接池监控">
-        <Empty 
-          description="暂无连接池数据" 
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
+  const { pools, summary } = data;
+
+  const renderContent = () => (
+    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={6}>
+          <Card size="small" className="metric-sub-card">
+            <Statistic
+              title="活跃 / 最大"
+              value={`${safeGet(summary, 'totalActiveConnections', 0)} / ${safeGet(summary, 'totalMaxConnections', 0)}`}
+              prefix={<ApiOutlined style={{ color: '#1890ff' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card size="small" className="metric-sub-card">
+            <Statistic
+              title="池化实例数"
+              value={safeGet(summary, 'totalPools', 0)}
+              prefix={<DatabaseOutlined style={{ color: '#722ed1' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Card size="small" className="metric-sub-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>总体池化资源使用率</Text>
+              <Text strong>{safeGet(summary, 'overallUsagePercent', 0)}%</Text>
+            </div>
+            <Progress
+              percent={safeGet(summary, 'overallUsagePercent', 0)}
+              status={getStatusColor(safeGet(summary, 'overallUsagePercent', 0))}
+              strokeWidth={10}
+              showInfo={false}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {safeGet(summary, 'overallUsagePercent', 0) >= 80 && (
+        <Alert
+          message="连接池资源紧张"
+          description="当前总体使用率较高，这可能导致请求排队，请评估是否需要增加最大连接数配置。"
+          type={safeGet(summary, 'overallUsagePercent', 0) >= 90 ? "error" : "warning"}
+          showIcon
         />
-      </Card>
-    );
-  }
+      )}
 
-  const { pools, summary } = dbPoolInfo;
-
-  return (
-    <div>
-      {/* 总览统计 */}
-      <Card title="连接池总览" style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]}>
-          <Col span={6}>
-            <Statistic 
-              title="连接池数量" 
-              value={safeGet(summary, 'totalPools', 0)} 
-              prefix={<DatabaseOutlined />}
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic 
-              title="总活跃连接" 
-              value={safeGet(summary, 'totalActiveConnections', 0)} 
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic 
-              title="总最大连接" 
-              value={safeGet(summary, 'totalMaxConnections', 0)} 
-            />
-          </Col>
-          <Col span={6}>
-            <Statistic 
-              title="总体使用率" 
-              value={safeGet(summary, 'overallUsagePercent', 0)} 
-              suffix="%"
-              valueStyle={{ 
-                color: getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'error' ? '#ff4d4f' : 
-                       getStatusColor(safeGet(summary, 'overallUsagePercent', 0)) === 'warning' ? '#faad14' : '#52c41a'
-              }}
-            />
-          </Col>
-        </Row>
-        
-        {/* 总体使用率进度条 */}
-        <Divider />
-        <div style={{ marginBottom: 16 }}>
-          <Text strong>总体连接池使用率</Text>
-          <Progress 
-            percent={safeGet(summary, 'overallUsagePercent', 0)} 
-            status={getStatusColor(safeGet(summary, 'overallUsagePercent', 0))}
-            strokeWidth={8}
-          />
-        </div>
-        
-        {/* 状态提示 */}
-        {safeGet(summary, 'overallUsagePercent', 0) >= 90 && (
-          <Alert
-            message="连接池使用率过高"
-            description="总体连接池使用率超过90%，建议检查连接池配置或优化数据库连接使用。"
-            type="error"
-            showIcon
-            style={{ marginTop: 16 }}
-          />
-        )}
-        {safeGet(summary, 'overallUsagePercent', 0) >= 70 && safeGet(summary, 'overallUsagePercent', 0) < 90 && (
-          <Alert
-            message="连接池使用率较高"
-            description="总体连接池使用率超过70%，建议关注连接池状态。"
-            type="warning"
-            showIcon
-            style={{ marginTop: 16 }}
-          />
-        )}
-      </Card>
-
-      {/* 详细连接池信息表格 */}
-      <Card title="连接池详细信息">
+      <MagicCard
+        title="连接池明细"
+        description="基于 HikariCP 的底层度量，实时查看各连接池的活跃、空闲及性能水位"
+        icon={<DatabaseOutlined style={{ color: '#1677ff' }} />}
+        size="small"
+      >
         <Table
           columns={columns}
           dataSource={pools.map((pool, index) => ({ ...pool, key: index }))}
           pagination={false}
           size="middle"
-          scroll={{ x: 1200 }}
+          bordered
+          style={{ borderRadius: 8, overflow: 'hidden' }}
         />
-      </Card>
-    </div>
+      </MagicCard>
+    </Space>
   );
+
+  if (standalone) {
+    return (
+      <div style={{ padding: 24 }}>
+        <MagicCard
+          title="数据库连接池监控"
+          description="深度洞察应用层与数据库之间的连接状态，优化查询响应时间与吞吐量"
+          icon={<ApiOutlined />}
+          extra={
+            <Space>
+              <StatusPill label="监控中" status="success" />
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  setRefreshKey(prev => prev + 1);
+                  refetch();
+                }}
+                loading={loading}
+              >
+                刷新
+              </Button>
+            </Space>
+          }
+        >
+          {renderContent()}
+        </MagicCard>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default HikariCPMonitoring;

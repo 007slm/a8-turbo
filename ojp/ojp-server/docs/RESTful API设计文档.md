@@ -199,17 +199,11 @@ Content-Type: application/json
 
 **请求体字段说明**:
 - `ruleName` (optional): 规则名称
-- `dbType` (optional): 数据库类型 (mysql, postgresql, oracle)
-- `ttl` (optional): 缓存时间，秒为单位的整数
-- `ruleType` (optional): 规则类型 (`TABLES`, `TABLES_ANY`, `TABLES_ALL`, `QUERY_IDS`, `REGEX`)
-- `tables` (optional): 精确匹配的表名列表
-- `tablesAny` (optional): 任意匹配的表名列表
-- `tablesAll` (optional): 全部匹配的表名列表
-- `queryIds` (optional): 查询ID列表
-- `regex` (optional): 正则表达式
-- `priority` (optional): 优先级
-- `enabled` (optional): 是否启用
 - `description` (optional): 规则描述
+- `tables` (optional): 涉及的表名列表
+- `slowQueryIds` (optional): 关联的慢查询ID列表
+- `connHash` (required): 数据库连接哈希值
+- `enabled` (optional): 是否启用规则
 
 **响应**:
 ```json

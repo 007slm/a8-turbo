@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
-import { 
-  Card, 
-  Typography, 
-  Row, 
-  Col, 
-  Statistic, 
-  Progress, 
-  Space, 
-  Tag, 
+import {
+  Card,
+  Typography,
+  Row,
+  Col,
+  Statistic,
+  Progress,
+  Space,
+  Tag,
   Divider,
   Avatar,
   List,
@@ -17,11 +17,11 @@ import {
   Alert,
   Table
 } from 'antd'
-import { 
+import {
   DashboardOutlined,
-  MonitorOutlined, 
-  HddOutlined, 
-  DesktopOutlined, 
+  MonitorOutlined,
+  HddOutlined,
+  DesktopOutlined,
   DatabaseOutlined,
   ThunderboltOutlined,
   ClockCircleOutlined,
@@ -94,7 +94,7 @@ const DashboardOverview = () => {
   }
 
   const isLoading = metricsLoading || resourcesLoading || jvmLoading || healthLoading
-  
+
   // 数据格式化工具函数
   const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return '0 B'
@@ -110,7 +110,7 @@ const DashboardOverview = () => {
     const days = Math.floor(totalSeconds / (60 * 60 * 24))
     const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60))
     const minutes = Math.floor((totalSeconds % (60 * 60)) / 60)
-    
+
     if (days > 0) return `${days}天 ${hours}小时`
     if (hours > 0) return `${hours}小时 ${minutes}分钟`
     if (minutes > 0) return `${minutes}分钟`
@@ -255,47 +255,47 @@ const DashboardOverview = () => {
 
       {/* JVM 信息 */}
       {jvmInfo && (
-        <Card title="JVM 信息" style={{ marginBottom: 24, borderRadius: 8 }}>
+        <Card title="运行环境信息" style={{ marginBottom: 24, borderRadius: 8 }}>
           <Row gutter={[16, 16]}>
             <Col xs={24} sm={12}>
               <Statistic
-                 title="堆内存使用"
-                 value={formatBytes(jvmInfo?.heapUsed || 0)}
-                 suffix={`/ ${formatBytes(jvmInfo?.heapMax || 0)}`}
-               />
-               <Progress
-                 percent={jvmInfo?.heapUsage || 0}
-                 strokeColor="#1890ff"
-                 showInfo={false}
-                 style={{ marginTop: 8 }}
-               />
+                title="堆内存使用"
+                value={formatBytes(jvmInfo?.heapUsed || 0)}
+                suffix={`/ ${formatBytes(jvmInfo?.heapMax || 0)}`}
+              />
+              <Progress
+                percent={jvmInfo?.heapUsage || 0}
+                strokeColor="#1890ff"
+                showInfo={false}
+                style={{ marginTop: 8 }}
+              />
             </Col>
             <Col xs={24} sm={12}>
               <Statistic
-                 title="非堆内存使用"
-                 value={formatBytes(jvmInfo?.nonHeapUsed || 0)}
-                 suffix={`/ ${formatBytes(jvmInfo?.nonHeapMax || 0)}`}
-               />
-               <Progress
-                 percent={jvmInfo?.nonHeapUsage || 0}
-                 strokeColor="#52c41a"
-                 showInfo={false}
-                 style={{ marginTop: 8 }}
-               />
+                title="非堆内存使用"
+                value={formatBytes(jvmInfo?.nonHeapUsed || 0)}
+                suffix={`/ ${formatBytes(jvmInfo?.nonHeapMax || 0)}`}
+              />
+              <Progress
+                percent={jvmInfo?.nonHeapUsage || 0}
+                strokeColor="#52c41a"
+                showInfo={false}
+                style={{ marginTop: 8 }}
+              />
             </Col>
             <Col xs={24} sm={12}>
               <Statistic
-                 title="线程数"
-                 value={jvmInfo?.threadsLive || 0}
-                 suffix="个"
-               />
+                title="线程数"
+                value={jvmInfo?.threadsLive || 0}
+                suffix="个"
+              />
             </Col>
             <Col xs={24} sm={12}>
               <Statistic
-                 title="GC次数"
-                 value={((jvmInfo?.gcCollectionsYoung || 0) + (jvmInfo?.gcCollectionsOld || 0)).toLocaleString()}
-                 suffix="次"
-               />
+                title="资源回收次数"
+                value={((jvmInfo?.gcCollectionsYoung || 0) + (jvmInfo?.gcCollectionsOld || 0)).toLocaleString()}
+                suffix="次"
+              />
             </Col>
           </Row>
         </Card>
@@ -313,23 +313,23 @@ const DashboardOverview = () => {
               />
             </Col>
             <Col xs={24} sm={12}>
-               <Statistic
-                 title="运行时间"
-                 value={formatDuration(resources?.uptime || 0)}
-               />
-             </Col>
-             <Col xs={24} sm={12}>
-               <Statistic
-                 title="CPU使用率"
-                 value={formatPercentage(resources?.cpuUsage || 0)}
-               />
-             </Col>
-             <Col xs={24} sm={12}>
-               <Statistic
-                 title="内存使用率"
-                 value={formatPercentage(resources?.memoryUsage || 0)}
-               />
-             </Col>
+              <Statistic
+                title="运行时间"
+                value={formatDuration(resources?.uptime || 0)}
+              />
+            </Col>
+            <Col xs={24} sm={12}>
+              <Statistic
+                title="CPU使用率"
+                value={formatPercentage(resources?.cpuUsage || 0)}
+              />
+            </Col>
+            <Col xs={24} sm={12}>
+              <Statistic
+                title="内存使用率"
+                value={formatPercentage(resources?.memoryUsage || 0)}
+              />
+            </Col>
           </Row>
         </Card>
       )}
@@ -338,7 +338,7 @@ const DashboardOverview = () => {
       {healthInfo && healthInfo.components && (
         <Row gutter={[16, 16]}>
           <Col span={24}>
-            <Card 
+            <Card
               title={<><CheckCircleOutlined style={{ marginRight: 8 }} />系统组件状态</>}
               size="small"
               style={{ borderRadius: 8 }}
@@ -346,20 +346,20 @@ const DashboardOverview = () => {
               <Row gutter={[16, 16]}>
                 {Object.entries(healthInfo.components).map(([key, component]) => (
                   <Col xs={24} sm={12} md={8} lg={6} key={key}>
-                    <div style={{ 
-                      padding: 12, 
-                      border: '1px solid #f0f0f0', 
+                    <div style={{
+                      padding: 12,
+                      border: '1px solid #f0f0f0',
                       borderRadius: 6,
                       textAlign: 'center'
                     }}>
-                      <Badge 
-                        status={component.status === 'UP' ? 'success' : 
-                               component.status === 'DOWN' ? 'error' : 'warning'} 
+                      <Badge
+                        status={component.status === 'UP' ? 'success' :
+                          component.status === 'DOWN' ? 'error' : 'warning'}
                         text={key.charAt(0).toUpperCase() + key.slice(1)}
                       />
                       <div style={{ marginTop: 4 }}>
-                        <Tag color={component.status === 'UP' ? 'green' : 
-                                  component.status === 'DOWN' ? 'red' : 'orange'}>
+                        <Tag color={component.status === 'UP' ? 'green' :
+                          component.status === 'DOWN' ? 'red' : 'orange'}>
                           {component.status}
                         </Tag>
                       </div>

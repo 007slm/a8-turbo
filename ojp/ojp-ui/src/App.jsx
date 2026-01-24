@@ -8,6 +8,12 @@ import {
   MonitorOutlined,
   BellOutlined,
   QuestionCircleOutlined,
+  PieChartOutlined,
+  GoldOutlined,
+  RestOutlined,
+  NodeIndexOutlined,
+  LinkOutlined,
+  CloudServerOutlined,
   BulbOutlined,
   ShopOutlined,
   ApiOutlined,
@@ -15,6 +21,21 @@ import {
   SyncOutlined,
   RocketOutlined,
   AppstoreOutlined,
+  SolutionOutlined,
+  FileTextOutlined,
+  ClockCircleOutlined,
+  SafetyOutlined,
+  ToolOutlined,
+  HomeOutlined,
+  SettingOutlined,
+  ThunderboltOutlined,
+  BarChartOutlined,
+  ClusterOutlined,
+  UserOutlined,
+  ShoppingOutlined,
+  ShoppingCartOutlined,
+  CommentOutlined,
+  CodeOutlined,
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import Monitoring from './components/Monitoring'
@@ -37,8 +58,15 @@ import LicenseManager from './pages/LicenseManager'
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
 import QueryCache from './components/cache/QueryCache'
-import CacheRecommendations from './components/cache/CacheRecommendations'
 import ShopService from './components/shopservice/ShopService'
+
+// 导入运维监控子组件
+import JvmInfo from './components/monitoring/JvmInfo'
+import MemoryUsage from './components/monitoring/MemoryUsage'
+import ThreadInfo from './components/monitoring/ThreadInfo'
+import GcInfo from './components/monitoring/GcInfo'
+import HikariCPMonitoring from './components/monitoring/HikariCPMonitoring'
+import OjpBusinessMetrics from './components/monitoring/OjpBusinessMetrics'
 
 import { fetchSystemStatus, licenseApi } from './services/api'
 import './App.css'
@@ -75,119 +103,175 @@ function AppContent() {
     routes: [
       {
         path: '/home',
-        name: '监控总览',
+        name: '工作台',
         icon: <DashboardOutlined />,
-      },
-      {
-        path: '/monitor',
-        name: '服务监控',
-        icon: <MonitorOutlined />,
-        routes: [
-          {
-            path: '/monitor/cache',
-            name: '缓存服务',
-            icon: <DatabaseOutlined />,
-          },
-          {
-            path: '/monitor/redis',
-            name: '数据同步服务',
-            icon: <DatabaseOutlined />,
-          },
-          {
-            path: '/monitor/starrocks',
-            name: '数据仓库',
-            icon: <DatabaseOutlined />,
-          },
-          {
-            path: '/monitor/prometheus',
-            name: '监控服务',
-            icon: <MonitorOutlined />,
-          },
-          {
-            path: '/monitor/skywalking',
-            name: '链路追踪',
-            icon: <RocketOutlined />,
-          },
-        ]
-      },
-      {
-        path: '/cache',
-        name: '缓存管理',
-        icon: <DatabaseOutlined />,
-        routes: [
-          {
-            path: '/cache/recommendations',
-            name: '智能推荐',
-            icon: <BulbOutlined />,
-          },
-          {
-            path: '/cache/rules',
-            name: '缓存规则',
-          },
-          {
-            path: '/cache/queries',
-            name: '慢查询列表',
-          },
-          {
-            path: '/cache/sync-status',
-            name: '同步状态',
-          }
-        ]
-      },
-      {
-        path: '/test',
-        name: '系统服务测试',
-        icon: <BulbOutlined />,
-        routes: [
-          {
-            path: '/shopservice',
-            name: 'ShopService',
-            icon: <ShopOutlined />,
-            routes: [
-              {
-                path: '/shopservice/users',
-                name: '用户管理',
-              },
-              {
-                path: '/shopservice/products',
-                name: '商品管理',
-              },
-              {
-                path: '/shopservice/orders',
-                name: '订单管理',
-              },
-              {
-                path: '/shopservice/reviews',
-                name: '评价管理',
-              },
-              {
-                path: '/shopservice/chinook',
-                name: 'Chinook SQL 实验台',
-              }
-            ]
-          },
-          {
-            path: '/test/sql-translator',
-            name: 'SQL Converter',
-            icon: <SyncOutlined />,
-          },
-          {
-            path: '/test/connectivity',
-            name: '服务连通性测试',
-            icon: <ApiOutlined />,
-          }
-        ]
       },
 
       {
-        path: '/license',
-        name: '商业授权',
-        icon: <SafetyCertificateOutlined />,
+        path: '/core',
+        name: '数据业务',
+        icon: <SolutionOutlined />,
+        routes: [
+          {
+            path: '/cache',
+            name: '智能加速',
+            icon: <RocketOutlined />,
+            routes: [
+              {
+                path: '/cache/rules',
+                name: '加速策略',
+                icon: <FileTextOutlined />,
+              },
+              {
+                path: '/cache/queries',
+                name: '提速成效',
+                icon: <ClockCircleOutlined />,
+              },
+              {
+                path: '/cache/sync-status',
+                name: '就绪监控',
+                icon: <SyncOutlined />,
+              }
+            ]
+          },
+        ]
       },
       {
-        path: '/service-portal',
-        name: '服务导航',
-        icon: <AppstoreOutlined />,
+        path: '/assurance',
+        name: '运维监控',
+        icon: <SafetyOutlined />,
+        routes: [
+          {
+            path: '/monitor',
+            name: '状态监控',
+            icon: <MonitorOutlined />,
+            routes: [
+              {
+                path: '/monitor/jvm',
+                name: '运行环境',
+                icon: <ThunderboltOutlined />,
+              },
+              {
+                path: '/monitor/memory',
+                name: '内存深度分析',
+                icon: <PieChartOutlined />,
+              },
+              {
+                path: '/monitor/threads',
+                name: '执行线程堆栈',
+                icon: <ClusterOutlined />,
+              },
+              {
+                path: '/monitor/gc',
+                name: '资源回收详情',
+                icon: <RestOutlined />,
+              },
+              {
+                path: '/monitor/dbpool',
+                name: '连接池状态',
+                icon: <LinkOutlined />,
+              },
+              {
+                path: '/monitor/cache',
+                name: '加速实例',
+                icon: <CloudServerOutlined />,
+              },
+              {
+                path: '/monitor/redis',
+                name: '同步节点',
+                icon: <NodeIndexOutlined />,
+              },
+              {
+                path: '/monitor/starrocks',
+                name: '数仓节点',
+                icon: <GoldOutlined />,
+              },
+              {
+                path: '/monitor/prometheus',
+                name: '指标采集',
+                icon: <MonitorOutlined />,
+              },
+              {
+                path: '/monitor/skywalking',
+                name: '全链路追踪',
+                icon: <RocketOutlined />,
+              },
+            ]
+          },
+          {
+            path: '/service-portal',
+            name: '服务入口',
+            icon: <AppstoreOutlined />,
+          },
+        ]
+      },
+      {
+        path: '/tools',
+        name: '实验室',
+        icon: <ToolOutlined />,
+        routes: [
+          {
+            path: '/test',
+            name: '开发测试',
+            icon: <BulbOutlined />,
+            routes: [
+              {
+                path: '/shopservice',
+                name: '示例业务',
+                icon: <ShopOutlined />,
+                routes: [
+                  {
+                    path: '/shopservice/users',
+                    name: '用户管理',
+                    icon: <UserOutlined />,
+                  },
+                  {
+                    path: '/shopservice/products',
+                    name: '商品管理',
+                    icon: <ShoppingOutlined />,
+                  },
+                  {
+                    path: '/shopservice/orders',
+                    name: '订单管理',
+                    icon: <ShoppingCartOutlined />,
+                  },
+                  {
+                    path: '/shopservice/reviews',
+                    name: '评价管理',
+                    icon: <CommentOutlined />,
+                  },
+                  {
+                    path: '/shopservice/chinook',
+                    name: 'Chinook SQL',
+                    icon: <CodeOutlined />,
+                  }
+                ]
+              },
+              {
+                path: '/test/sql-translator',
+                name: 'SQL 实验室',
+                icon: <SyncOutlined />,
+              },
+              {
+                path: '/test/connectivity',
+                name: '连通性验证',
+                icon: <ApiOutlined />,
+              }
+            ]
+          },
+        ]
+      },
+      {
+        path: '/settings',
+        name: '系统设置',
+        icon: <SettingOutlined />,
+        routes: [
+          {
+            path: '/license',
+            name: '许可证管理',
+            icon: <SafetyCertificateOutlined />,
+          },
+        ]
       },
     ],
   };
@@ -219,7 +303,7 @@ function AppContent() {
     >
       <AntdApp>
         <ProLayout
-          title="A8 Platform"
+          title="A8 Turbo"
           logo="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
           layout="mix"
           splitMenus={false}
@@ -248,11 +332,11 @@ function AppContent() {
           actionsRender={() => [
             <div key="status" style={{ display: 'flex', alignItems: 'center', marginRight: 8 }}>
               {statusLoading ? (
-                <StatusPill label="状态检查中" status="default" />
+                <StatusPill label="状态检查中" status="default" className="header-status-pill" />
               ) : isSystemUp() ? (
-                <StatusPill label="系统正常" status="success" />
+                <StatusPill label="系统正常" status="success" className="header-status-pill" />
               ) : (
-                <StatusPill label="系统异常" status="danger" />
+                <StatusPill label="系统异常" status="danger" className="header-status-pill" />
               )}
             </div>,
             <BellOutlined key="bell" style={{ fontSize: 16 }} />,
@@ -266,6 +350,11 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Monitoring />} />
             <Route path="/home" element={<Monitoring />} />
+            <Route path="/monitor/jvm" element={<JvmInfo jvmInfo={null} loading={false} standalone />} />
+            <Route path="/monitor/memory" element={<MemoryUsage memoryInfo={null} loading={false} standalone />} />
+            <Route path="/monitor/threads" element={<ThreadInfo threadInfo={null} loading={false} standalone />} />
+            <Route path="/monitor/gc" element={<GcInfo gcInfo={null} loading={false} standalone />} />
+            <Route path="/monitor/dbpool" element={<HikariCPMonitoring dbPoolInfo={null} loading={false} standalone />} />
             <Route path="/monitor" element={<MonitorDashboard />} />
             <Route path="/monitor/test" element={<PrometheusTest />} />
             <Route path="/monitor/cache" element={<CacheNativeMonitor />} />
@@ -283,7 +372,6 @@ function AppContent() {
             <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
             <Route path="/cache" element={<CacheRules />} />
             <Route path="/cache/rules" element={<CacheRules />} />
-            <Route path="/cache/recommendations" element={<CacheRecommendations />} />
             <Route path="/cache/queries" element={<QueryCache />} />
             <Route path="/cache/rules/new" element={<CacheRuleEditor />} />
             <Route path="/cache/rules/:ruleId/edit" element={<CacheRuleEditor />} />
@@ -299,6 +387,7 @@ function AppContent() {
 
 
 
+            <Route path="/core/metrics" element={<OjpBusinessMetrics businessMetrics={null} loading={false} standalone />} />
             <Route path="/license" element={<LicenseManager />} />
           </Routes>
         </ProLayout>

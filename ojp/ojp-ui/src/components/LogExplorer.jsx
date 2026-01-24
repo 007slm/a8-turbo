@@ -35,8 +35,10 @@ import {
   DownloadOutlined,
   ClearOutlined,
   EyeOutlined,
-  FilterOutlined
+  FilterOutlined,
+  FileTextOutlined
 } from '@ant-design/icons'
+import { PageContainer } from '@ant-design/pro-components'
 import { lokiApi, LogQLBuilder, LogFormatter } from '../services/lokiApi'
 
 const { RangePicker } = DatePicker
@@ -52,7 +54,7 @@ const LogExplorer = () => {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(false)
   const [lokiHealth, setLokiHealth] = useState(true)
-  
+
   // 查询条件
   const [filters, setFilters] = useState({
     traceId: '',
@@ -62,7 +64,7 @@ const LogExplorer = () => {
     search: ''
   })
   const [timeRange, setTimeRange] = useState([])
-  
+
   // UI 状态
   const [expandedRows, setExpandedRows] = useState(new Set())
   const [selectedRowKeys, setSelectedRowKeys] = useState([])
@@ -88,15 +90,15 @@ const LogExplorer = () => {
    */
   useEffect(() => {
     checkLokiHealth()
-    
+
     // 设置默认时间范围（最近1小时）
     const now = new Date()
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
     setTimeRange([oneHourAgo, now])
-    
+
     // 定期检查健康状态
     const healthCheckInterval = setInterval(checkLokiHealth, 30000)
-    
+
     return () => clearInterval(healthCheckInterval)
   }, [checkLokiHealth])
 
@@ -110,7 +112,7 @@ const LogExplorer = () => {
         end: Math.floor(timeRange[1].getTime() / 1000)
       }
     }
-    
+
     // 默认最近1小时
     const now = Math.floor(Date.now() / 1000)
     return {
@@ -132,14 +134,14 @@ const LogExplorer = () => {
     try {
       const query = LogQLBuilder.buildQuery(filters)
       const { start, end } = getTimeRange()
-      
+
       console.log('执行查询:', { query, start, end })
-      
+
       const data = await lokiApi.queryRange(query, start, end, 1000)
       const formattedLogs = LogFormatter.formatLokiResponse(data)
-      
+
       setLogs(formattedLogs)
-      
+
       if (formattedLogs.length === 0) {
         message.info('未找到匹配的日志记录')
       } else {
@@ -197,7 +199,7 @@ const LogExplorer = () => {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    
+
     message.success('日志导出成功')
   }
 
@@ -264,7 +266,7 @@ const LogExplorer = () => {
           INFO: { color: 'green', icon: '🟢' },
           DEBUG: { color: 'gray', icon: '🔵' }
         }[level] || { color: 'default', icon: '⚪' }
-        
+
         return (
           <Tag color={config.color}>
             {config.icon} {level}
@@ -290,8 +292,8 @@ const LogExplorer = () => {
       width: 140,
       render: (traceId) => traceId ? (
         <Tooltip title={`点击查询此会话的所有日志: ${traceId}`}>
-          <Tag 
-            color="purple" 
+          <Tag
+            color="purple"
             style={{ cursor: 'pointer' }}
             onClick={() => {
               setFilters(prev => ({ ...prev, traceId }))
@@ -313,12 +315,12 @@ const LogExplorer = () => {
       render: (message, record) => {
         const isExpanded = expandedRows.has(record.key)
         const displayMessage = isExpanded ? message : message.substring(0, 100)
-        
+
         return (
           <div>
             <Paragraph
-              style={{ 
-                marginBottom: 0, 
+              style={{
+                marginBottom: 0,
                 wordBreak: 'break-all',
                 fontSize: '13px'
               }}
@@ -361,58 +363,64 @@ const LogExplorer = () => {
   }
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card 
-        title={
+    <PageContainer
+      header={{
+        title: (
           <Space>
             <span>日志查询</span>
-            <Badge 
-              count={logs.length} 
-              style={{ backgroundColor: '#52c41a' }} 
+            <Badge
+              count={logs.length}
+              style={{ backgroundColor: '#52c41a' }}
               overflowCount={9999}
             />
           </Space>
-        }
-        extra={
-          <Space>
-            {!lokiHealth && (
-              <Alert
-                message="日志服务离线"
-                type="warning"
-                icon={<ExclamationCircleOutlined />}
-                showIcon
-                size="small"
-              />
-            )}
-            <Button 
-              icon={<ClearOutlined />} 
-              onClick={clearFilters}
-              disabled={loading}
-            >
-              清空
-            </Button>
-            <Button 
-              icon={<DownloadOutlined />} 
-              onClick={exportLogs}
-              disabled={logs.length === 0 || loading}
-            >
-              导出
-            </Button>
-            <Button 
-              type="primary"
-              icon={<ReloadOutlined />} 
-              onClick={searchLogs}
-              loading={loading}
-              disabled={!lokiHealth}
-            >
-              查询
-            </Button>
-          </Space>
-        }
-      >
+        ),
+        subTitle: "分布式日志检索与链路追踪",
+        extra: [
+          !lokiHealth && (
+            <Alert
+              key="alert"
+              message="日志服务离线"
+              type="warning"
+              icon={<ExclamationCircleOutlined />}
+              showIcon
+              size="small"
+              style={{ marginRight: 8 }}
+            />
+          ),
+          <Button
+            key="clear"
+            icon={<ClearOutlined />}
+            onClick={clearFilters}
+            disabled={loading}
+          >
+            清空
+          </Button>,
+          <Button
+            key="export"
+            icon={<DownloadOutlined />}
+            onClick={exportLogs}
+            disabled={logs.length === 0 || loading}
+          >
+            导出
+          </Button>,
+          <Button
+            key="search"
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={searchLogs}
+            loading={loading}
+            disabled={!lokiHealth}
+          >
+            查询
+          </Button>
+        ]
+      }}
+    >
+      <Card bordered={false} bodyStyle={{ padding: '0 0 24px 0' }}>
         {/* 查询条件面板 */}
-        <Collapse defaultActiveKey={['filters']} style={{ marginBottom: 16 }}>
-          <Panel header={<><FilterOutlined /> 查询条件</>} key="filters">
+        <Collapse defaultActiveKey={['filters']} style={{ marginBottom: 16 }} ghost>
+          <Panel header={<Space><FilterOutlined /><Text strong>查询过滤条件</Text></Space>} key="filters">
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} md={8} lg={6}>
                 <Input.Search
@@ -424,7 +432,7 @@ const LogExplorer = () => {
                   disabled={loading}
                 />
               </Col>
-              
+
               <Col xs={24} sm={12} md={8} lg={6}>
                 <Input
                   placeholder="搜索日志内容"
@@ -434,7 +442,7 @@ const LogExplorer = () => {
                   disabled={loading}
                 />
               </Col>
-              
+
               <Col xs={12} sm={8} md={6} lg={4}>
                 <Select
                   value={filters.service}
@@ -448,7 +456,7 @@ const LogExplorer = () => {
                   <Option value="ojp-ui">OJP UI</Option>
                 </Select>
               </Col>
-              
+
               <Col xs={12} sm={8} md={6} lg={4}>
                 <Select
                   value={filters.level}
@@ -463,7 +471,7 @@ const LogExplorer = () => {
                   <Option value="DEBUG">DEBUG</Option>
                 </Select>
               </Col>
-              
+
               <Col xs={24} sm={16} md={12} lg={8}>
                 <RangePicker
                   showTime
@@ -493,18 +501,17 @@ const LogExplorer = () => {
               pageSize: 50,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total, range) => 
+              showTotal: (total, range) =>
                 `第 ${range[0]}-${range[1]} 条，共 ${total} 条日志`,
               pageSizeOptions: ['20', '50', '100', '200']
             }}
             scroll={{ x: 1200 }}
-            size="small"
-            bordered
-            style={{ marginTop: 16 }}
+            size="middle"
+            style={{ padding: '0 24px' }}
           />
         </Spin>
       </Card>
-    </div>
+    </PageContainer>
   )
 }
 

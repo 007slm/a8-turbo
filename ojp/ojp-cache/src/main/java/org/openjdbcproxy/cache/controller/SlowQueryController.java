@@ -29,13 +29,6 @@ import java.util.Map;
 public class SlowQueryController {
 
     private final SlowQueryService slowQueryService;
-    private final org.openjdbcproxy.cache.service.RecommendationService recommendationService;
-
-    @GetMapping("/recommendations")
-    @Operation(summary = "获取缓存推荐", description = "智能分析慢查询并推荐缓存规则")
-    public List<org.openjdbcproxy.cache.model.RuleRecommendation> getRecommendations() {
-        return recommendationService.generateRecommendations();
-    }
 
     @GetMapping
     @Operation(summary = "分页获取慢查询", description = "支持连接、关键字、执行耗时、查询类型与表名过滤")

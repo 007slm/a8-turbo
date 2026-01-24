@@ -97,7 +97,7 @@ ojp:
       base-path: /api/cache
   # Redis配置
   redis:
-    host: ${REDIS_HOST:localhost}
+    host: ${REDIS_HOST:redis}
     port: ${REDIS_PORT:6379}
     database: ${REDIS_DATABASE:0}
     password: ${REDIS_PASSWORD:}

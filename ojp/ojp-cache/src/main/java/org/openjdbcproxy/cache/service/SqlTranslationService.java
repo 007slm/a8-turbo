@@ -25,10 +25,10 @@ public class SqlTranslationService {
 
     private final SlowQueryService slowQueryService;
     private final RedisTemplate<String, Object> redisTemplate;
-    
-    @Value("${ojp.sql-translator.url:http://a8-sql-translator:8000}")
+
+    @Value("${ojp.sql-translator.url:http://ojp-sql-translator:8000}")
     private String processorUrl;
-    
+
     private final RestTemplate restTemplate = new RestTemplate();
 
     public void processRule(CacheRule rule) {
@@ -53,7 +53,7 @@ public class SqlTranslationService {
 
     private void processQuery(String queryId, CacheRule rule) {
         String cacheKey = "ojp:cache:sql:translated:" + queryId;
-        
+
         // Check if already translated
         if (Boolean.TRUE.equals(redisTemplate.hasKey(cacheKey))) {
             return;
@@ -64,14 +64,18 @@ public class SqlTranslationService {
             return;
         }
         SlowQuery query = queryOpt.get();
-        
-        // Determine source database type. 
-        // Logic to determine source type might need to be refined based on available metadata.
-        // For now, assuming Oracle if not specified, or inferring from connection info if available.
-        // Since the requirement specifically mentions Oracle to StarRocks, we'll default source to 'oracle'.
-        // TODO: In the future, this should be dynamic based on the actual source DB type of the connection.
-        String source = "oracle"; 
-        
+
+        // Determine source database type.
+        // Logic to determine source type might need to be refined based on available
+        // metadata.
+        // For now, assuming Oracle if not specified, or inferring from connection info
+        // if available.
+        // Since the requirement specifically mentions Oracle to StarRocks, we'll
+        // default source to 'oracle'.
+        // TODO: In the future, this should be dynamic based on the actual source DB
+        // type of the connection.
+        String source = "oracle";
+
         String sql = query.getSql();
         if (sql == null || sql.trim().isEmpty()) {
             return;
@@ -79,7 +83,7 @@ public class SqlTranslationService {
 
         try {
             String translatedSql = callTranslationApi(sql, source, "starrocks");
-            
+
             if (translatedSql != null) {
                 // Store in Redis with expiration same as rule or persistent?
                 // The requirement says "store to redis... behind use when needed".

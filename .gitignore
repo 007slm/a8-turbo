@@ -208,6 +208,7 @@ dist-ssr
 /docker/oracle/data/
 /docker/redis/data/
 /docker/seatunnel/data/
+/docker/prometheus/data/
 
 SA_TASK.7z
 

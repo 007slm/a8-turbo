@@ -1,0 +1,50 @@
+# Git and IDE
+**/.git
+**/.idea
+**/.vscode
+
+# Node & Python
+**/node_modules
+**/__pycache__
+**/*.pyc
+
+# Java build artifacts
+**/target
+!ojp/ojp-server/target/ojp-server-*.jar
+**/*.class
+**/build
+**/.gradle
+
+# Logs and temp
+**/*.log
+**/*.tmp
+**/logs
+
+# Large Archives
+**/*.7z
+**/*.zip
+**/*.tar.gz
+**/*.iso
+
+# ----------------------------------------------------
+# 排除 Docker 目录下的大型数据目录 (解决 69GB Context 问题)
+# ----------------------------------------------------
+docker/mysql*
+docker/redis*
+docker/oracle*
+docker/starrocks*
+docker/flink*
+docker/seatunnel*
+docker/minio*
+docker/prometheus*
+docker/grafana*
+docker/kong*
+docker/nacos*
+docker/kafka*
+docker/zookeeper*
+docker/elasticsearch*
+docker/postgres*
+
+# 保留必要的目录 (即使上面通配符误杀，这里加回也没坏处，虽然上面的写法应该足够精确)
+!docker/skywalking
+!docker/ojp

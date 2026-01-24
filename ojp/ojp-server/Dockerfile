@@ -9,7 +9,7 @@ WORKDIR /app
 RUN groupadd -r ojp && useradd -r -g ojp ojp
 
 # 从本地复制Spring Boot可执行JAR文件
-COPY ojp-server/target/ojp-server-0.0.8-alpha.jar ojp-server.jar
+COPY ojp/ojp-server/target/ojp-server-0.0.8-alpha.jar ojp-server.jar
 
 # 复制 SkyWalking Agent
 COPY docker/skywalking/skywalking-agent /app/skywalking-agent
@@ -22,6 +22,7 @@ USER ojp
 
 # 暴露端口 (修正为8010，统一HTTP+gRPC端口)
 EXPOSE 8010
+EXPOSE 8330
 
 # 设置JVM参数（包含 SkyWalking Agent）
 ENV JAVA_OPTS="-Xms512m -Xmx1024m"

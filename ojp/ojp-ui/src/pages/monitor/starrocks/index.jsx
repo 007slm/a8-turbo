@@ -13,8 +13,8 @@ import PrometheusChart from '../../../components/charts/PrometheusChart';
 const StarRocksMonitor = ({ duration = '1h' }) => {
     return (
         <MonitorLayout
-            title="数据仓库监控"
-            subtitle="分析型数据库性能指标"
+            title="数仓节点监控"
+            subtitle="分析型加速引擎性能指标"
         >
             {({ duration }) => (
                 <>
@@ -22,38 +22,42 @@ const StarRocksMonitor = ({ duration = '1h' }) => {
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col span={6}>
                             <MetricStatCard
-                                title="FE 节点数"
-                                query='starrocks_fe_node_num{state="alive"}'
+                                title="前端节点存活"
+                                query='count(up{job="starrocks", group="fe"})'
                                 unit="count"
                                 icon={<ClusterOutlined />}
                                 color="#52c41a"
+                                description="活跃的数仓管理节点数量"
                             />
                         </Col>
                         <Col span={6}>
                             <MetricStatCard
-                                title="BE 节点数"
-                                query='starrocks_be_alive_node_num'
+                                title="存储节点存活"
+                                query='count(up{job="starrocks", group="be"})'
                                 unit="count"
                                 icon={<HddOutlined />}
                                 color="#1677ff"
+                                description="活跃的数据存储与计算节点数量"
                             />
                         </Col>
                         <Col span={6}>
                             <MetricStatCard
-                                title="查询 QPS"
+                                title="数仓查询吞吐"
                                 query='rate(starrocks_fe_query_total[1m])'
                                 unit="count"
                                 icon={<SearchOutlined />}
                                 color="#faad14"
+                                description="每秒处理的分析查询数量"
                             />
                         </Col>
                         <Col span={6}>
                             <MetricStatCard
-                                title="活跃查询"
+                                title="实时执行查询"
                                 query='starrocks_fe_running_queries'
                                 unit="count"
                                 icon={<StarOutlined />}
                                 color="#722ed1"
+                                description="当前正在执行的 OLAP 分析任务"
                             />
                         </Col>
                     </Row>
@@ -62,42 +66,68 @@ const StarRocksMonitor = ({ duration = '1h' }) => {
                     <Row gutter={[16, 16]}>
                         <Col span={12}>
                             <PrometheusChart
-                                title="查询 QPS 趋势"
+                                title="查询吞吐量趋势"
                                 query='rate(starrocks_fe_query_total[1m])'
                                 duration={duration}
                                 unit="items"
                                 type="area"
                                 colors={['#faad14']}
+                                legendFunc={() => '每秒查询数'}
                             />
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="查询延迟 P99"
-                                query='histogram_quantile(0.99, rate(starrocks_fe_query_latency_bucket[5m]))'
+                                title="长尾查询延迟 (P99)"
+                                query='starrocks_fe_query_latency_ms{quantile="0.99"}'
                                 duration={duration}
                                 unit="ms"
                                 type="line"
                                 colors={['#cf1322']}
+                                legendFunc={(metric) => metric.quantile === '0.99' ? 'P99 延迟' : '查询延迟'}
                             />
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="BE CPU 使用率"
-                                query='100 - (starrocks_be_cpu_idle * 100)'
+                                title="存储节点 CPU 负载"
+                                query='100 - (rate(starrocks_be_cpu{mode="idle"}[5m]) * 100)'
                                 duration={duration}
                                 unit="percent"
                                 type="line"
                                 colors={['#1677ff']}
+                                legendFunc={() => 'CPU 使用率'}
                             />
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="数据导入速率"
-                                query='rate(starrocks_fe_load_finished_total[5m])'
+                                title="管理节点状态趋势"
+                                query='count(up{job="starrocks", group="fe"})'
+                                duration={duration}
+                                unit="count"
+                                type="line"
+                                colors={['#52c41a']}
+                                legendFunc={() => '节点数量'}
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <PrometheusChart
+                                title="数据导入与同步速率"
+                                query='rate(starrocks_fe_load_finished[5m])'
                                 duration={duration}
                                 unit="items"
                                 type="area"
                                 colors={['#52c41a']}
+                                legendFunc={() => '每秒导入数'}
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <PrometheusChart
+                                title="存储节点状态趋势"
+                                query='count(up{job="starrocks", group="be"})'
+                                duration={duration}
+                                unit="count"
+                                type="line"
+                                colors={['#1677ff']}
+                                legendFunc={() => '节点数量'}
                             />
                         </Col>
                     </Row>

@@ -27,6 +27,7 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                                 unit="count"
                                 icon={<LineChartOutlined />}
                                 color="#1677ff"
+                                description="时间序列 (Time Series) 数量"
                             />
                         </Col>
                         <Col span={6}>
@@ -36,24 +37,27 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                                 unit="count"
                                 icon={<DatabaseOutlined />}
                                 color="#52c41a"
+                                description="已追加的样本总数"
                             />
                         </Col>
                         <Col span={6}>
                             <MetricStatCard
-                                title="Scrape 目标数"
+                                title="采集目标数"
                                 query='count(up)'
                                 unit="count"
                                 icon={<ApiOutlined />}
                                 color="#faad14"
+                                description="当前活跃的采集目标"
                             />
                         </Col>
                         <Col span={6}>
                             <MetricStatCard
-                                title="Scrape 间隔"
+                                title="采集间隔"
                                 query='prometheus_target_interval_length_seconds{quantile="0.99"}'
                                 unit="s"
                                 icon={<ClockCircleOutlined />}
                                 color="#722ed1"
+                                description="P99 采集间隔耗时"
                             />
                         </Col>
                     </Row>
@@ -62,7 +66,7 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                     <Row gutter={[16, 16]}>
                         <Col span={12}>
                             <PrometheusChart
-                                title="时间序列数趋势"
+                                title="时间序列趋势"
                                 query='prometheus_tsdb_head_series'
                                 duration={duration}
                                 unit="items"
@@ -72,7 +76,7 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="样本摄入速率"
+                                title="数据摄入速率"
                                 query='rate(prometheus_tsdb_head_samples_appended_total[5m])'
                                 duration={duration}
                                 unit="items"
@@ -82,7 +86,7 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="Scrape 耗时"
+                                title="采集任务耗时"
                                 query='prometheus_target_interval_length_seconds{quantile="0.99"}'
                                 duration={duration}
                                 unit="s"
@@ -92,7 +96,7 @@ const PrometheusMonitor = ({ duration = '1h' }) => {
                         </Col>
                         <Col span={12}>
                             <PrometheusChart
-                                title="存储块数量"
+                                title="数据块加载量"
                                 query='prometheus_tsdb_blocks_loaded'
                                 duration={duration}
                                 unit="items"

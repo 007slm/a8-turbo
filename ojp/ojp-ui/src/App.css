@@ -84,19 +84,19 @@
   .header-left {
     gap: 8px;
   }
-  
+
   .header-right {
     gap: 8px;
   }
-  
+
   .user-info {
     padding: 6px 8px;
   }
-  
+
   .user-name {
     display: none;
   }
-  
+
   .breadcrumb {
     font-size: 14px;
   }
@@ -106,12 +106,112 @@
   .header-left {
     gap: 4px;
   }
-  
+
   .header-right {
     gap: 4px;
   }
-  
+
   .status-indicator {
     display: none;
   }
+}
+
+/* 头部状态指示器优化 - 极简呼吸点风格 */
+.header-status-pill {
+  padding: 0 12px !important;
+  height: 26px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 24px !important;
+  border-radius: 99px !important;
+
+  /* 覆盖原有颜色样式，使用更中性的风格 */
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  color: #475569 !important;
+  /* 字体颜色加深 */
+  /* backdrop-filter: blur(4px); */
+  /* 可选 */
+
+  /* Flex布局 */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  transition: all 0.3s ease;
+}
+
+.header-status-pill:hover {
+  background: #fff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transform: translateY(-0.5px);
+}
+
+/* 状态点动画 */
+@keyframes status-pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes status-pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* 使用伪元素制作状态点 */
+.header-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 成功状态 */
+.header-status-pill.status-success {
+  color: #334155 !important;
+}
+
+.header-status-pill.status-success::before {
+  background-color: #10b981;
+  /* Emerald 500 */
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+  animation: status-pulse-green 2s infinite;
+}
+
+/* 失败状态 */
+.header-status-pill.status-danger {
+  color: #334155 !important;
+}
+
+.header-status-pill.status-danger::before {
+  background-color: #ef4444;
+  /* Red 500 */
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2);
+  animation: status-pulse-red 2s infinite;
+}
+
+/* 默认状态/加载中 */
+.header-status-pill.status-default::before {
+  background-color: #94a3b8;
+  /* Slate 400 */
 }

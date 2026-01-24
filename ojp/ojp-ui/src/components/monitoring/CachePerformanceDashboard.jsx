@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { 
-  Card, 
-  Row, 
-  Col, 
+import {
+  Card,
+  Row,
+  Col,
   Tabs,
   Button,
   Space,
@@ -88,15 +88,15 @@ const CachePerformanceDashboard = () => {
           </Col>
           <Col>
             <Space>
-              <Button 
-                icon={<ReloadOutlined />} 
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={handleGlobalRefresh}
                 loading={loading}
                 type="primary"
               >
                 全局刷新
               </Button>
-              <Button 
+              <Button
                 danger
                 onClick={handleResetAllStats}
                 disabled={loading}
@@ -141,19 +141,19 @@ const CachePerformanceDashboard = () => {
 
       {/* 监控面板标签页 */}
       <Spin spinning={loading}>
-        <Tabs 
-          defaultActiveKey="overview" 
+        <Tabs
+          defaultActiveKey="overview"
           size="large"
           tabBarStyle={{ marginBottom: '16px' }}
         >
           {/* 缓存管理 */}
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <DashboardOutlined />
                 缓存管理
               </span>
-            } 
+            }
             key="cache-management"
           >
             <Card>
@@ -167,19 +167,19 @@ const CachePerformanceDashboard = () => {
           </TabPane>
 
           {/* 系统监控 */}
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <DatabaseOutlined />
                 系统监控
               </span>
-            } 
+            }
             key="system-monitoring"
           >
             <Card>
               <Alert
                 message="系统监控功能"
-                description="此面板将显示系统级别的监控信息，包括JVM状态、内存使用、线程池状态等。"
+                description="此面板将显示系统级别的监控信息，包括运行环境状态、内存使用、线程池状态等。"
                 type="info"
                 showIcon
               />

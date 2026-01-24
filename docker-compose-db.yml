@@ -12,7 +12,7 @@ services:
   # --------------------------------------------------------------------------
 
   oracle:
-    image: gvenzl/oracle-xe:21-slim
+    image: gvenzl/oracle-xe:11-slim
     hostname: oracle
     container_name: oracle
     networks:
@@ -52,8 +52,6 @@ services:
       - MYSQL_USER=smartcache
       - MYSQL_PASSWORD=smartcache
       - MYSQL_DATABASE=smartcache
-      # cd /opt/flink-cdc  ./bin/flink-cdc.sh --jar /opt/flink-cdc/lib/mysql-connector-java.jar --flink-home $FLINK_HOME /opt/flink_jobs/mysql-to-nats-consume-to-starrocks.yaml
-
 
   mysql5:
     image: mysql:5.7

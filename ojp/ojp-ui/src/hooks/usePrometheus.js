@@ -38,8 +38,14 @@ export const usePrometheus = ({
             if (result && result.status === 'success') {
                 setData(result.data);
                 setError(null);
+            } else if (result && result.status === 'error') {
+                console.warn('[usePrometheus] Query returned error:', result.error);
+                setData(null);
+                setError(result.error);
             } else {
-                throw new Error(result?.error || 'Unknown Prometheus error');
+                console.warn('[usePrometheus] Unexpected response format:', result);
+                setData(null);
+                setError('Unexpected response format');
             }
         } catch (err) {
             console.error('[usePrometheus] Fetch error:', err);

@@ -18,7 +18,7 @@ services:
         ipv4_address: 172.24.0.10
 
     depends_on:
-      - a8-dbproxy
+      - ojp-server
       - shopservice
       - grafana
       - prometheus

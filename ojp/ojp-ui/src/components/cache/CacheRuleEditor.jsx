@@ -16,8 +16,24 @@ import {
   Tooltip,
   Typography,
   message,
+  Row,
+  Col,
+  Pagination
 } from 'antd'
-import { ArrowLeftOutlined, FilterOutlined, ReloadOutlined, SaveOutlined } from '@ant-design/icons'
+import {
+  ArrowLeftOutlined,
+  FilterOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  EyeOutlined,
+  CopyOutlined,
+  CheckCircleOutlined,
+  FireOutlined,
+  WarningOutlined,
+  AppstoreOutlined,
+  ClockCircleOutlined,
+  CheckOutlined
+} from '@ant-design/icons'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery } from 'react-query'
 import {
@@ -27,10 +43,21 @@ import {
   ProFormTextArea,
   ProFormSelect,
   ProFormSwitch,
-  ProList,
   ProCard
 } from '@ant-design/pro-components'
+import { AgGridReact } from 'ag-grid-react'
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { format } from 'sql-formatter'
 import { cacheApi, ruleApi } from '../../services/api'
+
+// 引入 ag-Grid 样式
+import 'ag-grid-community/styles/ag-grid.css'
+import 'ag-grid-community/styles/ag-theme-alpine.css'
+
+// 注册 ag-Grid 模块
+ModuleRegistry.registerModules([AllCommunityModule])
 
 const { Text, Paragraph } = Typography
 const { Search } = Input
@@ -41,14 +68,27 @@ const RULE_TYPE = {
   TABLES_ANY: 'TABLES_ANY',
 }
 
-const truncate = (value = '', length = 120) => {
-  if (!value) return ''
-  return value.length > length ? `${value.slice(0, length)}…` : value
+// ----------------------------------------------------------------------
+// 辅助函数 (从 QueryCache 复用)
+// ----------------------------------------------------------------------
+
+// 格式化 SQL
+const formatSql = (sql) => {
+  try {
+    return format(sql, { language: 'sql' })
+  } catch (e) {
+    return sql
+  }
 }
 
-const formatExecutionTime = (time) => {
-  if (time === undefined || time === null) return '-'
-  return `${time} ms`
+// 截断 SQL (用于摘要)
+const truncateSql = (sql) => {
+  if (!sql) return ''
+  const lines = sql.split('\n')
+  if (lines.length > 3) {
+    return lines.slice(0, 3).join('\n') + '\n...'
+  }
+  return sql
 }
 
 const formatTimestamp = (timestamp) => {
@@ -58,11 +98,148 @@ const formatTimestamp = (timestamp) => {
   return date.toLocaleString('zh-CN')
 }
 
-const parseTables = (tableNames = '') =>
-  tableNames
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean)
+// ----------------------------------------------------------------------
+// 组件：SqlEventCard (适配选择模式)
+// ----------------------------------------------------------------------
+
+const SqlEventCard = ({ query, isSelected, onToggleSelect, onViewDetail }) => {
+  const executionTime = query.executionTime || 0
+
+  // 视觉状态
+  let timeColor = '#8c8c8c' // 默认灰色
+  let statusTag = <Tag icon={<CheckCircleOutlined />} color="default">常规</Tag>
+
+  if (executionTime > 5000) {
+    timeColor = '#ff4d4f' // 红色
+    statusTag = <Tag icon={<FireOutlined />} color="error">严重</Tag>
+  } else if (executionTime > 1000) {
+    timeColor = '#faad14' // 橙色
+    statusTag = <Tag icon={<WarningOutlined />} color="warning">缓慢</Tag>
+  }
+
+  // 去噪 SQL (用于展示)
+  const displaySql = useMemo(() => {
+    return truncateSql(query.sql)
+  }, [query.sql])
+
+  return (
+    <div
+      style={{
+        borderBottom: '1px solid #f0f0f0',
+        padding: '12px 16px',
+        height: '100%',
+        boxSizing: 'border-box',
+        cursor: 'pointer',
+        position: 'relative',
+        transition: 'all 0.2s',
+        // 选中样式
+        background: isSelected ? '#e6f7ff' : undefined,
+        border: isSelected ? '1px solid #1890ff' : '1px solid transparent',
+        borderBottom: isSelected ? '1px solid #1890ff' : '1px solid #f0f0f0'
+      }}
+      onClick={() => onToggleSelect(query)}
+    >
+      {/* 选中标记 */}
+      {isSelected && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: 0,
+          height: 0,
+          borderStyle: 'solid',
+          borderWidth: '0 40px 40px 0',
+          borderColor: 'transparent #1890ff transparent transparent',
+          zIndex: 1
+        }}>
+          <CheckOutlined style={{ position: 'absolute', top: 8, right: -36, color: '#fff', fontSize: 16 }} />
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <Space size={12} align="center">
+          <span style={{ fontSize: 20, fontWeight: 'bold', color: timeColor, fontFamily: 'monospace' }}>
+            {executionTime}ms
+          </span>
+          {statusTag}
+          {query.tableNames && query.tableNames.split(',').slice(0, 2).map(t => (
+            <Tag key={t} onClick={(e) => {
+              e.stopPropagation()
+              message.info(`筛选表: ${t}`)
+            }} style={{ cursor: 'pointer' }}>
+              {t.trim()}
+            </Tag>
+          ))}
+        </Space>
+        <Space size={16} style={{ marginRight: isSelected ? 24 : 0 }}>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {new Date(parseInt(query.timestamp)).toLocaleString()}
+          </Text>
+          <Tooltip title="查看详情">
+            <Button
+              type="text"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                onViewDetail(query)
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="复制 SQL">
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={(e) => {
+                e.stopPropagation()
+                navigator.clipboard.writeText(query.sql)
+                message.success('SQL 已复制')
+              }}
+            />
+          </Tooltip>
+        </Space>
+      </div>
+
+      {/* Body */}
+      <div
+        style={{
+          padding: 8,
+          borderRadius: 4,
+          position: 'relative'
+        }}
+      >
+        <div style={{ fontSize: 13, fontFamily: 'monospace', color: '#333' }}>
+          <div style={{ whiteSpace: 'pre-wrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {/* 简易高亮关键字 */}
+            {displaySql.split(/(\s+)/).map((part, i) => {
+              const upper = part.toUpperCase()
+              if (['SELECT', 'FROM', 'WHERE', 'AND', 'OR', 'JOIN', 'LEFT', 'RIGHT', 'INNER', 'ON', 'GROUP', 'ORDER', 'BY', 'LIMIT'].includes(upper)) {
+                return <span key={i} style={{ color: '#096dd9', fontWeight: 'bold' }}>{part}</span>
+              }
+              return part
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Meta (业务语义) */}
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: '#595959' }}>
+        <div style={{ flex: 1, marginRight: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Tooltip title={query.connHash}>
+            <span><AppstoreOutlined /> 🔌 连接: {query.connHash || 'Unknown'}</span>
+          </Tooltip>
+        </div>
+        <div style={{ flexShrink: 0 }}>
+          <Tag icon={<ClockCircleOutlined />} color={query.inTransaction ? 'processing' : 'default'} style={{ margin: 0 }}>
+            {query.inTransaction ? '事务中' : '非事务'}
+          </Tag>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const CacheRuleEditor = () => {
   const navigate = useNavigate()
@@ -90,6 +267,38 @@ const CacheRuleEditor = () => {
     pageSize: DEFAULT_PAGE_SIZE,
   })
   const [queryDetailId, setQueryDetailId] = useState(null)
+  const [gridApi, setGridApi] = useState(null)
+
+  // 动态高度
+  const gridContainerRef = useRef(null)
+  const [gridHeight, setGridHeight] = useState(500)
+
+  // 监听选中变化，强制刷新行以更新UI状态
+  useEffect(() => {
+    if (gridApi) {
+      gridApi.redrawRows()
+    }
+  }, [selectedQueriesMap, gridApi])
+
+  // 监听容器高度变化
+  useEffect(() => {
+    // 简单的自适应高度计算
+    const updateHeight = () => {
+      if (!gridContainerRef.current) return
+      const vh = window.innerHeight
+      const top = gridContainerRef.current.getBoundingClientRect().top
+      // 预留底部 padding
+      const height = Math.max(400, vh - top - 100)
+      setGridHeight(height)
+    }
+
+    updateHeight()
+    window.addEventListener('resize', updateHeight)
+    // 延迟一次计算以确保 DOM 渲染完成
+    setTimeout(updateHeight, 500)
+
+    return () => window.removeEventListener('resize', updateHeight)
+  }, [currentRuleType]) // 规则类型切换时重新计算
 
   const selectedQueries = useMemo(
     () => Object.values(selectedQueriesMap),
@@ -136,6 +345,7 @@ const CacheRuleEditor = () => {
     }
   )
 
+  // 详情数据查询
   const {
     data: queryDetail,
     isLoading: queryDetailLoading,
@@ -174,13 +384,6 @@ const CacheRuleEditor = () => {
     return (filtersData?.connHashes ?? []).map((conn) => ({
       label: conn,
       value: conn,
-    }))
-  }, [filtersData])
-
-  const queryTypeOptions = useMemo(() => {
-    return (filtersData?.queryTypes ?? []).map((type) => ({
-      label: type,
-      value: type,
     }))
   }, [filtersData])
 
@@ -350,7 +553,7 @@ const CacheRuleEditor = () => {
   }
 
   const isEditing = Boolean(editingRule?.id)
-  const ruleHeading = isEditing ? '编辑缓存规则' : '创建缓存规则'
+  const ruleHeading = isEditing ? '编辑加速策略' : '创建加速策略'
   const detailRecord = queryDetail || {}
 
   // Merge selected items with current page items to ensure checked state visibility
@@ -361,13 +564,44 @@ const CacheRuleEditor = () => {
     return pageItems
   }, [isQueryRule, queriesPage])
 
-  const slowQueriesLoading = queriesInitialLoading || queriesFetching
+  // Cell Renderer (Wrapper for SqlEventCard)
+  const CardCellRenderer = (props) => {
+    const { data, node, context } = props
+    const { selectedQueriesMap, toggleQuerySelection, setQueryDetailId } = context
+
+    // 计算斑马纹背景色
+    const isOdd = node.rowIndex % 2 !== 0
+    // 如果选中，优先使用选中背景，否则使用斑马纹
+    const isSelected = !!selectedQueriesMap[data.id]
+    const backgroundColor = isSelected ? undefined : (isOdd ? '#fffbe6' : '#ffffff')
+
+    return (
+      <div style={{ padding: '0 8px 12px 8px', height: '100%', boxSizing: 'border-box', backgroundColor }}>
+        <SqlEventCard
+          query={data}
+          isSelected={isSelected}
+          onToggleSelect={toggleQuerySelection}
+          onViewDetail={(q) => setQueryDetailId(q.id)}
+        />
+      </div>
+    )
+  }
+
+  const columnDefs = useMemo(() => [
+    {
+      field: 'cardData',
+      cellRenderer: CardCellRenderer,
+      flex: 1,
+      autoHeight: true,
+      wrapText: true
+    }
+  ], []) // 移除依赖，使用 context 传递状态
 
   return (
     <PageContainer
       header={{
         title: ruleHeading,
-        subTitle: isEditing ? `ID: ${editingRule.id}` : '新建一条缓存优化规则',
+        subTitle: isEditing ? `ID: ${editingRule.id}` : '新建一条只能加速策略',
         onBack: () => navigate('/cache/rules'),
       }}
     >
@@ -417,6 +651,10 @@ const CacheRuleEditor = () => {
               options={connectionOptions}
               rules={[{ required: true, message: '请选择数据库连接' }]}
               showSearch
+              fieldProps={{
+                dropdownMatchSelectWidth: false,
+                optionLabelProp: 'label'
+              }}
             />
           </ProForm.Group>
           <ProFormTextArea
@@ -484,99 +722,114 @@ const CacheRuleEditor = () => {
               <Button type="primary" ghost onClick={() => refetchSlowQueries()}>查询</Button>
             </div>
 
-            <ProList
-              rowKey="id"
-              headerTitle="慢查询列表"
-              dataSource={mergedSlowQueryItems}
-              loading={slowQueriesLoading}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: queriesPage?.total || 0,
-                onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
-              }}
-              rowSelection={{
-                selectedRowKeys: selectedQueryIds,
-                onSelect: (record) => toggleQuerySelection(record),
-                preserveSelectedRowKeys: true,
-              }}
-              metas={{
-                title: {
-                  render: (_, row) => (
-                    <Paragraph copyable={{ text: row.sql }} ellipsis={{ rows: 2, expandable: true, symbol: '展开' }} style={{ marginBottom: 0 }}>
-                      {row.sql}
-                    </Paragraph>
-                  )
-                },
-                subTitle: {
-                  render: (_, row) => (
-                    <Space size={4}>
-                      <Tag color={row.queryType === 'SELECT' ? 'green' : 'blue'}>{row.queryType}</Tag>
-                      <Tag color={row.executionTime > 1000 ? 'red' : 'orange'}>{row.executionTime}ms</Tag>
-                      <Tag>{truncate(row.connHash, 8)}</Tag>
-                    </Space>
-                  )
-                },
-                description: {
-                  render: (_, row) => (
-                    <Space direction="vertical" style={{ width: '100%', fontSize: 12 }}>
-                      <Text type="secondary">时间: {formatTimestamp(row.timestamp)}</Text>
-                      {row.normalizedSql && row.normalizedSql !== row.sql && (
-                        <Text type="secondary" ellipsis>Normalized: {row.normalizedSql}</Text>
-                      )}
-                    </Space>
-                  )
-                },
-                actions: {
-                  render: (_, row) => [
-                    <a key="detail" onClick={() => setQueryDetailId(row.id)}>详情</a>
-                  ],
-                },
-              }}
-              onRow={(record) => ({
-                onClick: () => toggleQuerySelection(record),
-              })}
-              // Highlighting selected rows
-              rowClassName={(record) => selectedQueriesMap[record.id] ? 'ant-table-row-selected' : ''}
-            />
+            {/* ag-Grid Replacement */}
+            <div
+              ref={gridContainerRef}
+              className="ag-theme-alpine"
+              style={{ width: '100%', height: gridHeight, border: '1px solid #d9d9d9' }}
+            >
+              <style>{`
+                 .ag-theme-alpine .ag-row { border-bottom-style: none !important; }
+                 .ag-theme-alpine .ag-cell { border: none !important; padding: 0 !important; }
+                 .ag-theme-alpine .ag-root-wrapper { border: none !important; }
+                 .ag-theme-alpine .ag-viewport { overflow-y: scroll !important; }
+               `}</style>
+              <AgGridReact
+                theme="legacy"
+                rowData={mergedSlowQueryItems}
+                columnDefs={columnDefs}
+                context={{ selectedQueriesMap, toggleQuerySelection, setQueryDetailId }}
+                gridOptions={{
+                  headerHeight: 0,
+                  suppressCellFocus: true,
+                  suppressRowClickSelection: true
+                }}
+                headerHeight={0}
+                rowBuffer={10}
+                overlayLoadingTemplate={'<span class="ag-overlay-loading-center">加载中...</span>'}
+                overlayNoRowsTemplate={'<span class="ag-overlay-no-rows-center">暂无数据</span>'}
+                style={{ width: '100%', height: '100%' }}
+                onGridReady={(params) => setGridApi(params.api)}
+              />
+            </div>
+
+            {/* Pagination Controls */}
+            <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
+              <Pagination
+                current={pagination.current}
+                pageSize={pagination.pageSize}
+                total={queriesPage?.total || 0}
+                onChange={(page, pageSize) => setPagination({ current: page, pageSize })}
+                showSizeChanger
+                showTotal={(total) => `共 ${total} 条`}
+              />
+            </div>
+
           </ProCard>
         )}
       </ProForm>
 
+      {/* Detail Drawer (Enhanced) */}
       <Drawer
-        title="慢查询详情"
-        width={640}
+        title="SQL 详情"
+        placement="right"
+        width={800}
         open={Boolean(queryDetailId)}
         onClose={() => setQueryDetailId(null)}
         destroyOnClose
       >
         <Spin spinning={queryDetailLoading}>
-          {detailRecord?.id ? (
-            <Descriptions column={1} size="small" bordered>
-              <Descriptions.Item label="SQL">
-                <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-                  {detailRecord.sql}
-                </Typography.Paragraph>
+          {detailRecord?.id && (
+            <Descriptions column={1} bordered size="small" labelStyle={{ width: '120px' }}>
+              <Descriptions.Item label="执行信息">
+                <Space size={24}>
+                  <Statistic title="总耗时" value={detailRecord.executionTime} suffix="ms" valueStyle={{ color: '#cf1322', fontSize: 16 }} />
+                  <Statistic title="返回行数" value={'-'} valueStyle={{ fontSize: 16 }} />
+                  <Statistic title="执行次数" value={1} valueStyle={{ fontSize: 16 }} />
+                </Space>
               </Descriptions.Item>
-              <Descriptions.Item label="标准化 SQL">
-                {detailRecord.normalizedSql || <Text type="secondary">-</Text>}
+
+              <Descriptions.Item label="原始 SQL">
+                <div style={{ maxHeight: 400, overflow: 'auto' }}>
+                  <SyntaxHighlighter language="sql" style={vscDarkPlus} wrapLongLines customStyle={{ margin: 0 }}>
+                    {formatSql(detailRecord.sql)}
+                  </SyntaxHighlighter>
+                </div>
               </Descriptions.Item>
-              <Descriptions.Item label="参数">
-                {detailRecord.parameters ? (
-                  <Typography.Paragraph style={{ marginBottom: 0 }}>
-                    {detailRecord.parameters}
-                  </Typography.Paragraph>
-                ) : <Text type="secondary">无</Text>}
+
+              <Descriptions.Item label="调用上下文">
+                <Text type="secondary" copyable>{detailRecord.connHash}</Text>
               </Descriptions.Item>
+
+              {detailRecord.tableNames && (
+                <Descriptions.Item label="涉及表">
+                  <Space wrap>
+                    {detailRecord.tableNames.split(',').map(t => (
+                      <Tag key={t}>{t.trim()}</Tag>
+                    ))}
+                  </Space>
+                </Descriptions.Item>
+              )}
+
+              <Descriptions.Item label="事务状态">
+                <Tag color={detailRecord.inTransaction ? 'processing' : 'default'}>
+                  {detailRecord.inTransaction ? '事务中' : '非事务'}
+                </Tag>
+              </Descriptions.Item>
+
+              <Descriptions.Item label="时间戳">
+                {new Date(parseInt(detailRecord.timestamp)).toLocaleString()}
+              </Descriptions.Item>
+
               <Descriptions.Item label="调用栈">
                 {detailRecord.stackTrace ? (
-                  <Typography.Paragraph ellipsis={{ rows: 2, expandable: true, symbol: '更多' }}>
+                  <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: '更多' }} style={{ fontFamily: 'monospace', fontSize: 12 }}>
                     {detailRecord.stackTrace}
-                  </Typography.Paragraph>
+                  </Paragraph>
                 ) : <Text type="secondary">-</Text>}
               </Descriptions.Item>
             </Descriptions>
-          ) : <Empty />}
+          )}
         </Spin>
       </Drawer>
     </PageContainer>

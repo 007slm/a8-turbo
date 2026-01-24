@@ -1,5 +1,7 @@
 USE `Chinook`;
 
+
+
 SET @target_dim := 100000;
 SET @target_invoice := 100000;
 SET @target_playlist_track := 300000;
@@ -331,7 +333,7 @@ ORDER BY inv.InvoiceId, line_no;
 -- Update totals for new invoices to match invoice lines
 UPDATE Invoice AS i
 SET Total = (
-    SELECT ROUND(SUM(il.UnitPrice * il.Quantity), 2)
+    SELECT COALESCE(ROUND(SUM(il.UnitPrice * il.Quantity), 2), 0)
     FROM InvoiceLine AS il
     WHERE il.InvoiceId = i.InvoiceId
 )
@@ -365,133 +367,6 @@ WHERE EXISTS (
       AND il.InvoiceLineId > @invoice_line_id - @invoice_line_remaining
 );
 
--- Expand Users
-SET @user_need := GREATEST(@target_dim - (SELECT COUNT(*) FROM users), 0);
-SET @user_id := (SELECT IFNULL(MAX(id), 0) FROM users);
 
-INSERT INTO users (id, email, username)
-SELECT
-    @user_id := @user_id + 1 AS id,
-    CONCAT('user', @user_id, '@chinookshop.local') AS email,
-    CONCAT('user_', LPAD(@user_id, 6, '0')) AS username
-FROM tmp_numbers
-WHERE @user_need > 0
-ORDER BY idx
-LIMIT 100000;
-
-SET @user_total := (SELECT COUNT(*) FROM users);
-
--- Expand Products
-SET @product_need := GREATEST(@target_dim - (SELECT COUNT(*) FROM products), 0);
-SET @product_id := (SELECT IFNULL(MAX(id), 0) FROM products);
-
-INSERT INTO products (id, name, price)
-SELECT
-    @product_id := @product_id + 1 AS id,
-    CONCAT('Product ', LPAD(@product_id, 6, '0')) AS name,
-    ROUND(5 + ((@product_id % 200) * 0.95), 2) AS price
-FROM tmp_numbers
-WHERE @product_need > 0
-ORDER BY idx
-LIMIT 100000;
-
-SET @product_total := (SELECT COUNT(*) FROM products);
-
--- Expand Orders
-SET @order_need := GREATEST(@target_dim - (SELECT COUNT(*) FROM orders), 0);
-SET @order_id := (SELECT IFNULL(MAX(id), 0) FROM orders);
-SET @order_start := @order_id;
-
-INSERT INTO orders (id, order_date, user_id)
-SELECT
-    @order_id := @order_id + 1 AS id,
-    DATE_ADD('2016-01-01', INTERVAL (@order_id - 1) HOUR) AS order_date,
-    1 + ((@order_id - 1) % @user_total) AS user_id
-FROM tmp_numbers
-WHERE @order_need > 0
-ORDER BY idx
-LIMIT 100000;
-
-SET @order_total := (SELECT COUNT(*) FROM orders);
-
--- Expand Order Items for new orders
-SET @order_item_need := GREATEST(@target_order_items - (SELECT COUNT(*) FROM order_items), 0);
-SET @order_item_id := (SELECT IFNULL(MAX(id), 0) FROM order_items);
-SET @first_new_order := @order_start + 1;
-
-INSERT INTO order_items (id, quantity, order_id, product_id)
-SELECT
-    @order_item_id := @order_item_id + 1 AS id,
-    1 + ((new_orders.id + item.offset) % 7) AS quantity,
-    new_orders.id AS order_id,
-    1 + ((new_orders.id + item.offset) % @product_total) AS product_id
-FROM (
-         SELECT @first_new_order + idx AS id
-         FROM tmp_numbers
-         WHERE idx < @order_need
-         ORDER BY idx
-     ) AS new_orders
-         JOIN (
-    SELECT 0 AS offset
-    UNION ALL SELECT 1
-    UNION ALL SELECT 2
-    UNION ALL SELECT 3
-) AS item
-WHERE @order_need > 0
-ORDER BY new_orders.id, item.offset;
-
-INSERT INTO order_items (id, quantity, order_id, product_id)
-SELECT
-    @order_item_id := @order_item_id + 1 AS id,
-    1 + ((@order_item_id + idx) % 5) AS quantity,
-    1 + ((@order_item_id + idx) % @order_total) AS order_id,
-    1 + ((@order_item_id + idx * 3) % @product_total) AS product_id
-FROM tmp_numbers
-WHERE @order_item_need > 0
-ORDER BY idx
-LIMIT 100000;
-
--- Update totals for new orders to match order items
-UPDATE orders AS o
-SET Total = (
-    SELECT ROUND(SUM(oi.quantity * p.price), 2)
-    FROM order_items AS oi 
-    JOIN products AS p ON oi.product_id = p.id
-    WHERE oi.order_id = o.id
-)
-WHERE o.id >= @first_new_order;
-
-SET @order_item_total := (SELECT COUNT(*) FROM order_items);
-SET @order_item_remaining := GREATEST(@target_order_items - @order_item_total, 0);
-
-UPDATE orders AS o
-SET Total = (
-    SELECT ROUND(SUM(oi.quantity * p.price), 2)
-    FROM order_items AS oi 
-    JOIN products AS p ON oi.product_id = p.id
-    WHERE oi.order_id = o.id
-)
-WHERE EXISTS (
-    SELECT 1
-    FROM order_items AS oi
-    WHERE oi.order_id = o.id
-      AND oi.id > @order_item_id - @order_item_remaining
-);
-
--- Expand Reviews
-SET @review_need := GREATEST(@target_dim - (SELECT COUNT(*) FROM reviews), 0);
-SET @review_id := (SELECT IFNULL(MAX(id), 0) FROM reviews);
-
-INSERT INTO reviews (id, comment, rating, product_id, user_id)
-SELECT
-    @review_id := @review_id + 1 AS id,
-    CONCAT('Synthetic review ', LPAD(@review_id, 6, '0')) AS comment,
-    1 + ((@review_id) % 5) AS rating,
-    1 + ((@review_id) % @product_total) AS product_id,
-    1 + ((@review_id) % @user_total) AS user_id
-FROM tmp_numbers
-WHERE @review_need > 0
-ORDER BY idx
-LIMIT 100000;
 
 DROP TEMPORARY TABLE IF EXISTS tmp_numbers;

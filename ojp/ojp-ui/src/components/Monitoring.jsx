@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Typography,
   Row,
@@ -7,76 +7,39 @@ import {
   Space,
   Button,
   Spin,
-  Tabs,
-  Select,
-  Empty,
-  Input,
   Card,
   Tag,
   Tooltip,
+  Select,
 } from 'antd'
+
+const { Option } = Select
 import {
   MonitorOutlined,
   ReloadOutlined,
   BarChartOutlined,
   ThunderboltOutlined,
   ClockCircleOutlined,
-  AppstoreOutlined,
-  SearchOutlined,
-  QuestionCircleOutlined,
-  CloudOutlined,
-  DatabaseOutlined,
   DashboardOutlined,
-  GlobalOutlined,
-  LinkOutlined,
   RocketOutlined,
-  ClusterOutlined,
-  CloudServerOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
 import { monitoringApi } from '../services/api'
 import { useNavigate } from 'react-router-dom'
 import SystemOverview from './monitoring/SystemOverview'
-import JvmInfo from './monitoring/JvmInfo'
-import MemoryUsage from './monitoring/MemoryUsage'
-import ThreadInfo from './monitoring/ThreadInfo'
-import GcInfo from './monitoring/GcInfo'
-import MetricDetails from './monitoring/MetricDetails'
-import HikariCPMonitoring from './monitoring/HikariCPMonitoring'
 import OjpBusinessMetrics from './monitoring/OjpBusinessMetrics'
 import { AuroraBackground, MagicCard, StatusPill } from './magicui'
 import PrometheusChart from './charts/PrometheusChart'
 
 const { Text, Title, Paragraph } = Typography
-const { Option } = Select
-const { TabPane } = Tabs
 
 
 
 const Monitoring = () => {
   const navigate = useNavigate()
   const [refreshKey, setRefreshKey] = useState(0)
-  const [activeTab, setActiveTab] = useState('jvm')
-  const [selectedMetric, setSelectedMetric] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [availableMetrics, setAvailableMetrics] = useState([])
   const [promDuration, setPromDuration] = useState('1h')
-
-  const {
-    data: allMetrics,
-    isLoading: allMetricsLoading,
-    refetch: refetchAllMetrics,
-  } = useQuery(['allMetrics', refreshKey], monitoringApi.getAllMetrics, {
-    enabled: true,
-  })
-
-  const {
-    data: metricDetails,
-    isLoading: metricDetailsLoading,
-    refetch: refetchMetricDetails,
-  } = useQuery(['metricDetails', selectedMetric, refreshKey], () => monitoringApi.getMetricDetails(selectedMetric), {
-    enabled: !!selectedMetric,
-  })
 
   const {
     data: healthInfo,
@@ -94,50 +57,6 @@ const Monitoring = () => {
     enabled: true,
   })
 
-  const { data: jvmInfo, isLoading: jvmLoading, refetch: refetchJvm } = useQuery(
-    ['jvm', refreshKey],
-    monitoringApi.getJvmInfo,
-    {
-      enabled: true,
-    }
-  )
-
-  const {
-    data: memoryInfo,
-    isLoading: memoryLoading,
-    refetch: refetchMemory,
-  } = useQuery(['memory', refreshKey], monitoringApi.getMemoryUsage, {
-    enabled: true,
-  })
-
-  const { data: threadInfo, isLoading: threadLoading, refetch: refetchThread } = useQuery(
-    ['threads', refreshKey],
-    monitoringApi.getThreadInfo,
-    {
-      enabled: true,
-    }
-  )
-
-  const { data: gcInfo, isLoading: gcLoading, refetch: refetchGc } = useQuery(['gc', refreshKey], monitoringApi.getGcInfo, {
-    enabled: true,
-  })
-
-  const {
-    data: dbPoolInfo,
-    isLoading: dbPoolLoading,
-    refetch: refetchDbPool,
-  } = useQuery(['dbPool', refreshKey], monitoringApi.getDbPoolInfo, {
-    enabled: true,
-  })
-
-  const {
-    data: httpStats,
-    isLoading: httpStatsLoading,
-    refetch: refetchHttpStats,
-  } = useQuery(['httpStats', refreshKey], monitoringApi.getHttpStats, {
-    enabled: true,
-  })
-
   const {
     data: businessMetrics,
     isLoading: businessLoading,
@@ -146,45 +65,14 @@ const Monitoring = () => {
     enabled: true,
   })
 
-  useEffect(() => {
-    if (allMetrics && allMetrics.names) {
-      setAvailableMetrics(allMetrics.names)
-      if (!selectedMetric && allMetrics.names.length > 0) {
-        setSelectedMetric(allMetrics.names[0])
-      }
-    }
-  }, [allMetrics, selectedMetric])
 
-  const handleRefreshAll = async () => {
-    try {
-      await Promise.all([
-        refetchAllMetrics(),
-        refetchHealth(),
-        refetchResources(),
-        refetchJvm(),
-        refetchMemory(),
-        refetchThread(),
-        refetchGc(),
-        refetchDbPool(),
-        refetchHttpStats(),
-        refetchBusiness(),
-        refetchMetricDetails(),
-      ])
-      setRefreshKey((prev) => prev + 1)
-    } catch (error) {
-      console.error('刷新监控数据失败:', error)
-    }
+
+  const handleRefreshAll = () => {
+    setRefreshKey((prev) => prev + 1)
+    refetchHealth()
+    refetchResources()
+    refetchBusiness()
   }
-
-  const handleMetricChange = (value) => {
-    setSelectedMetric(value)
-  }
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
-  }
-
-  const filteredMetrics = availableMetrics.filter((metric) => metric.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const formatDuration = (ms) => {
     if (!ms || ms === 0) return '0ms'
@@ -223,10 +111,22 @@ const Monitoring = () => {
   const diskUsage = Number(resources?.diskUsage ?? 0)
   const uptimeSeconds = Number(resources?.uptime ?? 0)
   const uptimeText = uptimeSeconds ? formatDuration(uptimeSeconds * 1000) : '运行时间准备中'
-  const metricsCount = availableMetrics.length
   const lastUpdatedLabel = resources?.timestamp
     ? new Date(resources.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
     : '尚未获取'
+
+  const cacheMetrics = (businessMetrics || []).filter((m) => m.category === 'cache')
+  const getMetricCount = (metrics, name) => {
+    const metric = metrics.find((m) => m.name === name)
+    if (!metric || !metric.measurements) return 0
+    const countM = metric.measurements.find((m) => m.statistic === 'COUNT')
+    return countM ? countM.value || 0 : metric.measurements[0]?.value || 0
+  }
+
+  const hits = getMetricCount(cacheMetrics, 'ojp.cache.hit')
+  const misses = getMetricCount(cacheMetrics, 'ojp.cache.miss')
+  const totalQueries = hits + misses
+  const hitRate = totalQueries > 0 ? (hits * 100) / totalQueries : 0
 
   const snapshotStats = [
     {
@@ -251,6 +151,20 @@ const Monitoring = () => {
       status: getStatusTone(diskUsage),
     },
     {
+      id: 'hit-rate',
+      label: '缓存命中率',
+      value: `${hitRate.toFixed(1)}%`,
+      meta: 'ojp.cache.hit_rate',
+      status: hitRate > 80 ? 'success' : hitRate > 50 ? 'default' : 'warning',
+    },
+    {
+      id: 'queries',
+      label: '业务查询总数',
+      value: totalQueries.toLocaleString(),
+      meta: 'ojp.cache.total',
+      status: 'default',
+    },
+    {
       id: 'uptime',
       label: '服务运行时长',
       value: uptimeText,
@@ -265,20 +179,10 @@ const Monitoring = () => {
 
   const heroPills = [
     uptimeSeconds ? { label: `运行 ${uptimeText}`, status: 'success' } : null,
-    threadInfo?.totalThreads ? { label: `线程 ${threadInfo.totalThreads}`, status: 'default' } : null,
-    metricsCount ? { label: `指标 ${metricsCount} 项`, status: 'default' } : null,
-    dbPoolInfo?.summary?.totalPools ? { label: `连接池 ${dbPoolInfo.summary.totalPools}`, status: 'default' } : null,
   ].filter(Boolean)
 
   const isLoading =
-    allMetricsLoading ||
     resourcesLoading ||
-    jvmLoading ||
-    memoryLoading ||
-    threadLoading ||
-    gcLoading ||
-    dbPoolLoading ||
-    httpStatsLoading ||
     businessLoading ||
     healthLoading
 
@@ -364,6 +268,7 @@ const Monitoring = () => {
               unit="items"
               type="area"
               colors={['#8884d8']}
+              height={300}
             />
           </Col>
           <Col span={12}>
@@ -373,6 +278,7 @@ const Monitoring = () => {
               duration={promDuration}
               unit="ms"
               colors={['#faad14']}
+              height={300}
             />
           </Col>
           <Col span={12}>
@@ -384,6 +290,7 @@ const Monitoring = () => {
               unit="bytes"
               type="line"
               colors={['#1677ff', '#2f54eb', '#722ed1']}
+              height={300}
             />
           </Col>
           <Col span={12}>
@@ -394,137 +301,34 @@ const Monitoring = () => {
               unit="items"
               type="line"
               colors={['#52c41a']}
+              height={300}
+            />
+          </Col>
+          <Col span={12}>
+            <PrometheusChart
+              title="缓存命中趋势"
+              query='sum(rate(ojp_cache_hit_total[1m])) / (sum(rate(ojp_cache_hit_total[1m])) + sum(rate(ojp_cache_miss_total[1m])))'
+              duration={promDuration}
+              unit="percent"
+              type="area"
+              colors={['#1890ff']}
+              height={300}
+            />
+          </Col>
+          <Col span={12}>
+            <PrometheusChart
+              title="业务 API 调用"
+              query='sum(rate(http_server_requests_seconds_count{uri!~"/api/actuator.*|/swagger.*|/api-docs.*"}[1m]))'
+              duration={promDuration}
+              unit="items"
+              type="line"
+              colors={['#fadb14']}
+              height={300}
             />
           </Col>
         </Row>
       </MagicCard>
 
-      <MagicCard
-        title="深入洞察"
-        description="通过标签页在 JVM、线程、连接池与业务视角间灵活切换"
-        icon={<AppstoreOutlined />}
-        extra={
-          <Space size={12}>
-            <StatusPill label={`刷新于 ${lastUpdatedLabel}`} status="default" />
-            <Button type="primary" icon={<ReloadOutlined />} onClick={handleRefreshAll} loading={isLoading}>
-              全量刷新
-            </Button>
-          </Space>
-        }
-      >
-        {isLoading ? (
-          <div className="monitoring-loading">
-            <Spin size="large" />
-            <Text type="secondary" style={{ marginTop: 12 }}>
-              正在聚合监控数据...
-            </Text>
-          </div>
-        ) : (
-          <Tabs activeKey={activeTab} onChange={setActiveTab} className="monitoring-tabs" destroyInactiveTabPane>
-
-
-            <TabPane tab="JVM 信息" key="jvm">
-              <JvmInfo jvmInfo={jvmInfo} loading={jvmLoading} />
-            </TabPane>
-
-            <TabPane tab="内存使用" key="memory">
-              <MemoryUsage memoryInfo={memoryInfo} loading={memoryLoading} />
-            </TabPane>
-
-            <TabPane tab="线程状态" key="threads">
-              <ThreadInfo threadInfo={threadInfo} loading={threadLoading} />
-            </TabPane>
-
-            <TabPane tab="GC 信息" key="gc">
-              <GcInfo gcInfo={gcInfo} loading={gcLoading} />
-            </TabPane>
-
-            <TabPane tab="数据库连接池" key="dbpool">
-              <HikariCPMonitoring dbPoolInfo={dbPoolInfo} loading={dbPoolLoading} />
-            </TabPane>
-
-            <TabPane tab="HTTP 统计" key="http">
-              <MagicCard
-                title="HTTP 请求统计"
-                description="聚合 Actuator http.server.requests 指标"
-                icon={<CloudOutlined />}
-                loading={httpStatsLoading}
-                size="small"
-              >
-                {httpStats ? (
-                  <Row gutter={[16, 16]}>
-                    <Col xs={24} md={8}>
-                      <Statistic title="总请求数" value={safeGet(httpStats, 'totalRequests', 0)} prefix={<ThunderboltOutlined />} />
-                    </Col>
-                    <Col xs={24} md={8}>
-                      <Statistic title="错误请求数" value={safeGet(httpStats, 'errorRequests', 0)} prefix={<MonitorOutlined />} />
-                    </Col>
-                    <Col xs={24} md={8}>
-                      <Statistic
-                        title="错误率"
-                        value={formatPercentage(safeGet(httpStats, 'errorRate', 0))}
-                        prefix={<ClockCircleOutlined />}
-                      />
-                    </Col>
-                  </Row>
-                ) : (
-                  <Empty description="暂无 HTTP 统计信息" />
-                )}
-              </MagicCard>
-            </TabPane>
-
-            <TabPane tab="A8 业务指标" key="business">
-              <OjpBusinessMetrics businessMetrics={businessMetrics} loading={businessLoading} />
-            </TabPane>
-
-            <TabPane tab="自定义指标" key="custom">
-              <Row gutter={[16, 16]}>
-                <Col span={24}>
-                  <MagicCard
-                    title="指标选择器"
-                    description="通过搜索快速定位 Actuator 指标并查看测量详情"
-                    icon={<SearchOutlined />}
-                    size="small"
-                  >
-                    <Row gutter={[16, 16]}>
-                      <Col span={24}>
-                        <Input
-                          placeholder="搜索指标"
-                          prefix={<SearchOutlined />}
-                          value={searchTerm}
-                          onChange={handleSearchChange}
-                          size="large"
-                        />
-                      </Col>
-                      <Col span={24}>
-                        <Select
-                          style={{ width: '100%' }}
-                          value={selectedMetric}
-                          onChange={handleMetricChange}
-                          placeholder="选择一个指标"
-                          showSearch
-                          optionFilterProp="children"
-                          size="large"
-                        >
-                          {filteredMetrics.map((metric) => (
-                            <Option key={metric} value={metric}>
-                              {metric}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Col>
-                    </Row>
-                  </MagicCard>
-                </Col>
-
-                <Col span={24}>
-                  <MetricDetails metricDetails={metricDetails} loading={metricDetailsLoading} />
-                </Col>
-              </Row>
-            </TabPane>
-          </Tabs>
-        )}
-      </MagicCard>
     </div >
   )
 }

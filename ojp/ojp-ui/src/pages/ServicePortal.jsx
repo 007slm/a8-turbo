@@ -20,7 +20,7 @@ import {
     LinkOutlined,
     CloudServerOutlined,
 } from '@ant-design/icons'
-import { MagicCard } from '../components/magicui'
+import { PageContainer } from '@ant-design/pro-components'
 
 const { Text, Title, Paragraph } = Typography
 const { TabPane } = Tabs
@@ -28,37 +28,28 @@ const { TabPane } = Tabs
 // Service Configuration
 const monitoringServices = [
     {
-        name: 'Grafana',
-        port: 3000,
-        url: 'http://localhost:3000',
+        name: '可视化大屏',
+        port: 8000,
+        url: 'http://localhost:8000/grafana',
         description: '数据可视化平台，用于监控各项服务指标',
         icon: <DashboardOutlined />,
         color: '#f46800',
         gradient: 'linear-gradient(135deg, #f46800 0%, #ff8c00 100%)',
     },
     {
-        name: 'Prometheus',
-        port: 9090,
-        url: 'http://localhost:9090',
+        name: '指标数据源',
+        port: 8000,
+        url: 'http://localhost:8000/prometheus',
         description: '监控和告警工具，收集和存储时间序列数据',
         icon: <MonitorOutlined />,
         color: '#e6522c',
         gradient: 'linear-gradient(135deg, #e6522c 0%, #ff6b45 100%)',
     },
     {
-        name: 'NATS Dashboard',
+        name: '同步集群管理',
         port: 8000,
-        url: 'http://localhost:8000',
-        description: 'NATS 消息系统的可视化监控面板',
-        icon: <ThunderboltOutlined />,
-        color: '#27aae1',
-        gradient: 'linear-gradient(135deg, #27aae1 0%, #4fc3f7 100%)',
-    },
-    {
-        name: 'SeaTunnel Zeta',
-        port: 8080,
-        url: 'http://localhost:8080',
-        description: 'SeaTunnel Zeta 集群管理 REST 控制台',
+        url: 'http://localhost:8000/seatunnel',
+        description: '数据同步集群管理控制台',
         icon: <ClusterOutlined />,
         color: '#722ed1',
         gradient: 'linear-gradient(135deg, #722ed1 0%, #9254de 100%)',
@@ -67,28 +58,28 @@ const monitoringServices = [
 
 const databaseServices = [
     {
-        name: 'MySQL',
+        name: '业务数据库 (MySQL)',
         port: 3306,
-        url: 'localhost:3306',
-        description: '主数据库，存储业务数据',
+        url: '',
+        description: '主数据库，存储业务数据 (仅内部访问)',
         icon: <DatabaseOutlined />,
         color: '#00758f',
         gradient: 'linear-gradient(135deg, #00758f 0%, #00a0d2 100%)',
     },
     {
-        name: 'Redis',
-        port: 6379,
-        url: 'localhost:6379',
-        description: '缓存数据库，用于Redis Smart Cache',
+        name: '元数据存储',
+        port: 8000,
+        url: 'http://localhost:8000/phpredmin',
+        description: '加速规则与状态存储管理',
         icon: <DatabaseOutlined />,
         color: '#dc382d',
         gradient: 'linear-gradient(135deg, #dc382d 0%, #ff5252 100%)',
     },
     {
-        name: 'StarRocks',
-        port: '9030/8030',
-        url: 'http://localhost:9030',
-        description: 'OLAP数据库，用于数据分析',
+        name: '加速存储引擎',
+        port: 8000,
+        url: 'http://localhost:8000/starrocks',
+        description: '高性能列式存储引擎',
         icon: <DatabaseOutlined />,
         color: '#faad14',
         gradient: 'linear-gradient(135deg, #faad14 0%, #ffc53d 100%)',
@@ -97,37 +88,28 @@ const databaseServices = [
 
 const ojpServices = [
     {
-        name: 'OJP Server',
-        port: 1059,
-        url: 'http://localhost:1059',
-        description: 'OJP gRPC 服务端',
+        name: '智能加速服务端',
+        port: 8000,
+        url: 'http://localhost:8000/api/',
+        description: '核心服务接口于控制台',
         icon: <RocketOutlined />,
         color: '#1677ff',
         gradient: 'linear-gradient(135deg, #1677ff 0%, #40a9ff 100%)',
     },
     {
-        name: 'OJP Prometheus',
-        port: 9026,
-        url: 'http://localhost:9026',
-        description: 'OJP服务监控端点',
+        name: '加速引擎指标',
+        port: 8000,
+        url: 'http://localhost:8000/api/actuator/prometheus',
+        description: '核心性能指标采集端点',
         icon: <MonitorOutlined />,
         color: '#52c41a',
         gradient: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
     },
     {
-        name: 'OJP UI (开发)',
-        port: 5173,
-        url: 'http://localhost:5173',
-        description: 'OJP前端开发服务器',
-        icon: <GlobalOutlined />,
-        color: '#13c2c2',
-        gradient: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)',
-    },
-    {
-        name: 'OJP UI (生产)',
-        port: 50080,
-        url: 'http://localhost:50080',
-        description: 'OJP前端生产服务器',
+        name: '管理门户',
+        port: 8000,
+        url: 'http://localhost:8000/',
+        description: '可视化管理控制台',
         icon: <GlobalOutlined />,
         color: '#2f54eb',
         gradient: 'linear-gradient(135deg, #2f54eb 0%, #597ef7 100%)',
@@ -149,10 +131,10 @@ const containerIPs = [
     {
         category: '数据库',
         items: [
-            { name: 'mysql', ip: '172.24.0.10' },
-            { name: 'mysql5', ip: '172.24.0.11' },
-            { name: 'mysql-exporter', ip: '172.24.0.12' },
-            { name: 'starrocks', ip: '172.24.0.13' },
+            { name: 'mysql', ip: '172.24.0.60' },
+            { name: 'mysql5', ip: '172.24.0.61' },
+            { name: 'mysql-exporter', ip: '172.24.0.62' },
+            { name: 'starrocks', ip: '172.24.0.63' },
         ],
     },
     {
@@ -174,13 +156,13 @@ const containerIPs = [
             { name: 'ojp-server', ip: '172.24.0.40' },
             { name: 'ojp-ui', ip: '172.24.0.41' },
             { name: 'shopservice', ip: '172.24.0.42' },
+            { name: 'ojp-sql-translator', ip: '172.24.0.100' },
         ],
     },
     {
         category: '其他组件',
         items: [
             { name: 'oracle', ip: '172.24.0.50' },
-            { name: 'windows7', ip: '172.24.0.51' },
         ],
     },
 ]
@@ -236,70 +218,78 @@ const ServicePortal = () => {
     )
 
     return (
-        <div style={{ padding: '24px' }}>
-            <MagicCard
-                title="服务导航"
-                description="快速访问核心组件、数据库与应用服务"
-                icon={<CloudServerOutlined />}
-                extra={
-                    <Space size={12}>
-                        <Tag color="processing">{monitoringServices.length + databaseServices.length + ojpServices.length} 个服务在线</Tag>
-                    </Space>
-                }
+        <PageContainer
+            header={{
+                title: "服务导航",
+                subTitle: "快速访问核心组件、数据库与应用服务",
+                extra: [
+                    <Tag key="status" color="processing" style={{ padding: '4px 10px', fontSize: '14px' }}>
+                        <Space>
+                            <CloudServerOutlined />
+                            {monitoringServices.length + databaseServices.length + ojpServices.length} 个服务在线
+                        </Space>
+                    </Tag>
+                ]
+            }}
+        >
+            <Tabs
+                activeKey={activeServiceTab}
+                onChange={setActiveServiceTab}
+                type="card"
+                size="large"
+                destroyInactiveTabPane
+                tabBarStyle={{ marginBottom: 24 }}
             >
-                <Tabs activeKey={activeServiceTab} onChange={setActiveServiceTab} type="card" size="small" style={{ marginBottom: 0 }}>
-                    <TabPane tab="监控与可视化" key="monitoring">
-                        <Row gutter={[16, 16]}>{monitoringServices.map(renderServiceCard)}</Row>
-                    </TabPane>
+                <TabPane tab="监控与可视化" key="monitoring">
+                    <Row gutter={[24, 24]}>{monitoringServices.map(renderServiceCard)}</Row>
+                </TabPane>
 
-                    <TabPane tab="数据库与存储" key="database">
-                        <Row gutter={[16, 16]}>{databaseServices.map(renderServiceCard)}</Row>
-                    </TabPane>
+                <TabPane tab="数据库与存储" key="database">
+                    <Row gutter={[24, 24]}>{databaseServices.map(renderServiceCard)}</Row>
+                </TabPane>
 
-                    <TabPane tab="OJP 服务" key="ojp">
-                        <Row gutter={[16, 16]}>{ojpServices.map(renderServiceCard)}</Row>
-                    </TabPane>
+                <TabPane tab="OJP 服务" key="ojp">
+                    <Row gutter={[24, 24]}>{ojpServices.map(renderServiceCard)}</Row>
+                </TabPane>
 
-                    <TabPane tab="网络拓扑" key="network">
-                        <Row gutter={[16, 16]}>
-                            {containerIPs.map((category, idx) => (
-                                <Col xs={24} md={12} lg={8} key={idx}>
-                                    <Card
-                                        title={category.category}
-                                        bordered={false}
-                                        style={{ borderRadius: 12 }}
-                                        headStyle={{
-                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                            color: '#fff',
-                                            borderRadius: '12px 12px 0 0',
-                                        }}
-                                        bodyStyle={{ padding: '12px' }}
-                                    >
-                                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                            {category.items.map((item, i) => (
-                                                <div
-                                                    key={i}
-                                                    style={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        padding: '8px 12px',
-                                                        background: '#fafafa',
-                                                        borderRadius: 8,
-                                                    }}
-                                                >
-                                                    <Text strong>{item.name}</Text>
-                                                    <Tag color="geekblue">{item.ip}</Tag>
-                                                </div>
-                                            ))}
-                                        </Space>
-                                    </Card>
-                                </Col>
-                            ))}
-                        </Row>
-                    </TabPane>
-                </Tabs>
-            </MagicCard>
-        </div>
+                <TabPane tab="网络拓扑" key="network">
+                    <Row gutter={[16, 16]}>
+                        {containerIPs.map((category, idx) => (
+                            <Col xs={24} md={12} lg={8} key={idx}>
+                                <Card
+                                    title={category.category}
+                                    bordered={false}
+                                    style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+                                    headStyle={{
+                                        borderBottom: '1px solid #f0f0f0',
+                                        fontSize: '15px',
+                                        fontWeight: 600
+                                    }}
+                                    bodyStyle={{ padding: '12px 16px' }}
+                                >
+                                    <Space direction="vertical" size={0} style={{ width: '100%' }}>
+                                        {category.items.map((item, i) => (
+                                            <div
+                                                key={i}
+                                                style={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    padding: '10px 0',
+                                                    borderBottom: i === category.items.length - 1 ? 'none' : '1px solid #f5f5f5',
+                                                }}
+                                            >
+                                                <Text type="secondary">{item.name}</Text>
+                                                <Text code>{item.ip}</Text>
+                                            </div>
+                                        ))}
+                                    </Space>
+                                </Card>
+                            </Col>
+                        ))}
+                    </Row>
+                </TabPane>
+            </Tabs>
+        </PageContainer>
     )
 }
 

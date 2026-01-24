@@ -110,26 +110,26 @@ public class CacheStatus {
 
 ---
 
-## 2. 规则管理服务接口
+## 2. 缓存规则管理服务接口
 
-### 2.1 RuleManagementService
+### 2.1 CacheRuleService
 
 ```java
-public interface RuleManagementService {
-    
+public interface CacheRuleService {
+
     /**
      * 获取缓存规则列表（按数据库分组）
      * @return 按数据库名称分组的规则列表
      */
     Map<String, List<CacheRuleResponse>> getRules();
-    
+
     /**
      * 创建缓存规则
      * @param request 创建请求
      * @return 创建的规则
      */
     CacheRuleResponse createRule(CreateCacheRuleRequest request);
-    
+
     /**
      * 更新缓存规则
      * @param ruleId 规则ID
@@ -137,27 +137,12 @@ public interface RuleManagementService {
      * @return 更新后的规则
      */
     CacheRuleResponse updateRule(String ruleId, UpdateCacheRuleRequest request);
-    
+
     /**
      * 删除缓存规则
      * @param ruleId 规则ID
      */
     void deleteRule(String ruleId);
-    
-    /**
-     * 获取规则配置（运行时调用）
-     * @param datasourceName 数据库名称
-     * @return 规则配置数组
-     */
-    RuleConfig[] getRuleConfigs(String datasourceName);
-    
-    /**
-     * 匹配查询规则（运行时调用）
-     * @param datasourceName 数据库名称
-     * @param query 查询对象
-     * @return 匹配的动作（包含TTL等信息）
-     */
-    Action matchRule(String datasourceName, Query query);
 }
 ```
 
@@ -169,15 +154,12 @@ public interface RuleManagementService {
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateCacheRuleRequest {
-    private String ruleName;
-    private String datasourceName;
-    private String dbType;
-    private List<String> tables;
-    private String ruleType; // tables, tablesAny, tablesAll, queryIds, regex
-    private int ttl; // 秒数
-    private boolean enabled;
+    private String name;
     private String description;
-    private int priority;
+    private List<String> tables;        // 涉及的表名
+    private List<String> slowQueryIds; // 关联的慢查询ID
+    private String connHash;            // 数据库连接哈希
+    private boolean enabled;
 }
 
 @Data
@@ -185,14 +167,11 @@ public class CreateCacheRuleRequest {
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateCacheRuleRequest {
-    private String ruleName;
-    private String dbType;
-    private List<String> tables;
-    private String ruleType; // tables, tablesAny, tablesAll, queryIds, regex
-    private int ttl; // 秒数
-    private boolean enabled;
+    private String name;
     private String description;
-    private int priority;
+    private List<String> tables;
+    private List<String> slowQueryIds;
+    private boolean enabled;
 }
 
 @Data
@@ -200,19 +179,15 @@ public class UpdateCacheRuleRequest {
 @NoArgsConstructor
 @AllArgsConstructor
 public class CacheRuleResponse {
-    private String ruleId;
-    private String ruleName;
-    private String datasourceName;
-    private String dbType;
-    private List<String> tables;
-    private String ruleType; // tables, tablesAny, tablesAll, queryIds, regex
-    private int ttl; // 秒数
-    private boolean enabled;
+    private String id;
+    private String name;
     private String description;
-    private int priority;
-    private String createdAt; // ISO格式: "2024-01-01T12:00:00Z"
-    private String updatedAt; // ISO格式: "2024-01-01T12:00:00Z"
-    private List<String> matchedQueries;
+    private List<String> tables;
+    private List<String> slowQueryIds;
+    private String connHash;
+    private boolean enabled;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
 ```
 
@@ -315,37 +290,31 @@ public class PerformanceHistory {
 
 ```java
 public interface CacheDecisionService {
-    
+
     /**
-     * 判断查询是否应该走缓存路径（查询StarRocks）
-     * @param datasourceName 数据库名称
+     * 判断给定 SQL 是否应该路由到 StarRocks 缓存
+     * @param connHash 连接标识
      * @param sql SQL语句
-     * @param parameters 查询参数
-     * @return 缓存决策结果
+     * @return true 如果所有涉及的表都已同步就绪，可以走 StarRocks
      */
-    CacheDecision shouldUseCache(String datasourceName, String sql, Object[] parameters);
-    
+    boolean makeDecision(String connHash, String sql);
+
     /**
-     * 清理表级缓存配置（触发重新同步）
-     * @param datasourceName 数据库名称
-     * @param tableName 表名
+     * 记录缓存查询延迟 (命中 StarRocks 时调用)
      */
-    void clearTableCache(String datasourceName, String tableName);
+    void recordCachedQueryLatency(long durationMs);
+
+    /**
+     * 记录原始查询延迟 (回源时调用)
+     */
+    void recordOriginalQueryLatency(long durationMs);
 }
+```
 
 ### 4.2 数据传输对象
 
 ```java
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class CacheDecision {
-    private boolean useCache;
-    private String reason;
-    private String ruleId;
-    private int ttl;
-}
+// 无复杂决策结果对象，简单布尔返回值
 ```
 
 

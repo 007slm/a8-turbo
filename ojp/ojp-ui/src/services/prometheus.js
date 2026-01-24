@@ -13,9 +13,11 @@ export const prometheusService = {
      */
     query: async (query) => {
         try {
+            console.log('[Prometheus] Executing instant query:', query);
             const response = await axios.get(`${PROMETHEUS_BASE}/query`, {
                 params: { query },
             });
+            console.log('[Prometheus] Query response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Prometheus query failed:', error);

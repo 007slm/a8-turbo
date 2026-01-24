@@ -23,61 +23,65 @@ import {
   WarningOutlined,
   BarChartOutlined,
   RocketOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  MonitorOutlined
 } from '@ant-design/icons';
+import { useQuery } from 'react-query';
 import { monitoringApi, cacheApi } from '../../services/api';
+import { MagicCard, StatusPill } from '../magicui';
 
 const { Title, Text } = Typography;
 
-const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
-  const [loading, setLoading] = useState(false)
-  const [enhancedMetrics, setEnhancedMetrics] = useState(null)
-  const [performanceData, setPerformanceData] = useState(null)
-  const [refreshKey, setRefreshKey] = useState(0)
+const OjpBusinessMetrics = ({ businessMetrics: propMetrics, loading: propLoading, standalone = false }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // 加载增强的性能数据
-  const loadEnhancedData = async () => {
-    setLoading(true)
-    try {
-      const [cacheStats, queryStats, overviewStats] = await Promise.all([
-        cacheApi.getQueries().catch(() => null),
-        cacheApi.getQueries().catch(() => null),
-        cacheApi.getQueries().catch(() => null)
-      ])
-
-      setPerformanceData({ cacheStats, queryStats, overviewStats })
-    } catch (error) {
-      console.error('加载增强性能数据失败:', error)
-    } finally {
-      setLoading(false)
+  const { data: fetchedMetrics, isLoading: monitoringLoading, refetch } = useQuery(
+    ['business', refreshKey],
+    monitoringApi.getBusinessMetrics,
+    {
+      enabled: standalone,
     }
-  }
+  );
+
+  const businessMetrics = standalone ? fetchedMetrics : propMetrics;
+  const isLoading = (standalone ? monitoringLoading : propLoading);
 
   // 刷新数据
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1)
-    loadEnhancedData()
-  }
+    setRefreshKey(prev => prev + 1);
+    if (standalone) {
+      refetch();
+    }
+  };
 
-  useEffect(() => {
-    loadEnhancedData()
-  }, [refreshKey])
+  // 获取指标值的辅助函数
+  const getMetricValue = (metric) => {
+    if (!metric || !metric.measurements) return 0;
+    const count = metric.measurements.find(m => m.statistic === 'COUNT');
+    const value = metric.measurements.find(m => m.statistic === 'VALUE');
+    const total = metric.measurements.find(m => m.statistic === 'TOTAL_TIME');
+    return (count || value || total)?.value || 0;
+  };
 
-  const isLoading = propLoading || loading
+  // 格式化时间值（秒转换为毫秒）
+  const formatTime = (ms) => {
+    if (ms === null || ms === undefined) return '0ms';
+    if (ms < 1) return `${(ms * 1000).toFixed(2)}µs`;
+    if (ms < 1000) return `${ms.toFixed(2)}ms`;
+    return `${(ms / 1000).toFixed(2)}s`;
+  };
 
-  if (isLoading) {
+  if (isLoading && !businessMetrics) {
     return (
-      <Card loading={true}>
-        <div style={{ textAlign: 'center', padding: '50px 0' }}>
-          <Text type="secondary">正在加载 A8 业务指标...</Text>
-        </div>
-      </Card>
+      <Card loading={true} style={{ borderRadius: 12 }} />
     );
   }
 
   if (!businessMetrics || businessMetrics.length === 0) {
     return (
       <Card
+        size="small"
+        style={{ borderRadius: 12 }}
         extra={
           <Button
             icon={<ReloadOutlined />}
@@ -88,10 +92,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
           </Button>
         }
       >
-        <Empty
-          description="暂无 A8 业务指标数据"
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-        />
+        <Empty description="暂无业务指标数据" />
         <Alert
           message="提示"
           description="请确保 A8 服务正在运行并且已配置Micrometer指标收集。"
@@ -107,43 +108,10 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
   const cacheMetrics = businessMetrics.filter(m => m.category === 'cache');
   const queryMetrics = businessMetrics.filter(m => m.category === 'query');
 
-  // 获取指标值的辅助函数
-  const getMetricValue = (metric) => {
-    if (!metric.measurements || metric.measurements.length === 0) {
-      return 0;
-    }
-
-    // 对于计数器类型，通常取COUNT值
-    const countMeasurement = metric.measurements.find(m => m.statistic === 'COUNT');
-    if (countMeasurement) {
-      return countMeasurement.value || 0;
-    }
-
-    // 对于时间类型，取TOTAL_TIME或VALUE
-    const totalTimeMeasurement = metric.measurements.find(m => m.statistic === 'TOTAL_TIME');
-    if (totalTimeMeasurement) {
-      return totalTimeMeasurement.value || 0;
-    }
-
-    // 默认取第一个测量值
-    return metric.measurements[0]?.value || 0;
-  };
-
-  // 格式化时间值（秒转换为毫秒）
-  const formatTime = (seconds) => {
-    if (seconds < 0.001) {
-      return `${(seconds * 1000000).toFixed(2)} μs`;
-    } else if (seconds < 1) {
-      return `${(seconds * 1000).toFixed(2)} ms`;
-    } else {
-      return `${seconds.toFixed(3)} s`;
-    }
-  };
-
   // 计算缓存命中率
   const calculateHitRate = () => {
-    const hitMetric = cacheMetrics.find(m => m.name === 'ojp.cache.hit');
-    const missMetric = cacheMetrics.find(m => m.name === 'ojp.cache.miss');
+    const hitMetric = businessMetrics.find(m => m.name === 'ojp.cache.hit');
+    const missMetric = businessMetrics.find(m => m.name === 'ojp.cache.miss');
 
     if (!hitMetric || !missMetric) return 0;
 
@@ -156,7 +124,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
 
   const hitRate = calculateHitRate();
 
-  return (
+  const renderContent = () => (
     <div className="ojp-business-metrics">
       <Row gutter={[16, 16]}>
         {/* 缓存指标概览 */}
@@ -165,7 +133,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
             title={
               <Space>
                 <DatabaseOutlined style={{ color: '#1890ff' }} />
-                <span>缓存性能指标</span>
+                <span>加速引擎指标</span>
               </Space>
             }
             size="small"
@@ -240,7 +208,7 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
             title={
               <Space>
                 <RocketOutlined style={{ color: '#52c41a' }} />
-                <span>查询性能指标</span>
+                <span>提速性能指标</span>
               </Space>
             }
             size="small"
@@ -369,6 +337,34 @@ const OjpBusinessMetrics = ({ businessMetrics, loading: propLoading }) => {
       </Row>
     </div>
   );
+
+  if (standalone) {
+    return (
+      <div style={{ padding: 24 }}>
+        <MagicCard
+          title="A8 智能加速业务指标深度洞察"
+          description="监控加速命中率、SQL 执行延迟及核心业务吞吐量指标"
+          icon={<MonitorOutlined />}
+          extra={
+            <Space>
+              <StatusPill label="统计中" status="success" />
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                loading={isLoading}
+              >
+                刷新数据
+              </Button>
+            </Space>
+          }
+        >
+          {renderContent()}
+        </MagicCard>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default OjpBusinessMetrics;

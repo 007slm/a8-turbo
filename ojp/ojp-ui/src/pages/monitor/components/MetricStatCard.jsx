@@ -12,11 +12,14 @@ const MetricStatCard = ({
     valueFormatter,
     trend = false
 }) => {
-    const { data, loading } = usePrometheus({ query, type: 'instant', refreshInterval });
+    const { data, loading, error } = usePrometheus({ query, type: 'instant', refreshInterval });
 
     let value = '-';
     if (data && data.result && data.result.length > 0) {
-        const val = parseFloat(data.result[0].value[1]);
+        let val = parseFloat(data.result[0].value[1]);
+        if (isNaN(val) || !isFinite(val)) {
+            val = 0;
+        }
 
         if (valueFormatter) {
             value = valueFormatter(val);
@@ -26,8 +29,14 @@ const MetricStatCard = ({
             else if (unit === 'gb') value = `${(val / 1024 / 1024 / 1024).toFixed(1)} GB`;
             else if (unit === 'ms') value = `${val.toFixed(1)} ms`;
             else if (unit === 's') value = `${val.toFixed(2)} s`;
+            else if (unit === 'count') value = `${Math.round(val)}`;
             else value = val.toFixed(2);
         }
+    }
+
+    // Debug info
+    if (error) {
+        console.warn(`[MetricStatCard] ${title} - Error:`, error);
     }
 
     return (

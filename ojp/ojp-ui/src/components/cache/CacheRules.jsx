@@ -1,16 +1,22 @@
 import React, { useRef, useState } from 'react'
-import { Button, Drawer, Space, Tag, Typography, Popconfirm, message, Tooltip, Alert, List } from 'antd'
+import { Button, Drawer, Space, Tag, Typography, Popconfirm, message, Tooltip, Alert, List, Row, Col } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
   DeleteOutlined,
   EditOutlined,
   SyncOutlined,
+  DatabaseOutlined,
+  CheckCircleOutlined,
+  SafetyCertificateOutlined,
+  RocketOutlined,
+  AppstoreOutlined
 } from '@ant-design/icons'
-import { PageContainer, ProTable, ProCard } from '@ant-design/pro-components'
+import { PageContainer, ProTable } from '@ant-design/pro-components'
 import { useMutation, useQuery } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 import { ruleApi } from '../../services/api'
+import { MagicCard } from '../magicui'
 
 const { Text } = Typography
 
@@ -52,6 +58,7 @@ const CacheRules = () => {
   const totalRules = rules.length
   const enabledRules = rules.filter((rule) => rule.enabled).length
   const seatunnelSynced = rules.filter((rule) => Object.keys(rule.seatunnelJobIds || {}).length > 0).length
+  const autoInvalidateRules = rules.filter((rule) => rule.invalidationPolicy === 'AUTO').length // Assuming this prop exists or just placeholder
 
   const deleteRuleMutation = useMutation((ruleId) => ruleApi.deleteRule(ruleId), {
     onSuccess: () => {
@@ -88,6 +95,7 @@ const CacheRules = () => {
       dataIndex: 'name',
       copyable: true,
       width: 200,
+      fixed: 'left',
       ellipsis: true,
       render: (dom, entity) => (
         <a
@@ -142,15 +150,18 @@ const CacheRules = () => {
       render: (_, record) =>
         record.connHash ? (
           <Tooltip title={record.connHash}>
-            <Tag color="blue">{truncate(record.connHash, 12)}</Tag>
+            <Tag color="blue" style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', verticalAlign: 'bottom' }}>
+              {record.connHash}
+            </Tag>
           </Tooltip>
         ) : (
           <Text type="secondary">未指定</Text>
         ),
     },
     {
-      title: '匹配条件',
+      title: '匹配 (加速对象)',
       key: 'conditions',
+      width: 250,
       search: false,
       render: (_, record) => {
         const type = deriveRuleType(record)
@@ -159,14 +170,14 @@ const CacheRules = () => {
           if (tables.length === 0) return <Text type="secondary">未配置</Text>
           return (
             <Tooltip title={tables.join(', ')}>
-              <div style={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ maxWidth: 230, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {tables.join(', ')}
               </div>
             </Tooltip>
           )
         }
         const queryIds = (Array.isArray(record.queryIds) && record.queryIds.length > 0 ? record.queryIds : record.slowQueryIds) || []
-        return <Tag color="green">匹配 {queryIds.length} 条慢查询</Tag>
+        return <Tag color="green">智能匹配 {queryIds.length} 条慢查询</Tag>
       },
     },
     {
@@ -179,7 +190,7 @@ const CacheRules = () => {
     {
       title: 'Seatunnel 作业',
       key: 'seatunnel',
-      width: 180,
+      width: 160,
       search: false,
       render: (_, record) => {
         const jobIds = record.seatunnelJobIds || {}
@@ -201,7 +212,7 @@ const CacheRules = () => {
       title: '更新时间',
       dataIndex: 'updatedAt',
       valueType: 'dateTime',
-      width: 160,
+      width: 180,
       search: false,
       sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
     },
@@ -234,8 +245,8 @@ const CacheRules = () => {
   return (
     <PageContainer
       header={{
-        title: '缓存规则管理',
-        subTitle: '配置和管理数据库查询缓存策略',
+        title: '加速策略配置',
+        subTitle: '管理自动加速策略与数据同步规则',
         extra: [
           <Button key="refresh" icon={<ReloadOutlined />} onClick={() => refetch()} loading={isFetching}>刷新</Button>,
           <Popconfirm
@@ -252,23 +263,37 @@ const CacheRules = () => {
           </Button>
         ]
       }}
-      content={
-        <ProCard.Group direction="row" style={{ marginBottom: 16 }} gutter={16} ghost>
-          <ProCard colSpan={8} layout="center" bordered direction="column">
-            <div style={{ color: '#00000073' }}>规则总数</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalRules}</div>
-          </ProCard>
-          <ProCard colSpan={8} layout="center" bordered direction="column">
-            <div style={{ color: '#00000073' }}>启用状态</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>{enabledRules}</div>
-          </ProCard>
-          <ProCard colSpan={8} layout="center" bordered direction="column">
-            <div style={{ color: '#00000073' }}>已同步作业</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>{seatunnelSynced}</div>
-          </ProCard>
-        </ProCard.Group>
-      }
     >
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8}>
+          <MagicCard
+            title="规则总数"
+            icon={<AppstoreOutlined />}
+            extra={<Tag color="blue">Total</Tag>}
+          >
+            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{totalRules}</div>
+          </MagicCard>
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <MagicCard
+            title="启用状态"
+            icon={<SafetyCertificateOutlined />}
+            extra={<Tag color="success">Active</Tag>}
+          >
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>{enabledRules}</div>
+          </MagicCard>
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <MagicCard
+            title="已同步作业"
+            icon={<RocketOutlined />}
+            extra={<Tag color="processing">Synced</Tag>}
+          >
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>{seatunnelSynced}</div>
+          </MagicCard>
+        </Col>
+      </Row>
+
       <ProTable
         actionRef={actionRef}
         rowKey="id"
@@ -278,13 +303,14 @@ const CacheRules = () => {
         loading={isLoading}
         search={{
           labelWidth: 'auto',
-          filterType: 'light',
         }}
+        options={false}
         pagination={{
           pageSize: 10,
+          showSizeChanger: true,
         }}
+        scroll={{ x: 1300 }}
         dateFormatter="string"
-        toolBarRender={() => []}
       />
 
       <Drawer

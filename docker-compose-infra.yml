@@ -1,53 +1,27 @@
-networks:
-  a8:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.24.0.0/16
-          # IP Range Allocation:
-          # - Infrastructure: 172.24.0.2 - 172.24.0.19
-          # - CDC/SeaTunnel: 172.24.0.20 - 172.24.0.39
-          # - Dev Environment: 172.24.0.40 - 172.24.0.79
-          # - LGT/Monitoring: 172.24.0.80 - 172.24.0.99
-          # - Sidecars: 172.24.0.100 - 172.24.0.119
-          # - Commercial: 172.24.0.120 - 172.24.0.139
-
-include:
-  - ./docker-compose-cdc-sync-zeta.yml
-  - ./docker-compose-kong.yml
-  #  - ./docker-compose-ojp.yml
-  #  - ./docker-compose-shopservice.yml
-  - ./docker-compose-db.yml
-  - ./docker-compose-dev.yml
-
-  - ./docker-compose-skywalking.yml
-  - ./docker-compose-sidecar.yml
-  - ./docker-compose-sentinel.yml
-
 services:
   # 1. 自定义 DNS 服务器（dnsmasq）
-  dns-server:
-    image: andyshinn/dnsmasq
-    container_name: dns-server
-    volumes:
-      - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf # 挂载解析规则
-    ports:
-      - "50053:53/udp"
-      - "50053:53/tcp"
-    networks:
-      a8:
-        ipv4_address: 172.24.0.2
-    cap_add:
-      - NET_ADMIN
+  # dns-server:
+  #   image: andyshinn/dnsmasq
+  #   container_name: dns-server
+  #   volumes:
+  #     - ./docker/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf
+  #   ports:
+  #     - "50053:53/udp"
+  #     - "50053:53/tcp"
+  #   networks:
+  #     a8:
+  #       ipv4_address: 172.24.0.2
+  #   cap_add:
+  #     - NET_ADMIN
 
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    # 移除对外暴露的端口，通过Kong网关访问
     ports:
       - "9090:9090"
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./docker/prometheus/data:/prometheus
     networks:
       a8:
         ipv4_address: 172.24.0.3
@@ -56,16 +30,12 @@ services:
     image: grafana/grafana:latest
     hostname: grafana
     container_name: grafana
-    # 移除对外暴露的端口，通过Kong网关访问
-    # ports:
-    #   - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=fluxDB
       - GF_SECURITY_ADMIN_USER=fluxDB
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_USERS_ALLOW_ORG_CREATE=false
-      #- GF_INSTALL_PLUGINS=grafana-piechart-panel,marcusolsson-json-datasource,marcusolsson-dynamictext-panel
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/a8-turbo-dashboard.json
       - GF_SERVER_ROOT_URL=http://localhost:3000/grafana
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
@@ -100,9 +70,6 @@ services:
   redis-exporter:
     image: oliver006/redis_exporter:latest
     container_name: redis-exporter
-    # 移除对外暴露的端口，通过Kong网关访问
-    # ports:
-    #   - "9121:9121"
     environment:
       - REDIS_ADDR=redis://redis:6379
     networks:
@@ -115,9 +82,6 @@ services:
     image: sasanrose/phpredmin:latest
     container_name: phpredmin
     hostname: phpredmin
-    # 移除对外暴露的端口，通过Kong网关访问
-    # ports:
-    #   - "50082:80"
     networks:
       a8:
         ipv4_address: 172.24.0.7

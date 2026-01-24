@@ -31,7 +31,7 @@ export const buildGrafanaUrl = ({
     'mysql': 'mysql-overview',
     'redis': 'redis-overview',
     'starrocks': 'starrocks-overview',
-    'nats': 'nats-overview',
+
     'flink': 'flink-overview',
     'ojp-cache': 'ojp-cache-monitoring',
     'a8-turbo': 'a8-turbo-dashboard' // 主仪表板

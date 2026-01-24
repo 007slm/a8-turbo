@@ -42,13 +42,7 @@ export const monitoringServices = [
     dashboardFile: 'flink-dashboard.json',
     description: 'Flink 流处理引擎监控'
   },
-  {
-    key: 'nats',
-    name: 'NATS 消息队列',
-    icon: '📨',
-    dashboardFile: 'nats-dashboard.json',
-    description: 'NATS 消息队列监控'
-  },
+
   {
     key: 'prometheus',
     name: 'Prometheus 监控',

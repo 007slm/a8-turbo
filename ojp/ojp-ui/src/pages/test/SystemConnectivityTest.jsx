@@ -32,7 +32,6 @@ const SystemConnectivityTest = () => {
         {
             category: 'Middleware & Sync',
             items: [
-                { key: 'nats', name: 'NATS Messaging', port: 4222, icon: <ThunderboltOutlined />, type: 'queue' },
                 { key: 'seatunnel', name: 'SeaTunnel Zeta', port: 8080, icon: <ClusterOutlined />, type: 'etl' },
             ]
         },

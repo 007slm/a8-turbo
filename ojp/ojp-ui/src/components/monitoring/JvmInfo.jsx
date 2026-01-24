@@ -1,84 +1,144 @@
-import React from 'react';
-import { Card, Row, Col, Statistic, List, Typography, Divider, Alert } from 'antd';
-import { 
-  ThunderboltOutlined, 
-  ClockCircleOutlined, 
-  InfoCircleOutlined 
+import React, { useState } from 'react';
+import { Card, Row, Col, Statistic, List, Typography, Divider, Alert, Button, Space } from 'antd';
+import {
+  ThunderboltOutlined,
+  ClockCircleOutlined,
+  InfoCircleOutlined,
+  ReloadOutlined
 } from '@ant-design/icons';
+import { useQuery } from 'react-query';
+import { monitoringApi } from '../../services/api';
+import { MagicCard, StatusPill } from '../magicui';
 
-const { Text, Paragraph } = Typography;
+const { Text, Paragraph, Title } = Typography;
 
-const JvmInfo = ({ jvmInfo, loading }) => {
-  
-  if (!jvmInfo) {
+const JvmInfo = ({ jvmInfo: propJvmInfo, loading: propLoading, standalone = false }) => {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const { data: fetchedJvmInfo, isLoading, refetch } = useQuery(
+    ['jvm', refreshKey],
+    monitoringApi.getJvmInfo,
+    {
+      enabled: standalone,
+    }
+  );
+
+  const data = standalone ? fetchedJvmInfo : propJvmInfo;
+  const loading = standalone ? isLoading : propLoading;
+
+  if (loading && !data) {
     return (
-      <Card title="JVM 信息" size="small">
-        <Alert message="加载中..." type="info" showIcon />
+      <Card loading={true} style={{ borderRadius: 12 }} />
+    );
+  }
+
+  if (!data) {
+    return (
+      <Card size="small" style={{ borderRadius: 12 }}>
+        <Alert message="暂无运行环境信息" type="info" showIcon />
       </Card>
     );
   }
-  
-  return (
-    <div>
-      <Card title="JVM 基本信息" size="small" style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={8}>
+
+  const renderContent = () => (
+    <Space direction="vertical" size={24} style={{ width: '100%' }}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={8}>
+          <Card size="small" className="metric-sub-card">
             <Statistic
               title="Java 版本"
-              value={jvmInfo.javaVersion || '未知'}
-              prefix={<InfoCircleOutlined />}
+              value={data.javaVersion || '未知'}
+              prefix={<InfoCircleOutlined style={{ color: '#1677ff' }} />}
             />
-          </Col>
-          
-          <Col xs={24} sm={8}>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={8}>
+          <Card size="small" className="metric-sub-card">
             <Statistic
-              title="JVM 名称"
-              value={jvmInfo.javaVmName || '未知'}
-              prefix={<ThunderboltOutlined />}
+              title="虚拟机名称"
+              value={data.javaVmName || '未知'}
+              prefix={<ThunderboltOutlined style={{ color: '#722ed1' }} />}
             />
-          </Col>
-          
-          <Col xs={24} sm={8}>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={8}>
+          <Card size="small" className="metric-sub-card">
             <Statistic
               title="供应商"
-              value={jvmInfo.vendor || '未知'}
-              prefix={<InfoCircleOutlined />}
+              value={data.vendor || '未知'}
+              prefix={<InfoCircleOutlined style={{ color: '#52c41a' }} />}
             />
-          </Col>
-        </Row>
-      </Card>
-      
-      <Card title="JVM 运行状态" size="small" style={{ marginBottom: 16 }}>
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12}>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12}>
+          <Card size="small" title="启动时间" className="metric-sub-card">
             <Statistic
-              title="启动时间"
-              value={jvmInfo.startTime || '未知'}
-              prefix={<ClockCircleOutlined />}
+              value={new Date(data.startTime).toLocaleString() || '未知'}
+              prefix={<ClockCircleOutlined style={{ color: '#faad14' }} />}
+              valueStyle={{ fontSize: 18 }}
             />
-          </Col>
-          
-          <Col xs={24} sm={12}>
+          </Card>
+        </Col>
+
+        <Col xs={24} sm={12}>
+          <Card size="small" title="已运行时间" className="metric-sub-card">
             <Statistic
-              title="运行时间"
-              value={jvmInfo.uptime || '未知'}
-              prefix={<ClockCircleOutlined />}
+              value={Math.floor(data.uptime / 1000 / 60) + ' 分钟'}
+              prefix={<ClockCircleOutlined style={{ color: '#13c2c2' }} />}
+              valueStyle={{ fontSize: 18 }}
             />
-          </Col>
-        </Row>
-      </Card>
-      
-      <Card title="JVM 参数" size="small">
+          </Card>
+        </Col>
+      </Row>
+
+      <Card title="运行时启动参数" size="small" style={{ borderRadius: 12 }}>
         <List
           size="small"
           bordered
-          dataSource={jvmInfo.arguments || []}
-          renderItem={item => <List.Item>{item}</List.Item>}
-          locale={{ emptyText: '无JVM参数信息' }}
+          dataSource={data.arguments || []}
+          renderItem={item => <List.Item><Text code>{item}</Text></List.Item>}
+          locale={{ emptyText: '无 JVM 参数信息' }}
+          style={{ maxHeight: 300, overflowY: 'auto' }}
         />
       </Card>
-    </div>
+    </Space>
   );
+
+  if (standalone) {
+    return (
+      <div style={{ padding: 24 }}>
+        <MagicCard
+          title="运行环境详情"
+          description="查看 Java 虚拟机版本、启动参数及运行状态"
+          icon={<ThunderboltOutlined />}
+          extra={
+            <Space>
+              <StatusPill label="实时获取" status="success" />
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => {
+                  setRefreshKey(prev => prev + 1);
+                  refetch();
+                }}
+                loading={loading}
+              >
+                刷新
+              </Button>
+            </Space>
+          }
+        >
+          {renderContent()}
+        </MagicCard>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default JvmInfo;

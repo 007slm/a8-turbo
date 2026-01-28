@@ -180,13 +180,7 @@ const CacheRules = () => {
         return <Tag color="green">智能匹配 {queryIds.length} 条慢查询</Tag>
       },
     },
-    {
-      title: 'TTL',
-      dataIndex: 'ttl',
-      width: 100,
-      search: false,
-      render: (text) => text ? <Tag color="cyan">{text}</Tag> : '-',
-    },
+
     {
       title: 'Seatunnel 作业',
       key: 'seatunnel',

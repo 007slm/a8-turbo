@@ -576,7 +576,7 @@ const CacheRuleEditor = () => {
     const backgroundColor = isSelected ? undefined : (isOdd ? '#fffbe6' : '#ffffff')
 
     return (
-      <div style={{ padding: '0 8px 12px 8px', height: '100%', boxSizing: 'border-box', backgroundColor }}>
+      <div style={{ height: '100%', boxSizing: 'border-box', backgroundColor }}>
         <SqlEventCard
           query={data}
           isSelected={isSelected}
@@ -767,6 +767,7 @@ const CacheRuleEditor = () => {
 
           </ProCard>
         )}
+        <div style={{ height: 26 }} />
       </ProForm>
 
       {/* Detail Drawer (Enhanced) */}

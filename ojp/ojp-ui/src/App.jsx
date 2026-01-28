@@ -1,47 +1,25 @@
 import React, { useState } from 'react'
 import { HashRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { ConfigProvider, App as AntdApp, Dropdown } from 'antd'
+import { ConfigProvider, App as AntdApp, Spin } from 'antd'
 import { ProLayout } from '@ant-design/pro-components'
 import {
-  DashboardOutlined,
-  DatabaseOutlined,
-  MonitorOutlined,
   BellOutlined,
   QuestionCircleOutlined,
-  PieChartOutlined,
-  GoldOutlined,
-  RestOutlined,
-  NodeIndexOutlined,
-  LinkOutlined,
-  CloudServerOutlined,
-  BulbOutlined,
+  HomeOutlined,
+  RocketOutlined,
+  SecurityScanOutlined,
+  DashboardOutlined,
+  ExperimentOutlined,
+  DatabaseOutlined,
+  DeploymentUnitOutlined,
+  MonitorOutlined,
   ShopOutlined,
   ApiOutlined,
-  SafetyCertificateOutlined,
-  SyncOutlined,
-  RocketOutlined,
-  AppstoreOutlined,
-  SolutionOutlined,
-  FileTextOutlined,
-  ClockCircleOutlined,
-  SafetyOutlined,
-  ToolOutlined,
-  HomeOutlined,
-  SettingOutlined,
-  ThunderboltOutlined,
-  BarChartOutlined,
-  ClusterOutlined,
-  UserOutlined,
-  BarcodeOutlined,
-  OrderedListOutlined,
-  StarOutlined,
-  ConsoleSqlOutlined,
+  CompassOutlined
 } from '@ant-design/icons'
 import { useQuery } from 'react-query'
+import { Agentation } from 'agentation'
 import Monitoring from './components/Monitoring'
-
-import MonitoringOverview from './components/MonitoringOverview'
-import ServiceMonitoring from './components/ServiceMonitoring'
 import ServicePortal from './pages/ServicePortal.jsx'
 
 import MonitorDashboard from './pages/monitor/index.jsx'
@@ -50,10 +28,8 @@ import RedisNativeMonitor from './pages/monitor/redis/index.jsx'
 import StarrocksNativeMonitor from './pages/monitor/starrocks/index.jsx'
 import PrometheusNativeMonitor from './pages/monitor/prometheus/index.jsx'
 import TableSyncStatus from './components/cache/TableSyncStatus'
-import PrometheusTest from './pages/monitor/test/PrometheusTest.jsx'
 import SqlTranslatorTest from './pages/test/SqlTranslatorTest.jsx'
 import SystemConnectivityTest from './pages/test/SystemConnectivityTest.jsx'
-
 
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
@@ -74,7 +50,6 @@ import './components/magicui/styles.css'
 import LicenseLockScreen from './components/LicenseLockScreen'
 import { StatusPill } from './components/magicui'
 import LicenseModal from './components/LicenseModal'
-import { Spin } from 'antd'
 
 
 
@@ -110,18 +85,18 @@ function AppContent() {
       {
         path: '/home',
         name: '工作台',
-        icon: <span role="img" aria-label="home" style={{ fontSize: '18px' }}>💻</span>,
+        icon: <HomeOutlined />,
       },
 
       {
         path: '/core',
         name: '数据业务',
-        icon: <span role="img" aria-label="core" style={{ fontSize: '18px' }}>💎</span>,
+        icon: <DatabaseOutlined />,
         routes: [
           {
             path: '/cache',
             name: '智能加速',
-            icon: <span role="img" aria-label="rocket" style={{ fontSize: '18px' }}>🚀</span>,
+            icon: <RocketOutlined />,
             routes: [
               {
                 path: '/cache/rules',
@@ -129,7 +104,7 @@ function AppContent() {
               },
               {
                 path: '/cache/queries',
-                name: '提速成效',
+                name: '性能分析',
               },
               {
                 path: '/cache/sync-status',
@@ -142,12 +117,12 @@ function AppContent() {
       {
         path: '/assurance',
         name: '运维监控',
-        icon: <span role="img" aria-label="shield" style={{ fontSize: '18px' }}>🛡️</span>,
+        icon: <SecurityScanOutlined />,
         routes: [
           {
             path: '/monitor',
             name: '状态监控',
-            icon: <span role="img" aria-label="monitor" style={{ fontSize: '18px' }}>🩺</span>,
+            icon: <DashboardOutlined />,
             routes: [
               {
                 path: '/monitor/jvm',
@@ -194,24 +169,24 @@ function AppContent() {
           {
             path: '/service-portal',
             name: '服务入口',
-            icon: <span role="img" aria-label="compass" style={{ fontSize: '18px' }}>🧭</span>,
+            icon: <CompassOutlined />,
           },
         ]
       },
       {
         path: '/tools',
         name: '实验室',
-        icon: <span role="img" aria-label="lab" style={{ fontSize: '18px' }}>🧪</span>,
+        icon: <ExperimentOutlined />,
         routes: [
           {
             path: '/test',
             name: '开发测试',
-            icon: <span role="img" aria-label="puzzle" style={{ fontSize: '18px' }}>🧩</span>,
+            icon: <DeploymentUnitOutlined />,
             routes: [
               {
                 path: '/shopservice',
                 name: '示例业务',
-                icon: <span role="img" aria-label="shop" style={{ fontSize: '18px' }}>🏪</span>,
+                icon: <ShopOutlined />,
                 routes: [
                   {
                     path: '/shopservice/users',
@@ -298,13 +273,21 @@ function AppContent() {
           colorBgContainer: '#ffffff',
           borderRadiusLG: 12,
           fontFamily: 'Inter, -apple-system, system-ui, "Segoe UI", Arial, sans-serif',
+          boxShadow: 'none',
+          boxShadowSecondary: 'none',
+          boxShadowTertiary: 'none',
         },
+        components: {
+          Card: {
+            boxShadowCard: 'none',
+          }
+        }
       }}
     >
       <AntdApp>
         <ProLayout
           title="A8 平台 · Turbo"
-          logo="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg"
+          logo="/logo.svg"
           layout="mix"
           splitMenus={false}
           contentWidth="Fluid"
@@ -328,11 +311,12 @@ function AppContent() {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8,
+                  gap: 10,
+                  fontSize: '15px',
                   justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
                 }}
               >
-                {item.icon}
+                <div style={{ fontSize: '18px', display: 'flex' }}>{item.icon}</div>
                 {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
               </div>
             )
@@ -343,10 +327,11 @@ function AppContent() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
+                gap: 10,
+                fontSize: '15px',
                 justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
               }}>
-                {item.icon}
+                <div style={{ fontSize: '18px', display: 'flex' }}>{item.icon}</div>
                 {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
               </div>
             )
@@ -393,7 +378,6 @@ function AppContent() {
             <Route path="/monitor/gc" element={<GcInfo gcInfo={null} loading={false} standalone />} />
             <Route path="/monitor/dbpool" element={<HikariCPMonitoring dbPoolInfo={null} loading={false} standalone />} />
             <Route path="/monitor" element={<MonitorDashboard />} />
-            <Route path="/monitor/test" element={<PrometheusTest />} />
             <Route path="/monitor/cache" element={<CacheNativeMonitor />} />
             <Route path="/monitor/redis" element={<RedisNativeMonitor />} />
             <Route path="/monitor/starrocks" element={<StarrocksNativeMonitor />} />
@@ -405,8 +389,6 @@ function AppContent() {
                 title="SkyWalking"
               />
             } />
-            <Route path="/monitoring" element={<MonitoringOverview />} />
-            <Route path="/monitoring/:serviceKey" element={<ServiceMonitoring />} />
             <Route path="/cache" element={<CacheRules />} />
             <Route path="/cache/rules" element={<CacheRules />} />
             <Route path="/cache/queries" element={<QueryCache />} />
@@ -429,6 +411,7 @@ function AppContent() {
           </Routes>
         </ProLayout>
         <LicenseModal open={licenseModalOpen} onClose={() => setLicenseModalOpen(false)} />
+        {import.meta.env.DEV && <Agentation />}
       </AntdApp>
     </ConfigProvider>
   )

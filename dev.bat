@@ -188,12 +188,12 @@ if "%BUILD_DOCKER%"=="true" (
 )
 
 echo 启动服务...
-docker compose -f docker-compose-base.yml -f docker-compose-dev-overrides.yml down --remove-orphans
+@REM docker compose -f docker-compose-base.yml -f docker-compose-dev-overrides.yml down --remove-orphans
 docker compose -f docker-compose-base.yml -f docker-compose-dev-overrides.yml up -d
 
 
-cd ojp/ojp-ui
-pnpm dev
+echo %cd%
+pnpm -C ojp/ojp-ui dev
 
 if errorlevel 1 (
     echo 错误: 服务启动失败

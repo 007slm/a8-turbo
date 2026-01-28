@@ -498,7 +498,7 @@ const QueryCache = () => {
   return (
     <PageContainer
       header={{
-        title: '提速成效分析',
+        title: '性能分析',
         subTitle: '3秒内定位慢SQL并评估加速潜力',
         extra: [
           <Button key="refresh" icon={<ReloadOutlined />} onClick={() => refetchQueries()} loading={isLoading}>刷新</Button>

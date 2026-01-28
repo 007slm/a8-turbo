@@ -231,7 +231,7 @@ const PrometheusChart = ({
         <Card
             title={title}
             size="small"
-            bodyStyle={{ padding: '16px 8px 8px 0' }}
+            bodyStyle={{ padding: '16px' }}
             className="prometheus-chart-card"
             style={{ height: height + 70 }}
         >

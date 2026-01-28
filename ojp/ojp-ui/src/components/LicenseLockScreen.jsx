@@ -115,7 +115,7 @@ const LicenseLockScreen = () => {
             </Card>
 
             <div style={{ position: 'absolute', bottom: 24, textAlign: 'center', width: '100%' }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>© 2024 A8 Platform Enterprise Edition</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>© 2026 A8 Platform Enterprise Edition</Text>
             </div>
         </div>
     );

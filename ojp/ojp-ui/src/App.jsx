@@ -243,13 +243,7 @@ function AppContent() {
   // 如果正在加载授权信息，显示全屏 Loading
   if (licenseLoading) {
     return (
-      <div style={{
-        height: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: '#f0f2f5'
-      }}>
+      <div className="h-screen flex justify-center items-center bg-[#f0f2f5]">
         <Spin size="large" tip="系统启动中..." />
       </div>
     )
@@ -271,8 +265,12 @@ function AppContent() {
           colorPrimary: '#1677ff',
           colorBgLayout: '#f4f7fb',
           colorBgContainer: '#ffffff',
-          borderRadiusLG: 12,
+          borderRadiusLG: 10, // Slightly reduced radius
+          borderRadius: 6,
           fontFamily: 'Inter, -apple-system, system-ui, "Segoe UI", Arial, sans-serif',
+          fontSize: 13, // Reduced base font size
+          fontSizeHeading3: 20,
+          controlHeight: 30, // Reduced control height for tighter UI
           boxShadow: 'none',
           boxShadowSecondary: 'none',
           boxShadowTertiary: 'none',
@@ -280,6 +278,28 @@ function AppContent() {
         components: {
           Card: {
             boxShadowCard: 'none',
+            paddingLG: 16, // Reduced card padding
+          },
+          Menu: {
+            itemHeight: 36, // Reduced menu item height
+            fontSize: 13,
+          },
+          Button: {
+            controlHeight: 30,
+            fontSize: 13,
+          },
+          Input: {
+            controlHeight: 30,
+            fontSize: 13,
+          },
+          Select: {
+            controlHeight: 30,
+            fontSize: 13,
+          },
+          Table: {
+            fontSize: 13,
+            cellPaddingBlock: 10, // Compact table
+            borderSecondary: '#f0f0f0',
           }
         }
       }}
@@ -307,32 +327,19 @@ function AppContent() {
                 onClick={() => {
                   navigate(item.path || '/');
                 }}
-                style={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  fontSize: '15px',
-                  justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
-                }}
+                className={`flex items-center gap-2.5 text-[13px] cursor-pointer ${collapsed && isTopLevel ? 'justify-center' : 'justify-start'}`}
               >
-                <div style={{ fontSize: '18px', display: 'flex' }}>{item.icon}</div>
-                {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
+                <div className="text-base flex">{item.icon}</div>
+                {(!collapsed || !isTopLevel) && <span className="font-medium">{item.name}</span>}
               </div>
             )
           }}
           subMenuItemRender={(item, dom) => {
             const isTopLevel = ['/home', '/core', '/assurance', '/tools'].includes(item.path)
             return (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                fontSize: '15px',
-                justifyContent: (collapsed && isTopLevel) ? 'center' : 'flex-start',
-              }}>
-                <div style={{ fontSize: '18px', display: 'flex' }}>{item.icon}</div>
-                {(!collapsed || !isTopLevel) && <span>{item.name}</span>}
+              <div className={`flex items-center gap-2.5 text-[13px] ${collapsed && isTopLevel ? 'justify-center' : 'justify-start'}`}>
+                <div className="text-base flex">{item.icon}</div>
+                {(!collapsed || !isTopLevel) && <span className="font-medium">{item.name}</span>}
               </div>
             )
           }}
@@ -344,7 +351,7 @@ function AppContent() {
               return (
                 <div
                   onClick={() => setLicenseModalOpen(true)}
-                  style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                  className="cursor-pointer flex items-center gap-2"
                 >
                   {dom}
                 </div>
@@ -352,7 +359,7 @@ function AppContent() {
             },
           }}
           actionsRender={() => [
-            <div key="status" style={{ display: 'flex', alignItems: 'center', marginRight: 8 }}>
+            <div key="status" className="flex items-center mr-2">
               {statusLoading ? (
                 <StatusPill label="状态检查中" status="default" className="header-status-pill" />
               ) : isSystemUp() ? (

@@ -198,100 +198,60 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
       {renderSystemStatus()}
 
       {/* 统计卡片 */}
-      <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+      <Row gutter={[24, 24]} className="mb-8">
         <Col xs={24} sm={12} md={6}>
           <Card
-            className="stats-card"
+            className="stats-card h-[140px] flex flex-col justify-center rounded-xl border-none shadow-lg shadow-indigo-500/20 bg-gradient-to-br from-[#667eea] to-[#764ba2] transition-transform hover:-translate-y-1"
             hoverable
-            style={{
-              borderRadius: 12,
-              minHeight: 140,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              border: 'none',
-              boxShadow: '0 8px 24px rgba(102, 126, 234, 0.15)'
-            }}
           >
-            <div style={{ textAlign: 'center', color: '#fff' }}>
-              <CloudServerOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
-              <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
+            <div className="text-center text-white">
+              <CloudServerOutlined className="text-2xl mb-2 text-white" />
+              <div className="text-xl font-bold mb-1">
                 {healthInfo?.status === 'UP' ? '正常' : '异常'}
               </div>
-              <div style={{ fontSize: 14, opacity: 0.9 }}>服务器状态</div>
+              <div className="text-xs opacity-90">服务器状态</div>
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            className="stats-card"
+            className="stats-card h-[140px] flex flex-col justify-center rounded-xl border-none shadow-lg shadow-pink-500/20 bg-gradient-to-br from-[#f093fb] to-[#f5576c] transition-transform hover:-translate-y-1"
             hoverable
-            style={{
-              borderRadius: 12,
-              minHeight: 140,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              border: 'none',
-              boxShadow: '0 8px 24px rgba(240, 147, 251, 0.15)'
-            }}
           >
-            <div style={{ textAlign: 'center', color: '#fff' }}>
-              <DatabaseOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
-              <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
+            <div className="text-center text-white">
+              <DatabaseOutlined className="text-2xl mb-2 text-white" />
+              <div className="text-xl font-bold mb-1">
                 {formatPercentage(resources?.memoryUsage || 0)}
               </div>
-              <div style={{ fontSize: 14, opacity: 0.9 }}>内存使用率</div>
+              <div className="text-xs opacity-90">内存使用率</div>
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            className="stats-card"
+            className="stats-card h-[140px] flex flex-col justify-center rounded-xl border-none shadow-lg shadow-blue-500/20 bg-gradient-to-br from-[#4facfe] to-[#00f2fe] transition-transform hover:-translate-y-1"
             hoverable
-            style={{
-              borderRadius: 12,
-              minHeight: 140,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              border: 'none',
-              boxShadow: '0 8px 24px rgba(79, 172, 254, 0.15)'
-            }}
           >
-            <div style={{ textAlign: 'center', color: '#fff' }}>
-              <DesktopOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
-              <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
+            <div className="text-center text-white">
+              <DesktopOutlined className="text-2xl mb-2 text-white" />
+              <div className="text-xl font-bold mb-1">
                 {formatPercentage(resources?.cpuUsage || 0)}
               </div>
-              <div style={{ fontSize: 14, opacity: 0.9 }}>CPU使用率</div>
+              <div className="text-xs opacity-90">CPU使用率</div>
             </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
           <Card
-            className="stats-card"
+            className="stats-card h-[140px] flex flex-col justify-center rounded-xl border-none shadow-lg shadow-yellow-500/20 bg-gradient-to-br from-[#fa709a] to-[#fee140] transition-transform hover:-translate-y-1"
             hoverable
-            style={{
-              borderRadius: 12,
-              minHeight: 140,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-              border: 'none',
-              boxShadow: '0 8px 24px rgba(250, 112, 154, 0.15)'
-            }}
           >
-            <div style={{ textAlign: 'center', color: '#fff' }}>
-              <UserOutlined style={{ fontSize: 32, marginBottom: 12, color: '#fff' }} />
-              <div style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 4 }}>
-                {(threadInfo?.totalThreads || 0).toLocaleString()}
+            <div className="text-center text-white">
+              <UserOutlined className="text-2xl mb-2 text-white" />
+              <div className="text-xl font-bold mb-1">
+                {Number(threadInfo?.totalThreads || 0).toLocaleString()}
               </div>
-              <div style={{ fontSize: 14, opacity: 0.9 }}>活跃线程</div>
+              <div className="text-xs opacity-90">活跃线程</div>
             </div>
           </Card>
         </Col>
@@ -299,136 +259,74 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
 
       {/* 资源使用详情 */}
       <Card
-        title={<><DesktopOutlined style={{ marginRight: 8, color: '#1890ff' }} />资源使用详情</>}
-        style={{
-          marginBottom: 32,
-          borderRadius: 12,
-          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-          border: '1px solid #f0f0f0'
-        }}
-        headStyle={{
-          background: 'linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%)',
-          borderBottom: '1px solid #f0f0f0',
-          borderRadius: '12px 12px 0 0'
-        }}
+        title={<><DesktopOutlined className="mr-2 text-brand-primary" />资源使用详情</>}
+        className="mb-8 rounded-xl shadow-sm border border-slate-100 [&>.ant-card-head]:bg-gradient-to-r [&>.ant-card-head]:from-[#f8f9fa] [&>.ant-card-head]:to-white [&>.ant-card-head]:border-b-[#f0f0f0]"
       >
-        <Row gutter={[24, 24]}>
-          <Col xs={24} sm={8}>
-            <div style={{
-              padding: '20px',
-              background: '#fafafa',
-              borderRadius: '8px',
-              textAlign: 'center',
-              minHeight: '140px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}>
-              <DesktopOutlined style={{ fontSize: '24px', color: '#1890ff', marginBottom: '12px' }} />
-              <Statistic
-                title={<span style={{ color: '#666', fontSize: '14px' }}>CPU 使用率</span>}
-                value={cpuUsage}
-                precision={2}
-                suffix="%"
-                valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#1890ff' }}
-              />
-              <Progress
-                percent={cpuUsage}
-                status={cpuUsage > 90 ? 'exception' : cpuUsage > 70 ? 'warning' : 'normal'}
-                strokeWidth={6}
-                style={{ marginTop: '12px' }}
-              />
-            </div>
-          </Col>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-50 rounded-lg p-5 text-center min-h-[140px] flex flex-col justify-center items-center">
+            <DesktopOutlined className="text-2xl text-blue-500 mb-3" />
+            <Statistic
+              title={<span className="text-slate-500 text-xs">CPU 使用率</span>}
+              value={cpuUsage}
+              precision={2}
+              suffix="%"
+              valueStyle={{ fontSize: '24px', fontWeight: 'bold', color: '#1677ff' }}
+            />
+            <Progress
+              percent={cpuUsage}
+              status={cpuUsage > 90 ? 'exception' : cpuUsage > 70 ? 'warning' : 'normal'}
+              strokeWidth={6}
+              className="mt-3"
+            />
+          </div>
 
-          <Col xs={24} sm={8}>
-            <div style={{
-              padding: '20px',
-              background: '#fafafa',
-              borderRadius: '8px',
-              textAlign: 'center',
-              minHeight: '140px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}>
-              <DatabaseOutlined style={{ fontSize: '24px', color: '#52c41a', marginBottom: '12px' }} />
-              <Statistic
-                title={<span style={{ color: '#666', fontSize: '14px' }}>内存使用率</span>}
-                value={memoryUsage}
-                precision={2}
-                suffix="%"
-                valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#52c41a' }}
-              />
-              <Progress
-                percent={memoryUsage}
-                status={memoryUsage > 90 ? 'exception' : memoryUsage > 70 ? 'warning' : 'normal'}
-                strokeWidth={6}
-                style={{ marginTop: '12px' }}
-              />
-            </div>
-          </Col>
+          <div className="bg-slate-50 rounded-lg p-5 text-center min-h-[140px] flex flex-col justify-center items-center">
+            <DatabaseOutlined className="text-2xl text-emerald-500 mb-3" />
+            <Statistic
+              title={<span className="text-slate-500 text-xs">内存使用率</span>}
+              value={memoryUsage}
+              precision={2}
+              suffix="%"
+              valueStyle={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}
+            />
+            <Progress
+              percent={memoryUsage}
+              status={memoryUsage > 90 ? 'exception' : memoryUsage > 70 ? 'warning' : 'normal'}
+              strokeWidth={6}
+              className="mt-3"
+            />
+          </div>
 
-          <Col xs={24} sm={8}>
-            <div style={{
-              padding: '20px',
-              background: '#fafafa',
-              borderRadius: '8px',
-              textAlign: 'center',
-              minHeight: '140px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center'
-            }}>
-              <HddOutlined style={{ fontSize: '24px', color: '#fa8c16', marginBottom: '12px' }} />
-              <Statistic
-                title={<span style={{ color: '#666', fontSize: '14px' }}>磁盘使用率</span>}
-                value={diskUsage}
-                precision={2}
-                suffix="%"
-                valueStyle={{ fontSize: '28px', fontWeight: 'bold', color: '#fa8c16' }}
-              />
-              <Progress
-                percent={diskUsage}
-                status={diskUsage > 90 ? 'exception' : diskUsage > 70 ? 'warning' : 'normal'}
-                strokeWidth={6}
-                style={{ marginTop: '12px' }}
-              />
-            </div>
-          </Col>
-        </Row>
+          <div className="bg-slate-50 rounded-lg p-5 text-center min-h-[140px] flex flex-col justify-center items-center">
+            <HddOutlined className="text-2xl text-amber-500 mb-3" />
+            <Statistic
+              title={<span className="text-slate-500 text-xs">磁盘使用率</span>}
+              value={diskUsage}
+              precision={2}
+              suffix="%"
+              valueStyle={{ fontSize: '24px', fontWeight: 'bold', color: '#fa8c16' }}
+            />
+            <Progress
+              percent={diskUsage}
+              status={diskUsage > 90 ? 'exception' : diskUsage > 70 ? 'warning' : 'normal'}
+              strokeWidth={6}
+              className="mt-3"
+            />
+          </div>
+        </div>
       </Card>
 
       {/* JVM 信息 */}
       {(memoryInfo || threadInfo || gcInfo) && (
         <Card
-          title={<><ThunderboltOutlined style={{ marginRight: 8, color: '#722ed1' }} />运行环境信息</>}
-          style={{
-            marginBottom: 32,
-            borderRadius: 12,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            border: '1px solid #f0f0f0'
-          }}
-          headStyle={{
-            background: 'linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%)',
-            borderBottom: '1px solid #f0f0f0',
-            borderRadius: '12px 12px 0 0'
-          }}
+          title={<><ThunderboltOutlined className="mr-2 text-purple-600" />运行环境信息</>}
+          className="mb-8 rounded-xl shadow-sm border border-slate-100 [&>.ant-card-head]:bg-gradient-to-r [&>.ant-card-head]:from-[#f8f9fa] [&>.ant-card-head]:to-white [&>.ant-card-head]:border-b-[#f0f0f0]"
         >
           <Row gutter={[24, 24]}>
             <Col xs={24} sm={12}>
-              <div style={{
-                padding: '24px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '12px',
-                color: '#fff',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>堆内存使用</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>
+              <div className="p-6 bg-gradient-to-br from-[#667eea] to-[#764ba2] rounded-xl text-white min-h-[120px] flex flex-col justify-center shadow-lg shadow-indigo-500/10">
+                <div className="text-xs opacity-90 mb-1">堆内存使用</div>
+                <div className="text-base font-bold mb-2">
                   {formatBytes((memoryInfo?.heapUsed || 0) * 1024 * 1024)} / {formatBytes((memoryInfo?.heapMax || 0) * 1024 * 1024)}
                 </div>
                 <Progress
@@ -441,18 +339,9 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
               </div>
             </Col>
             <Col xs={24} sm={12}>
-              <div style={{
-                padding: '24px',
-                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                borderRadius: '12px',
-                color: '#fff',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>非堆内存使用</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '12px' }}>
+              <div className="p-6 bg-gradient-to-br from-[#4facfe] to-[#00f2fe] rounded-xl text-white min-h-[120px] flex flex-col justify-center shadow-lg shadow-blue-500/10">
+                <div className="text-sm opacity-90 mb-2">非堆内存使用</div>
+                <div className="text-lg font-bold mb-3">
                   {formatBytes((memoryInfo?.nonHeapUsed || 0) * 1024 * 1024)} / {formatBytes((memoryInfo?.nonHeapMax || 0) * 1024 * 1024)}
                 </div>
                 <Progress
@@ -465,41 +354,21 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
               </div>
             </Col>
             <Col xs={24} sm={12}>
-              <div style={{
-                padding: '24px',
-                background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                borderRadius: '12px',
-                textAlign: 'center',
-                color: '#fff',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <UserOutlined style={{ fontSize: '32px', marginBottom: '12px' }} />
-                <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>
+              <div className="p-6 bg-gradient-to-br from-[#fa709a] to-[#fee140] rounded-xl text-center text-white min-h-[120px] flex flex-col justify-center shadow-lg shadow-pink-500/10">
+                <UserOutlined className="text-3xl mb-3" />
+                <div className="text-2xl font-bold mb-1">
                   {(threadInfo?.totalThreads || 0).toLocaleString()}
                 </div>
-                <div style={{ fontSize: '14px', opacity: 0.9 }}>活跃线程数</div>
+                <div className="text-sm opacity-90">活跃线程数</div>
               </div>
             </Col>
             <Col xs={24} sm={12}>
-              <div style={{
-                padding: '24px',
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                borderRadius: '12px',
-                textAlign: 'center',
-                color: '#fff',
-                minHeight: '120px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <ThunderboltOutlined style={{ fontSize: '32px', marginBottom: '12px' }} />
-                <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '4px' }}>
+              <div className="p-6 bg-gradient-to-br from-[#f093fb] to-[#f5576c] rounded-xl text-center text-white min-h-[120px] flex flex-col justify-center shadow-lg shadow-red-500/10">
+                <ThunderboltOutlined className="text-2xl mb-2" />
+                <div className="text-xl font-bold mb-1">
                   {((gcInfo?.youngGcCount || 0) + (gcInfo?.fullGcCount || 0)).toLocaleString()}
                 </div>
-                <div style={{ fontSize: '14px', opacity: 0.9 }}>资源回收总次数</div>
+                <div className="text-xs opacity-90">资源回收总次数</div>
               </div>
             </Col>
           </Row>
@@ -509,94 +378,44 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
       {/* 系统信息 */}
       {resources && (
         <Card
-          title={<><CloudServerOutlined style={{ marginRight: 8, color: '#52c41a' }} />系统信息</>}
-          style={{
-            marginBottom: 32,
-            borderRadius: 12,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            border: '1px solid #f0f0f0'
-          }}
-          headStyle={{
-            background: 'linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%)',
-            borderBottom: '1px solid #f0f0f0',
-            borderRadius: '12px 12px 0 0'
-          }}
+          title={<><CloudServerOutlined className="mr-2 text-green-500" />系统信息</>}
+          className="mb-8 rounded-xl shadow-sm border border-slate-100 [&>.ant-card-head]:bg-gradient-to-r [&>.ant-card-head]:from-[#f8f9fa] [&>.ant-card-head]:to-white [&>.ant-card-head]:border-b-[#f0f0f0]"
         >
           <Row gutter={[24, 24]}>
             <Col xs={24} sm={12} md={6}>
-              <div style={{
-                padding: '20px',
-                background: '#f6ffed',
-                border: '1px solid #b7eb8f',
-                borderRadius: '8px',
-                textAlign: 'center',
-                minHeight: '100px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <CheckCircleOutlined style={{ fontSize: '20px', color: '#52c41a', marginBottom: '8px' }} />
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#52c41a', marginBottom: '4px' }}>
+              <div className="p-5 bg-green-50 border border-green-200 rounded-lg text-center min-h-[100px] flex flex-col justify-center">
+                <CheckCircleOutlined className="text-xl text-green-500 mb-2" />
+                <div className="text-base font-bold text-green-500 mb-1">
                   {healthInfo?.status === 'UP' ? '运行中' : '已停止'}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>系统状态</div>
+                <div className="text-xs text-neutral-500">系统状态</div>
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <div style={{
-                padding: '20px',
-                background: '#f0f5ff',
-                border: '1px solid #adc6ff',
-                borderRadius: '8px',
-                textAlign: 'center',
-                minHeight: '100px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <ClockCircleOutlined style={{ fontSize: '20px', color: '#1890ff', marginBottom: '8px' }} />
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>
+              <div className="p-5 bg-blue-50 border border-blue-200 rounded-lg text-center min-h-[100px] flex flex-col justify-center">
+                <ClockCircleOutlined className="text-xl text-blue-500 mb-2" />
+                <div className="text-base font-bold text-blue-500 mb-1">
                   {formatDuration(resources?.uptime || 0)}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>运行时间</div>
+                <div className="text-xs text-neutral-500">运行时间</div>
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <div style={{
-                padding: '20px',
-                background: '#fff7e6',
-                border: '1px solid #ffd591',
-                borderRadius: '8px',
-                textAlign: 'center',
-                minHeight: '100px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <DesktopOutlined style={{ fontSize: '20px', color: '#fa8c16', marginBottom: '8px' }} />
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fa8c16', marginBottom: '4px' }}>
+              <div className="p-5 bg-orange-50 border border-orange-200 rounded-lg text-center min-h-[100px] flex flex-col justify-center">
+                <DesktopOutlined className="text-xl text-orange-500 mb-2" />
+                <div className="text-base font-bold text-orange-500 mb-1">
                   {formatPercentage(resources?.cpuUsage || 0)}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>CPU使用率</div>
+                <div className="text-xs text-neutral-500">CPU使用率</div>
               </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
-              <div style={{
-                padding: '20px',
-                background: '#f9f0ff',
-                border: '1px solid #d3adf7',
-                borderRadius: '8px',
-                textAlign: 'center',
-                minHeight: '100px',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}>
-                <DatabaseOutlined style={{ fontSize: '20px', color: '#722ed1', marginBottom: '8px' }} />
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#722ed1', marginBottom: '4px' }}>
+              <div className="p-5 bg-purple-50 border border-purple-200 rounded-lg text-center min-h-[100px] flex flex-col justify-center">
+                <DatabaseOutlined className="text-xl text-purple-600 mb-2" />
+                <div className="text-base font-bold text-purple-600 mb-1">
                   {formatPercentage(resources?.memoryUsage || 0)}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>内存使用率</div>
+                <div className="text-xs text-neutral-500">内存使用率</div>
               </div>
             </Col>
           </Row>
@@ -606,67 +425,26 @@ const SystemOverview = ({ resources, healthInfo, loading }) => {
       {/* 系统组件状态 */}
       {healthInfo && healthInfo.components && (
         <Card
-          title={<><CheckCircleOutlined style={{ marginRight: 8, color: '#52c41a' }} />系统组件状态</>}
-          style={{
-            borderRadius: 12,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-            border: '1px solid #f0f0f0'
-          }}
-          headStyle={{
-            background: 'linear-gradient(90deg, #f8f9fa 0%, #ffffff 100%)',
-            borderBottom: '1px solid #f0f0f0',
-            borderRadius: '12px 12px 0 0'
-          }}
+          title={<><CheckCircleOutlined className="mr-2 text-green-500" />系统组件状态</>}
+          className="rounded-xl shadow-sm border border-slate-100 [&>.ant-card-head]:bg-gradient-to-r [&>.ant-card-head]:from-[#f8f9fa] [&>.ant-card-head]:to-white [&>.ant-card-head]:border-b-[#f0f0f0]"
         >
           <Row gutter={[24, 24]}>
             {Object.entries(healthInfo.components).map(([key, component]) => (
               <Col xs={24} sm={12} md={8} lg={6} key={key}>
-                <div style={{
-                  padding: '20px',
-                  background: component.status === 'UP' ?
-                    'linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)' :
-                    component.status === 'DOWN' ?
-                      'linear-gradient(135deg, #fff2f0 0%, #ffccc7 100%)' :
-                      'linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%)',
-                  border: component.status === 'UP' ?
-                    '2px solid #b7eb8f' :
-                    component.status === 'DOWN' ?
-                      '2px solid #ffa39e' :
-                      '2px solid #ffe58f',
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  minHeight: '100px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}>
-                  <div style={{
-                    fontSize: '24px',
-                    marginBottom: '8px',
-                    color: component.status === 'UP' ? '#52c41a' :
-                      component.status === 'DOWN' ? '#ff4d4f' : '#fa8c16'
-                  }}>
-                    {component.status === 'UP' ? '✓' :
-                      component.status === 'DOWN' ? '✗' : '⚠'}
+                <div className={`p-5 rounded-xl border-2 text-center min-h-[100px] flex flex-col justify-center transition-all duration-300 cursor-pointer hover:shadow-md hover:-translate-y-1 group bg-gradient-to-br
+                  ${component.status === 'UP' ? 'from-green-50 to-emerald-50 border-green-200' : component.status === 'DOWN' ? 'from-red-50 to-pink-50 border-red-200' : 'from-yellow-50 to-orange-50 border-yellow-200'}`}
+                >
+                  <div className={`text-2xl mb-2
+                    ${component.status === 'UP' ? 'text-green-500' : component.status === 'DOWN' ? 'text-red-500' : 'text-orange-500'}`}
+                  >
+                    {component.status === 'UP' ? '✓' : component.status === 'DOWN' ? '✗' : '⚠'}
                   </div>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    marginBottom: '4px',
-                    color: '#333'
-                  }}>
+                  <div className="text-sm font-bold mb-1 text-slate-800">
                     {key.charAt(0).toUpperCase() + key.slice(1)}
                   </div>
                   <Tag
-                    color={component.status === 'UP' ? 'green' :
-                      component.status === 'DOWN' ? 'red' : 'orange'}
-                    style={{
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      border: 'none'
-                    }}
+                    color={component.status === 'UP' ? 'green' : component.status === 'DOWN' ? 'red' : 'orange'}
+                    className="font-bold border-none mx-auto"
                   >
                     {component.status}
                   </Tag>

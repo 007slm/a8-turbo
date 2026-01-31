@@ -369,9 +369,9 @@ const Monitoring = () => {
 
   // Hero区域特性标签，增加颜色和渐变配置
   const heroFeatures = [
-    { text: '连接统一管控 + 弹性扩缩', color: '#6366f1', gradient: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.05) 100%)' },
-    { text: '智能SQL缓存 自动识别热点', color: '#10b981', gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 100%)' },
-    { text: '增量物化 近实时更新', color: '#f59e0b', gradient: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%)' },
+    { text: '连接统一管控 + 弹性扩缩', color: 'text-indigo-500', borderColor: 'border-indigo-500/40', bg: 'bg-indigo-500/5', shadow: 'shadow-indigo-500/20', hoverShadow: 'hover:shadow-indigo-500/40', hoverBorder: 'hover:border-indigo-500/80' },
+    { text: '智能SQL缓存 自动识别热点', color: 'text-emerald-500', borderColor: 'border-emerald-500/40', bg: 'bg-emerald-500/5', shadow: 'shadow-emerald-500/20', hoverShadow: 'hover:shadow-emerald-500/40', hoverBorder: 'hover:border-emerald-500/80' },
+    { text: '增量物化 近实时更新', color: 'text-amber-500', borderColor: 'border-amber-500/40', bg: 'bg-amber-500/5', shadow: 'shadow-amber-500/20', hoverShadow: 'hover:shadow-amber-500/40', hoverBorder: 'hover:border-amber-500/80' },
   ]
 
 
@@ -388,12 +388,7 @@ const Monitoring = () => {
   return (
     <div className="monitoring-page">
       <AuroraBackground className="monitoring-hero">
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '32px'
-        }}>
+        <div className="flex justify-between items-center mb-8">
           <StatusPill label={`状态 · ${heroStatusLabel}`} status={heroStatus} subtle />
           <Space size={12}>
             <Button
@@ -402,63 +397,34 @@ const Monitoring = () => {
               icon={<ReloadOutlined />}
               onClick={handleRefreshAll}
               loading={isLoading}
+              className="hover:scale-105 transition-transform duration-200 shadow-lg shadow-blue-500/30"
             >
               刷新监控
             </Button>
-            <Button size="large" ghost icon={<QuestionCircleOutlined />}>
+            <Button size="large" ghost icon={<QuestionCircleOutlined />} className="hover:text-blue-500 hover:border-blue-500 transition-colors">
               故障排查指引
             </Button>
           </Space>
         </div>
 
-        <div style={{ marginBottom: '24px' }}>
-          <h1 className="monitoring-hero-title">A8 平台 · Turbo 工作台</h1>
-          <p className="monitoring-hero-subtitle">
+        <div className="mb-6">
+          <h1 className="monitoring-hero-title text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">A8 平台 · Turbo 工作台</h1>
+          <p className="monitoring-hero-subtitle text-slate-500 text-lg">
             聚合展示 Turbo 引擎核心指标，实时监控智能缓存、SQL 转换与运行环境，确保系统全速运行。
           </p>
         </div>
 
-        <div style={{
-          display: 'flex',
-          gap: '16px',
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}>
+        <div className="flex gap-4 flex-wrap items-center">
           {heroFeatures.map((feature, index) => (
             <div key={index}
-              style={{
-                padding: '10px 20px',
-                background: feature.gradient,
-                border: `1px solid ${feature.color}40`,
-                borderRadius: '999px',
-                fontSize: '14px',
-                color: '#f1f5f9',
-                fontWeight: '500',
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: `0 4px 15px ${feature.color}15`,
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'default'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = `0 8px 20px ${feature.color}30`;
-                e.currentTarget.style.borderColor = `${feature.color}80`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = `0 4px 15px ${feature.color}15`;
-                e.currentTarget.style.borderColor = `${feature.color}40`;
-              }}
+              className={`
+                px-5 py-2.5 rounded-full text-sm font-medium backdrop-blur-md
+                border transition-all duration-300 ease-out cursor-default flex items-center
+                shadow-sm hover:-translate-y-0.5
+                ${feature.color} ${feature.borderColor} ${feature.bg} ${feature.hoverShadow} ${feature.hoverBorder}
+              `}
             >
-              <span style={{
-                color: feature.color,
-                marginRight: '10px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                textShadow: `0 0 10px ${feature.color}50`
-              }}>✓</span>
+              <span className={`mr-2.5 text-base font-bold drop-shadow-sm`}>✓</span>
               {feature.text}
             </div>
           ))}
@@ -472,54 +438,29 @@ const Monitoring = () => {
             <Col xs={12} sm={8} md={4} key={item.id}>
               <Card
                 hoverable
-                className="workbench-tool-card"
+                className="workbench-tool-card h-full rounded-xl overflow-hidden border-slate-100 shadow-sm transition-all duration-300 hover:shadow-lg group"
                 onClick={() => handleToolClick(item.id)}
-                style={{
-                  borderRadius: '12px',
-                  textAlign: 'center',
-                  padding: '16px 8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  border: '1px solid #f0f0f0',
-                  height: '100%',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
+                bodyStyle={{ padding: '16px 8px', textAlign: 'center' }}
               >
                 {/* Pin 图标 */}
                 <div
                   onClick={(e) => togglePin(e, item.id)}
-                  style={{
-                    position: 'absolute',
-                    top: '8px',
-                    right: '8px',
-                    fontSize: '14px',
-                    cursor: 'pointer',
-                    color: userToolsConfig[item.id]?.isPinned ? item.color : '#d9d9d9',
-                    transition: 'all 0.3s ease',
-                    zIndex: 10
-                  }}
+                  className={`
+                    absolute top-2 right-2 text-sm cursor-pointer transition-colors z-10 p-1 rounded-full
+                    ${userToolsConfig[item.id]?.isPinned ? 'text-amber-500 bg-amber-50' : 'text-slate-300 hover:text-slate-500 hover:bg-slate-100'}
+                  `}
                 >
                   <PushpinFilled />
                 </div>
 
-                <div style={{
-                  fontSize: '28px',
-                  color: item.color,
-                  marginBottom: '10px',
-                  background: `${item.color}0a`,
-                  width: '56px',
-                  height: '56px',
-                  lineHeight: '56px',
-                  borderRadius: '12px',
-                  margin: '0 auto 12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
+                <div
+                  className="w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-xl text-3xl transition-transform duration-300 group-hover:scale-110"
+                  style={{ color: item.color, background: `${item.color}0a` }}
+                >
                   {item.icon}
                 </div>
-                <div style={{ fontWeight: '600', fontSize: '15px', color: '#1f1f1f', marginBottom: '4px' }}>{item.title}</div>
-                <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{item.desc}</div>
+                <div className="font-semibold text-[15px] text-slate-800 mb-1">{item.title}</div>
+                <div className="text-xs text-slate-400">{item.desc}</div>
               </Card>
             </Col>
           ))}
@@ -532,31 +473,20 @@ const Monitoring = () => {
         icon={<BarChartOutlined />}
         extra={<StatusPill label={`最新采样 · ${lastUpdatedLabel}`} status="default" />}
       >
-        <div className="magic-stat-grid" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: '16px'
-        }}>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
           {snapshotStats.map((stat) => (
             <div
               key={stat.id}
-              className="magic-stat-card"
-              style={{
-                position: 'relative',
-                padding: '16px',
-                borderRadius: '12px',
-                background: '#fafafa',
-                border: '1px solid #f0f0f0',
-              }}
+              className="magic-stat-card relative p-4 rounded-xl bg-slate-50/50 border border-slate-100 hover:bg-white hover:shadow-md transition-all duration-300"
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div className="magic-stat-label" style={{ color: '#8c8c8c', fontSize: '13px' }}>{stat.label}</div>
-                <Tag color={stat.status === 'success' ? 'success' : stat.status === 'warning' ? 'warning' : stat.status === 'danger' ? 'error' : 'default'} style={{ margin: 0, borderRadius: '4px', fontSize: '11px' }}>
+              <div className="flex justify-between items-start mb-2">
+                <div className="text-slate-400 text-xs font-medium uppercase tracking-wider">{stat.label}</div>
+                <Tag color={stat.status === 'success' ? 'success' : stat.status === 'warning' ? 'warning' : stat.status === 'danger' ? 'error' : 'default'} style={{ margin: 0, borderRadius: '4px', fontSize: '10px', lineHeight: '18px' }}>
                   {stat.status.toUpperCase()}
                 </Tag>
               </div>
-              <div className="magic-stat-value" style={{ fontSize: '22px', fontWeight: 'bold', color: '#1f1f1f', marginBottom: '4px' }}>{stat.value}</div>
-              <div className="magic-stat-muted" style={{ fontSize: '11px', color: '#bfbfbf', fontFamily: 'monospace' }}>{stat.meta}</div>
+              <div className="text-2xl font-bold text-slate-800 mb-1 tracking-tight">{stat.value}</div>
+              <div className="text-[10px] text-slate-300 font-mono">{stat.meta}</div>
             </div>
           ))}
         </div>
@@ -571,19 +501,14 @@ const Monitoring = () => {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {activities.length > 0 ? activities.map((item) => (
-            <div key={item.id} style={{
-              display: 'flex',
-              gap: '16px',
-              padding: '12px',
-              background: item.type === 'error' ? '#fff1f0' : item.type === 'warning' ? '#fffbe6' : '#f6ffed',
-              borderRadius: '8px',
-              border: `1px solid ${item.type === 'error' ? '#ffccc7' : item.type === 'warning' ? '#ffe58f' : '#b7eb8f'}`,
-              transition: 'all 0.3s ease'
-            }}>
-              <div style={{ color: '#8c8c8c', fontSize: '12px', width: '60px', paddingTop: '2px' }}>{item.time}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '600', color: '#262626', marginBottom: '2px' }}>{item.msg}</div>
-                <div style={{ fontSize: '12px', color: '#595959', wordBreak: 'break-all' }}>{item.sub}</div>
+            <div key={item.id} className={`
+              flex gap-4 p-3 rounded-lg border transition-all duration-300 hover:shadow-md
+              ${item.type === 'error' ? 'bg-red-50 border-red-100' : item.type === 'warning' ? 'bg-amber-50 border-amber-100' : 'bg-green-50 border-green-100'}
+            `}>
+              <div className="text-xs text-slate-400 w-16 pt-0.5">{item.time}</div>
+              <div className="flex-1">
+                <div className="font-semibold text-slate-800 mb-0.5">{item.msg}</div>
+                <div className="text-xs text-slate-500 break-all">{item.sub}</div>
               </div>
             </div>
           )) : (

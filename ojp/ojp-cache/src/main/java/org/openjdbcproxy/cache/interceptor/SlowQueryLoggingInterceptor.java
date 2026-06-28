@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor {
     private SlowQueryRepository slowQueryRepository;
     private SqlParser sqlParser;
+    private final org.openjdbcproxy.cache.service.ConnectionConfigService connectionConfigService;
 
     /**
      * 慢查询阈值（毫秒），可通过配置文件ojp.server.interceptors.slow-query-threshold进行配置
@@ -37,9 +38,11 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
     private long slowQueryThreshold;
 
     @Autowired
-    public SlowQueryLoggingInterceptor(SlowQueryRepository slowQueryRepository) {
+    public SlowQueryLoggingInterceptor(SlowQueryRepository slowQueryRepository,
+            org.openjdbcproxy.cache.service.ConnectionConfigService connectionConfigService) {
         this.slowQueryRepository = slowQueryRepository;
         this.sqlParser = new SqlParser();
+        this.connectionConfigService = connectionConfigService;
     }
 
     /**
@@ -76,16 +79,12 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
             long executionTime = System.currentTimeMillis() - startTime;
             // 如果执行时间超过阈值，或者发生异常时，记录到Redis
             // 只处理executeQuery方法
-            if ((executionTime >= slowQueryThreshold || error != null) && 
-                "executeQuery".equals(context.getMethodName())) {
+            if ((executionTime >= slowQueryThreshold || error != null) &&
+                    "executeQuery".equals(context.getMethodName())) {
                 logSlowQuery(context, executionTime, true);
             }
         }
     }
-
-
-
-
 
     private void logSlowQuery(StatementServiceInterceptContext<?, ?> context, long executionTime, boolean hasError) {
         String methodName = context.getMethodName();
@@ -94,7 +93,7 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
 
         // 生成唯一的查询ID
         long timestamp = Instant.now().toEpochMilli();
-        String slowQueryId = JSqlParserUtil.generateSlowQueryId(session.getConnHash(),request.getSql());
+        String slowQueryId = JSqlParserUtil.generateSlowQueryId(session.getConnHash(), request.getSql());
 
         // 构建慢查询实体
         SlowQuery slowQuery = new SlowQuery();
@@ -132,5 +131,12 @@ public class SlowQueryLoggingInterceptor implements StatementServiceInterceptor 
                     // 不存在则新增记录
                     slowQueryRepository.save(slowQuery);
                 });
+
+        // 确保连接配置存在
+        try {
+            connectionConfigService.ensureConnectionConfig(session.getConnHash());
+        } catch (Exception e) {
+            log.warn("Auto-creation of ConnectionConfig failed", e);
+        }
     }
 }

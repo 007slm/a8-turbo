@@ -20,4 +20,5 @@ public class Constants {
     public static final String ORACLE_DRIVER_CLASS = "oracle.jdbc.OracleDriver";
     public static final String SQLSERVER_DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     public static final String DB2_DRIVER_CLASS = "com.ibm.db2.jcc.DB2Driver";
+    public static final String TRX_IS_DIRTY = "trx.isDirty";
 }

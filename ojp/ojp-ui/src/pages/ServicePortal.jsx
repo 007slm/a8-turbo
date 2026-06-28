@@ -28,15 +28,6 @@ const { TabPane } = Tabs
 // Service Configuration
 const monitoringServices = [
     {
-        name: '可视化大屏',
-        port: 8000,
-        url: 'http://localhost:8000/grafana',
-        description: '数据可视化平台，用于监控各项服务指标',
-        icon: <DashboardOutlined />,
-        color: '#f46800',
-        gradient: 'linear-gradient(135deg, #f46800 0%, #ff8c00 100%)',
-    },
-    {
         name: '指标数据源',
         port: 8000,
         url: 'http://localhost:8000/prometheus',
@@ -122,7 +113,6 @@ const containerIPs = [
         items: [
             { name: 'dns-server', ip: '172.24.0.2' },
             { name: 'prometheus', ip: '172.24.0.3' },
-            { name: 'grafana', ip: '172.24.0.4' },
             { name: 'redis', ip: '172.24.0.5' },
             { name: 'redis-exporter', ip: '172.24.0.6' },
             { name: 'phpredmin', ip: '172.24.0.7' },

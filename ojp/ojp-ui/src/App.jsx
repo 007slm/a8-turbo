@@ -30,6 +30,7 @@ import PrometheusNativeMonitor from './pages/monitor/prometheus/index.jsx'
 import TableSyncStatus from './components/cache/TableSyncStatus'
 import SqlTranslatorTest from './pages/test/SqlTranslatorTest.jsx'
 import SystemConnectivityTest from './pages/test/SystemConnectivityTest.jsx'
+import ConnectionManagement from './pages/connection/index.jsx'
 
 import CacheRuleEditor from './components/cache/CacheRuleEditor'
 import CacheRules from './components/cache/CacheRules'
@@ -109,6 +110,10 @@ function AppContent() {
               {
                 path: '/cache/sync-status',
                 name: '就绪监控',
+              },
+              {
+                path: '/core/connection',
+                name: '连接管理',
               }
             ]
           },
@@ -402,6 +407,7 @@ function AppContent() {
             <Route path="/cache/rules/new" element={<CacheRuleEditor />} />
             <Route path="/cache/rules/:ruleId/edit" element={<CacheRuleEditor />} />
             <Route path="/cache/sync-status" element={<TableSyncStatus />} />
+            <Route path="/core/connection" element={<ConnectionManagement />} />
 
             <Route path="/shopservice" element={<ShopService />} />
             <Route path="/shopservice/*" element={<ShopService />} />

@@ -1,0 +1,43 @@
+services:
+  # --------------------------------------------------------------------------
+  #  代理服务 - 开发环境 (Socat)
+  # --------------------------------------------------------------------------
+
+  ojp-server:
+    image: alpine:latest
+    container_name: ojp-server-dev
+    hostname: ojp-server
+    networks:
+      a8:
+        ipv4_address: 172.24.0.40
+    entrypoint: [ "sh", "-c" ]
+    command: [ "apk add --no-cache socat && (socat TCP-LISTEN:8010,fork,reuseaddr TCP:host.docker.internal:8010 & socat TCP-LISTEN:8330,fork,reuseaddr TCP:host.docker.internal:8330)" ]
+    restart: unless-stopped
+
+  shopservice:
+    image: alpine/socat:latest
+    container_name: shopservice-dev
+    hostname: shopservice
+    networks:
+      a8:
+        ipv4_address: 172.24.0.42
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:8280,fork,reuseaddr", "TCP:host.docker.internal:8280" ]
+    restart: unless-stopped
+
+  ojp-ui:
+    image: alpine/socat:latest
+    container_name: ojp-ui-dev
+    hostname: ojp-ui
+    networks:
+      a8:
+        ipv4_address: 172.24.0.41
+    entrypoint: [ "socat" ]
+    command: [ "TCP-LISTEN:3000,fork,reuseaddr", "TCP:host.docker.internal:3000" ]
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "localhost", "3000" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3

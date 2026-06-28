@@ -31,6 +31,63 @@ public class SqlTranslationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * 获取翻译后的 SQL。如果 Redis 缓存中存在则直接返回，否则实时调用 Sidecar 进行翻译并缓存到 Redis。
+     *
+     * @param sql      原始 SQL 语句
+     * @param connHash 连接标识
+     * @return 翻译后的 SQL，若翻译失败或未发生转换则返回 null
+     */
+    public String getOrTranslateSql(String sql, String connHash) {
+        if (sql == null || sql.trim().isEmpty()) {
+            return sql;
+        }
+
+        // 生成 Query ID 保持与慢查询日志一致
+        String queryId = org.openjdbcproxy.cache.util.JSqlParserUtil.generateSlowQueryId(connHash, sql);
+        String cacheKey = "ojp:cache:sql:translated:" + queryId;
+
+        // 1. 尝试从 Redis 缓存中获取
+        try {
+            Object cached = redisTemplate.opsForValue().get(cacheKey);
+            if (cached != null) {
+                String cachedSql = cached.toString();
+                if (!cachedSql.isEmpty()) {
+                    log.debug("从 Redis 缓存中命中翻译后的 SQL: queryId={}", queryId);
+                    return cachedSql;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("从 Redis 读取翻译 SQL 失败: queryId={}", queryId, e);
+        }
+
+        // 2. 缓存未命中，进行实时翻译
+        String source = "oracle"; // 默认源库为 oracle
+        if (connHash != null) {
+            String lowerConnHash = connHash.toLowerCase();
+            if (lowerConnHash.contains("mysql") || lowerConnHash.contains("jdbc:mysql")) {
+                source = "mysql";
+            } else if (lowerConnHash.contains("oracle") || lowerConnHash.contains("jdbc:oracle")) {
+                source = "oracle";
+            }
+        }
+
+        try {
+            log.info("翻译缓存未命中，开始实时调用 Sidecar 翻译 SQL: queryId={}", queryId);
+            String translatedSql = callTranslationApi(sql, source, "starrocks");
+            if (translatedSql != null && !translatedSql.trim().isEmpty()) {
+                // 3. 写入 Redis 缓存
+                redisTemplate.opsForValue().set(cacheKey, translatedSql);
+                log.info("实时翻译成功并已写入 Redis 缓存: queryId={}", queryId);
+                return translatedSql;
+            }
+        } catch (Exception e) {
+            log.error("实时翻译 SQL 失败: queryId={}, sql={}", queryId, sql, e);
+        }
+
+        return null;
+    }
+
     public void processRule(CacheRule rule) {
         if (rule == null || !rule.isEnabled()) {
             return;
@@ -85,11 +142,18 @@ public class SqlTranslationService {
             String translatedSql = callTranslationApi(sql, source, "starrocks");
 
             if (translatedSql != null) {
-                // Store in Redis with expiration same as rule or persistent?
-                // The requirement says "store to redis... behind use when needed".
-                // We'll store it without expiry for now, or maybe long expiry.
-                redisTemplate.opsForValue().set(cacheKey, translatedSql);
-                log.info("已完成查询 {} 的 SQL 转换并存入 Redis", queryId);
+                // 以结构化 JSON 格式存储翻译 SQL 缓存
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                Map<String, Object> cacheValue = new HashMap<>();
+                cacheValue.put("queryId", queryId);
+                cacheValue.put("originalSql", sql);
+                cacheValue.put("translatedSql", translatedSql);
+                cacheValue.put("connHash", query.getConnHash());
+                cacheValue.put("updateTime", System.currentTimeMillis());
+
+                String jsonVal = mapper.writeValueAsString(cacheValue);
+                redisTemplate.opsForValue().set(cacheKey, jsonVal);
+                log.info("已完成查询 {} 的 SQL 转换并存入 Redis (JSON 格式)", queryId);
             }
         } catch (Exception e) {
             log.error("转换查询 {} 的 SQL 时发生错误", queryId, e);

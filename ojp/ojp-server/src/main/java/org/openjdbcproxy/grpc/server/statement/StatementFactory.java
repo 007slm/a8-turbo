@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.openjdbcproxy.grpc.SerializationHandler.deserialize;
-import static org.openjdbcproxy.grpc.server.Constants.EMPTY_MAP;
+import java.util.Collections;
 
 /**
  * Factory class for creating different types of SQL statements.
@@ -97,7 +97,7 @@ public class StatementFactory {
         SessionInfo sessionInfo = currentContext.getCurrentSessionInfo();
         Connection conn = currentContext.getCurrentConnection();
         PreparedStatement ps = null;
-        Map<String, Object> properties = EMPTY_MAP;
+        Map<String, Object> properties = Collections.emptyMap();
         if (!request.getProperties().isEmpty()) {
             properties = deserialize(request.getProperties().toByteArray(), Map.class);
         }

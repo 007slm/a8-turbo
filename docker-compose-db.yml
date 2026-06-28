@@ -9,10 +9,14 @@ networks:
 services:
   # --------------------------------------------------------------------------
   # 开发环境代理服务 (Proxies for Local Dev)
+
+  #   CDC 账号：cdc_user / cdc_password (连接 ORCLPDB1)
+  #   业务账号：a8user / a8password (连接 ORCLPDB1)
+  #   SYS 密码：a8password
   # --------------------------------------------------------------------------
 
   oracle:
-    image: gvenzl/oracle-xe:11-slim
+    image: gvenzl/oracle-free:latest
     hostname: oracle
     container_name: oracle
     networks:
@@ -21,9 +25,15 @@ services:
     ports:
       - "1521:1521"
     environment:
-      - ORACLE_PASSWORD=a8
+      - ORACLE_PASSWORD=a8password
       - APP_USER=cdc_user
       - APP_USER_PASSWORD=cdc_password
+      - ORACLE_DATABASE=FREE
+      - ORACLE_PDB=FREEPDB1
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     volumes:
       - ./docker/oracle/initdb.d:/container-entrypoint-initdb.d
       - ./docker/oracle/data:/opt/oracle/oradata

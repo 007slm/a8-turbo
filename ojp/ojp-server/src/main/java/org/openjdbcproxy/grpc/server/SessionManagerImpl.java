@@ -27,7 +27,7 @@ public class SessionManagerImpl implements SessionManager {
 
     private Map<String, String> connectionHashMap = new ConcurrentHashMap<>();
     private Map<String, Session> sessionMap = new ConcurrentHashMap<>();
-    
+
     // 存储每个 session 的 trace context，用于关联同一 session 的所有操作
     private Map<String, SpanRef> sessionTraceMap = new ConcurrentHashMap<>();
 
@@ -38,11 +38,11 @@ public class SessionManagerImpl implements SessionManager {
     }
 
     @Override
-    public SessionInfo createSession(String clientUUID, Connection connection,boolean readOnly) {
-        log.info("Create session for client uuid {} readOnly: {}" , clientUUID,readOnly);
+    public SessionInfo createSession(String clientUUID, Connection connection, boolean readOnly) {
+        log.info("Create session for client uuid {} readOnly: {}", clientUUID, readOnly);
         Session session = new Session(connection, connectionHashMap.get(clientUUID), clientUUID, readOnly);
         String sessionUUID = session.getSessionUUID();
-        
+
         // 为新 session 创建一个 session 级别的 trace span
         SpanRef sessionSpan = Tracer.createLocalSpan("session-lifecycle");
         ActiveSpan.tag("session.uuid", sessionUUID);
@@ -50,15 +50,14 @@ public class SessionManagerImpl implements SessionManager {
         ActiveSpan.tag("connection.hash", connectionHashMap.get(clientUUID));
         ActiveSpan.tag("read.only", String.valueOf(readOnly));
         ActiveSpan.tag("component", "ojp-session");
-        
+
         // 存储 session 的 trace context
         sessionTraceMap.put(sessionUUID, sessionSpan);
-        
+
         log.info("Session {} created for client uuid {}", sessionUUID, clientUUID);
         this.sessionMap.put(sessionUUID, session);
         return session.getSessionInfo();
     }
-
 
     @Override
     public Connection getConnection(SessionInfo sessionInfo) {
@@ -93,7 +92,7 @@ public class SessionManagerImpl implements SessionManager {
 
     @Override
     public Statement getStatement(SessionInfo sessionInfo, String uuid) {
-        return  this.sessionMap.get(sessionInfo.getSessionUUID()).getStatement(uuid);
+        return this.sessionMap.get(sessionInfo.getSessionUUID()).getStatement(uuid);
     }
 
     @Override
@@ -163,7 +162,7 @@ public class SessionManagerImpl implements SessionManager {
             }
         }
         targetSession.terminate();
-        
+
         // 结束 session 级别的 trace span
         SpanRef sessionSpanObj = sessionTraceMap.remove(sessionUUID);
         if (sessionSpanObj != null) {
@@ -196,9 +195,12 @@ public class SessionManagerImpl implements SessionManager {
                 Thread.sleep(10);
             }
             log.info("Lob {} fully consumed.", lob.getUuid());
-            //During postgres tests it was found out that if the update is executed immediately after the lob injection
-            //the lob is not yet set in the prepared statement, this thread sleep currently is required as per there is
-            // no way to be sure that the prepared statement is ready, as this only affects Binary streams (not blobs or
+            // During postgres tests it was found out that if the update is executed
+            // immediately after the lob injection
+            // the lob is not yet set in the prepared statement, this thread sleep currently
+            // is required as per there is
+            // no way to be sure that the prepared statement is ready, as this only affects
+            // Binary streams (not blobs or
             // clobs), the MVP will use this solution.
             // TODO attempt reengineering.
             Thread.sleep(100);

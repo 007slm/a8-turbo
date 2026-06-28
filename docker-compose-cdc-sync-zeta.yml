@@ -7,12 +7,12 @@ services:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
       - HZ_NETWORK_RESTAPI_ENABLED=true
     volumes:
-      - ./docker/seatunnel/lib:/ojp-libs
+      - ./docker/seatunnel/lib:/ojp-cdc-monitor
       - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
       - ./docker/seatunnel/config/hazelcast-master.yaml:/opt/seatunnel/config/hazelcast-master.yaml:ro
       - ./docker/seatunnel/data/imap:/opt/seatunnel/data/imap
     entrypoint: >
-      /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
+      /bin/sh -c "cp /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
     ports:
       - "5801:5801"
       - "8080:8080"
@@ -27,12 +27,12 @@ services:
       - ST_DOCKER_MEMBER_LIST=seatunnel-master,seatunnel-worker1
       - HZ_NETWORK_RESTAPI_ENABLED=true
     volumes:
-      - ./docker/seatunnel/lib:/ojp-libs
+      - ./docker/seatunnel/lib:/ojp-cdc-monitor
       - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
       - ./docker/seatunnel/config/hazelcast-worker.yaml:/opt/seatunnel/config/hazelcast-worker.yaml:ro
       - ./docker/seatunnel/data/imap:/opt/seatunnel/data/imap
     entrypoint: >
-      /bin/sh -c "cp /ojp-libs/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
+      /bin/sh -c "cp /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
     depends_on:
       - seatunnel-master
     networks:

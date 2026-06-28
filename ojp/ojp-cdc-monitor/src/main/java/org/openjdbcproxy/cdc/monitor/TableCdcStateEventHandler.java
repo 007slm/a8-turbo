@@ -2,9 +2,10 @@ package org.openjdbcproxy.cdc.monitor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.seatunnel.api.event.Event;
 import org.apache.seatunnel.api.event.EventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -15,8 +16,9 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.*;
 
-@Slf4j
 public class TableCdcStateEventHandler implements EventHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(TableCdcStateEventHandler.class);
 
     /* ================= 配置 ================= */
 
@@ -30,7 +32,7 @@ public class TableCdcStateEventHandler implements EventHandler {
     private static final long IDLE_WINDOW_MS = 30_000;
 
     /** 定时扫描频率 */
-    private static final long SCAN_INTERVAL_MS = 5_000;
+    private static final long SCAN_INTERVAL_MS = 1_000;
 
     /* ================= Redis ================= */
 
@@ -189,23 +191,78 @@ public class TableCdcStateEventHandler implements EventHandler {
 
         String key = redisKey(table);
 
-        // 2. Get Source Metrics
-        // Metrics structure: metrics -> SourceReceivedCount
-        long currentCount = jobInfo.path("metrics").path("SourceReceivedCount").asLong(0);
-        Long prevCount = jobSourceCountCache.getOrDefault(jobId, -1L);
+        // 2. Get Metrics
+        long sourceCount = jobInfo.path("metrics").path("SourceReceivedCount").asLong(0);
+        long sinkCount = jobInfo.path("metrics").path("SinkWriteCount").asLong(0);
+        Long prevSourceCount = jobSourceCountCache.getOrDefault(jobId, -1L);
 
-        // 3. Determine State
-        if (currentCount > prevCount) {
-            // Data is flowing (or first run)
-            // Force update to SYNCING and update timestamp
+        // 3. 读取 Redis 中的状态和 syncStartTime
+        String stateStr = jedis.hget(key, "state");
+        String syncStartTimeStr = jedis.hget(key, "syncStartTime");
+        String sinkCountAtMarkStr = jedis.hget(key, "sinkCountAtMark");
+
+        long syncStartTime = 0;
+        long sinkCountAtMark = 0;
+        if (syncStartTimeStr != null) {
+            try {
+                syncStartTime = Long.parseLong(syncStartTimeStr);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (sinkCountAtMarkStr != null) {
+            try {
+                sinkCountAtMark = Long.parseLong(sinkCountAtMarkStr);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+
+        // 4. 判断状态
+        if (sourceCount > prevSourceCount) {
+            // 有新数据流入，保持 SYNCING
             setState(jedis, key, jobId, jobInfo, CdcState.INCREMENTAL_SYNCING, now);
-            jobSourceCountCache.put(jobId, currentCount);
+            jobSourceCountCache.put(jobId, sourceCount);
         } else {
-            // Count hasn't changed. Check if we are IDLE or need Heartbeat.
-            String stateStr = jedis.hget(key, "state");
-            String lastEventStr = jedis.hget(key, "lastEventTime");
+            // 无新数据流入，检查是否可以恢复 IDLE
+            CdcState currentState;
+            try {
+                currentState = stateStr != null ? CdcState.valueOf(stateStr) : CdcState.INCREMENTAL_SYNCING;
+            } catch (Exception e) {
+                currentState = CdcState.INCREMENTAL_SYNCING;
+            }
 
-            // Heartbeat Logic: If > 30s since last event, force update
+            // 关键逻辑：如果有 syncStartTime 标记，检查 SinkWriteCount 是否变化
+            if (CdcState.INCREMENTAL_SYNCING == currentState && syncStartTime > 0) {
+                // 如果 sinkCountAtMark 存在，用它判断；否则用 syncStartTime + sinkCount 变化判断
+                if (sinkCountAtMark > 0) {
+                    // 方式1: 比较 sinkCountAtMark
+                    if (sinkCount > sinkCountAtMark) {
+                        log.info("同步完成: {} sinkCount {} > sinkCountAtMark {}", key, sinkCount, sinkCountAtMark);
+                        currentState = CdcState.INCREMENTAL_IDLE;
+                        // 清除标记
+                        jedis.hdel(key, "syncStartTime", "sinkCountAtMark");
+                    }
+                } else {
+                    // 第一次检测到 syncStartTime，记录当前 sinkCount 作为基准
+                    log.info("记录 sinkCountAtMark: {} = {}", key, sinkCount);
+                    jedis.hset(key, "sinkCountAtMark", String.valueOf(sinkCount));
+                }
+            } else if (CdcState.INCREMENTAL_SYNCING == currentState) {
+                // 无 syncStartTime 标记，使用原有 30 秒空闲窗口逻辑
+                String lastEventStr = jedis.hget(key, "lastEventTime");
+                long lastTs = 0;
+                if (lastEventStr != null) {
+                    try {
+                        lastTs = Long.parseLong(lastEventStr);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                if (now - lastTs >= IDLE_WINDOW_MS) {
+                    currentState = CdcState.INCREMENTAL_IDLE;
+                }
+            }
+
+            // Heartbeat: 每 30 秒更新一次状态
+            String lastEventStr = jedis.hget(key, "lastEventTime");
             long lastTs = 0;
             if (lastEventStr != null) {
                 try {
@@ -213,20 +270,7 @@ public class TableCdcStateEventHandler implements EventHandler {
                 } catch (NumberFormatException ignored) {
                 }
             }
-
-            if (now - lastTs >= 30_000) { // Heartbeat interval
-                CdcState currentState;
-                try {
-                    currentState = stateStr != null ? CdcState.valueOf(stateStr) : CdcState.INCREMENTAL_SYNCING;
-                } catch (Exception e) {
-                    currentState = CdcState.INCREMENTAL_SYNCING;
-                }
-
-                // If IDLE logic applies, switch to IDLE
-                if (CdcState.INCREMENTAL_SYNCING == currentState && now - lastTs >= IDLE_WINDOW_MS) {
-                    currentState = CdcState.INCREMENTAL_IDLE;
-                }
-
+            if (now - lastTs >= 30_000) {
                 setState(jedis, key, jobId, jobInfo, currentState, now);
             }
         }
@@ -405,7 +449,7 @@ public class TableCdcStateEventHandler implements EventHandler {
 
             // 策略 2: 尝试解析 tablePaths (新逻辑)
             JsonNode tablePaths = vertex.path("tablePaths");
-            if (tablePaths.isArray() && tablePaths.size() > 0) {
+            if (tablePaths.isArray() && !tablePaths.isEmpty()) {
                 String fullPath = tablePaths.get(0).asText();
                 if (fullPath != null && fullPath.contains(".")) {
                     String[] parts = fullPath.split("\\.", 2);
@@ -426,7 +470,7 @@ public class TableCdcStateEventHandler implements EventHandler {
     private String extractFirst(JsonNode node, String fieldName) {
         JsonNode field = node.path(fieldName);
 
-        if (field.isArray() && field.size() > 0) {
+        if (field.isArray() && !field.isEmpty()) {
             return field.get(0).asText(null);
         }
 

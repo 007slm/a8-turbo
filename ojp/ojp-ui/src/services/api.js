@@ -144,6 +144,23 @@ export const ruleApi = {
   }),
 }
 
+// 连接管理相关接口
+export const connectionApi = {
+  // 获取连接列表
+  getConnections: () => request('/connections'),
+
+  // 更新连接配置 (主要是CDC凭证)
+  updateConnection: (id, data) => request(`/connections/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+
+  // 删除连接
+  deleteConnection: (id) => request(`/connections/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  }),
+}
+
 // 商业授权管理相关接口
 export const licenseApi = {
   // 获取授权信息

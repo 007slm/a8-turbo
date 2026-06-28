@@ -95,7 +95,6 @@ export const SERVICE_NAME_MAP = {
     'prometheus': '监控服务',
     'redis': '数据同步服务',
     'starrocks': '数据仓库',
-    'grafana': '可视化平台',
     'kafka': '消息队列',
     'mysql': '关系数据库',
     'ojp-server': 'OJP 服务端',

@@ -9,6 +9,8 @@ import org.openjdbcproxy.cache.entity.SlowQuery;
 import org.openjdbcproxy.cache.model.SeatunnelJobView;
 import org.openjdbcproxy.cache.repository.SlowQueryRepository;
 import org.openjdbcproxy.grpc.server.utils.JdbcUrlUtil;
+import org.openjdbcproxy.grpc.server.utils.UrlParser;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.lang.Nullable;
@@ -52,6 +54,7 @@ public class SeatunnelJobService {
     private final SlowQueryRepository slowQueryRepository;
     private final Map<String, String> inFlightJobs = new ConcurrentHashMap<>();
     private final StringRedisTemplate redisTemplate;
+    private final org.openjdbcproxy.cache.repository.ConnectionConfigRepository connectionConfigRepository;
 
     private RestClient restClient;
 
@@ -73,6 +76,8 @@ public class SeatunnelJobService {
             return Collections.emptyMap();
         }
 
+        log.info("开始协调 SeaTunnel 作业状态，总规则数: {}", rules.size());
+
         // 1. Identify all expected jobs (unique by Job Name)
         // Map JobName -> Context (so we can submit if missing)
         Map<String, JobSubmissionContext> expectedJobs = new HashMap<>();
@@ -81,8 +86,10 @@ public class SeatunnelJobService {
             if (!rule.isEnabled())
                 continue;
             Optional<DatabaseEndpoint> endpointOpt = parseEndpoint(rule.getConnHash());
-            if (endpointOpt.isEmpty())
+            if (endpointOpt.isEmpty()) {
+                log.warn("无法解析规则 {} 的连接哈希: {}", rule.getId(), rule.getConnHash());
                 continue;
+            }
             DatabaseEndpoint endpoint = endpointOpt.get();
 
             Map<String, String> resolved = resolveTables(rule);
@@ -94,38 +101,49 @@ public class SeatunnelJobService {
             }
         }
 
+        log.info("预期运行作业数: {}", expectedJobs.size());
+
         // 2. Get currently running jobs
         Map<String, String> runningJobs = listJobsByName();
         Map<String, String> finalActiveJobs = new HashMap<>();
+
+        log.info("当前运行中作业数: {}", runningJobs.size());
 
         // 3. Submit Missing
         for (Map.Entry<String, JobSubmissionContext> entry : expectedJobs.entrySet()) {
             String jobName = entry.getKey();
             if (runningJobs.containsKey(jobName)) {
-                finalActiveJobs.put(jobName, runningJobs.get(jobName));
+                String jobId = runningJobs.get(jobName);
+                finalActiveJobs.put(jobName, jobId);
+                log.debug("作业已在运行: name={}, jobId={}", jobName, jobId);
             } else {
                 JobSubmissionContext ctx = entry.getValue();
+                log.info("发现缺失作业，正在提交: name={}, table={}", jobName, ctx.table);
                 // Pass checkExists=false since we already know it's missing from runningJobs
                 submitSingleTableJob(ctx.rule, ctx.endpoint, ctx.table, false)
-                        .ifPresent(jobId -> finalActiveJobs.put(jobName, jobId));
+                        .ifPresent(jobId -> {
+                            finalActiveJobs.put(jobName, jobId);
+                            log.info("作业提交成功: name={}, jobId={}", jobName, jobId);
+                        });
             }
         }
 
-        // 4. Cancel Orphans
+        // 4. Cancel Orphans (Only those prefixed with ojp-cache-)
         List<String> toCancel = new ArrayList<>();
         for (Map.Entry<String, String> entry : runningJobs.entrySet()) {
             String jobName = entry.getKey();
-            // Only manage jobs created by this service (prefix check)
             if (jobName.startsWith("ojp-cache-") && !expectedJobs.containsKey(jobName)) {
                 toCancel.add(entry.getValue());
+                log.info("发现孤立作业，准备取消: name={}, jobId={}", jobName, entry.getValue());
             }
         }
 
         if (!toCancel.isEmpty()) {
-            log.info("同步: 正在取消 {} 个孤立作业...", toCancel.size());
+            log.info("正在执行批量取消: 共 {} 个", toCancel.size());
             cancelJobs(toCancel);
         }
 
+        log.info("协调完成，最终活跃作业数: {}", finalActiveJobs.size());
         return finalActiveJobs;
     }
 
@@ -398,18 +416,19 @@ public class SeatunnelJobService {
 
         sb.append("source {\n");
         sb.append("  MySQL-CDC {\n");
-        sb.append("    result_table_name = \"").append(resultTableName).append("\"\n");
+        // sb.append(" result_table_name = \"").append(resultTableName).append("\"\n");
         sb.append("    url = \"").append(endpoint.jdbcUrl()).append("\"\n");
         sb.append("    username = \"").append(endpoint.username()).append("\"\n");
         sb.append("    password = \"").append(endpoint.password()).append("\"\n");
-        sb.append("    database-names = [\"").append(endpoint.database()).append("\"]\n");
+        // sb.append(" database-names =
+        // [\"").append(endpoint.database()).append("\"]\n");
         sb.append("    table-names = [\"").append(endpoint.database()).append(".")
                 .append(tableName.toLowerCase(Locale.ROOT)).append("\"]\n");
         sb.append("    server-time-zone = \"").append(properties.getMysqlServerTimeZone()).append("\"\n");
         sb.append("    snapshot.split.size = ").append(properties.getMysqlSnapshotSplitSize()).append("\n");
         sb.append("    scan.startup.mode = \"initial\"\n");
         sb.append("    schema-changes.enabled = true\n");
-        sb.append("    base-url = \"").append(endpoint.baseJdbcUrl()).append("\"\n");
+        // sb.append(" base-url = \"").append(endpoint.baseJdbcUrl()).append("\"\n");
         sb.append("  }\n");
         sb.append("}\n\n");
 
@@ -433,13 +452,14 @@ public class SeatunnelJobService {
 
         sb.append("source {\n");
         sb.append("  Oracle-CDC {\n");
-        sb.append("    result_table_name = \"").append(resultTableName).append("\"\n");
+        sb.append("    plugin_output = \"").append(resultTableName).append("\"\n");
         sb.append("    url = \"").append(endpoint.jdbcUrl()).append("\"\n");
         sb.append("    username = \"").append(endpoint.username()).append("\"\n");
         sb.append("    password = \"").append(endpoint.password()).append("\"\n");
         sb.append("    database-names = [\"").append(endpoint.serviceName()).append("\"]\n");
         sb.append("    schema-names = [\"").append(endpoint.schema()).append("\"]\n");
-        sb.append("    table-names = [\"").append(endpoint.schema()).append(".").append(tableName).append("\"]\n");
+        sb.append("    table-names = [\"").append(endpoint.serviceName()).append(".").append(endpoint.schema())
+                .append(".").append(tableName).append("\"]\n");
         sb.append("    startup.mode = \"initial\"\n");
         sb.append("    debezium.log.mining.strategy = \"").append(properties.getOracleLogMiningStrategy())
                 .append("\"\n");
@@ -574,36 +594,47 @@ public class SeatunnelJobService {
         if (StringUtils.isBlank(connHash)) {
             return Optional.empty();
         }
-        String trimmed = connHash.trim();
 
-        // Oracle detection
-        if (trimmed.contains("oracle://") || trimmed.contains("jdbc:oracle:")) {
-            return parseOracleEndpoint(trimmed);
+        // 1. 获取真实 JDBC URL (移除 ojp[...] 前缀)
+        String realUrl = UrlParser.parseUrl(connHash.trim());
+
+        // 2. 根据数据库类型进行分流解析
+        if (realUrl.contains(":mysql:") || realUrl.startsWith("mysql://")) {
+            return parseMysqlEndpoint(realUrl, connHash);
+        } else if (realUrl.contains(":oracle:") || realUrl.startsWith("oracle://")) {
+            return parseOracleEndpoint(realUrl, connHash);
         }
 
-        int mysqlIdx = StringUtils.indexOf(trimmed, "mysql://");
-        if (mysqlIdx < 0) {
-            return Optional.empty();
-        }
-        String mysqlSection = trimmed.substring(mysqlIdx);
+        log.warn("不支持或无法识别的数据库连接哈希: {} (解析后: {})", connHash, realUrl);
+        return Optional.empty();
+    }
+
+    private Optional<DatabaseEndpoint> parseMysqlEndpoint(String realUrl, String connHash) {
         try {
+            // Find the mysql:// part
+            int mysqlIdx = realUrl.indexOf("mysql://");
+            if (mysqlIdx < 0) {
+                log.warn("无效的 MySQL 连接字符串: {}", realUrl);
+                return Optional.empty();
+            }
+            String mysqlSection = realUrl.substring(mysqlIdx);
             URI uri = new URI(mysqlSection);
             String host = uri.getHost();
             if (StringUtils.isBlank(host)) {
-                log.warn("connHash {} 中缺失主机信息", connHash);
+                log.warn("MySQL 连接中缺失主机信息: {}", realUrl);
                 return Optional.empty();
             }
             int port = uri.getPort() > 0 ? uri.getPort() : DEFAULT_MYSQL_PORT;
 
             JdbcUrlUtil.Credentials credentials = JdbcUrlUtil.extractCredentials(uri);
             if (credentials.username() == null || credentials.password() == null) {
-                log.warn("connHash {} 中缺失 MySQL 凭据 - 预期包含用户信息或查询参数", connHash);
+                log.warn("MySQL 连接中缺失凭据: {}", realUrl);
                 return Optional.empty();
             }
 
             String path = uri.getPath();
             if (StringUtils.isBlank(path) || path.length() <= 1) {
-                log.warn("connHash {} 中缺失数据库名称", connHash);
+                log.warn("MySQL 连接中缺失数据库名称: {}", realUrl);
                 return Optional.empty();
             }
             String database = path.substring(1);
@@ -614,39 +645,55 @@ public class SeatunnelJobService {
 
             String jdbcUrl = String.format("jdbc:mysql://%s:%d/%s", host, port, database);
             String baseUrl = String.format("jdbc:mysql://%s:%d", host, port);
-            return Optional.of(new MysqlEndpoint(host, port, database, credentials.username(), credentials.password(),
+
+            String finalUsername = credentials.username();
+            String finalPassword = credentials.password();
+
+            // Check for CDC credentials override
+            var configOpt = connectionConfigRepository.findById(connHash);
+            if (configOpt.isPresent()) {
+                var config = configOpt.get();
+                if (org.apache.commons.lang3.StringUtils.isNotBlank(config.getCdcUsername())) {
+                    finalUsername = config.getCdcUsername();
+                    finalPassword = config.getCdcPassword(); // Can be null/empty if password not required or handled
+                                                             // elsewhere
+                    log.info("Using CDC credentials for MySQL connection: {}", connHash);
+                }
+            }
+
+            return Optional.of(new MysqlEndpoint(host, port, database, finalUsername, finalPassword,
                     jdbcUrl, baseUrl, connHash));
         } catch (URISyntaxException e) {
-            log.warn("解析 MySQL 端点失败 (connHash: {}): {}", connHash, e.getMessage());
+            log.warn("解析 MySQL 端点失败: {}", e.getMessage());
             return Optional.empty();
         }
     }
 
-    private Optional<DatabaseEndpoint> parseOracleEndpoint(String connHash) {
+    private Optional<DatabaseEndpoint> parseOracleEndpoint(String realUrl, String connHash) {
         try {
-            // Expecting format like oracle://user:pass@host:1521/serviceName?schema=SCHEMA
-            // Or jdbc:oracle:thin:@host:1521/serviceName
-
-            // Simplistic parsing for now, assuming standard URI structure if possible
-            // However, oracle JDBC URLs are notoriously complex.
-            // We'll try to parse the "oracle://" part as a URI.
-
-            String uriString = connHash;
-            if (!uriString.startsWith("oracle://") && !uriString.startsWith("jdbc:oracle:")) {
-                return Optional.empty();
-            }
-
-            // Convert jdbc:oracle:thin:@host:port/service to oracle://host:port/service for
-            // parsing if needed
-            // But let's assume the user provides our agreed format:
-            // oracle://user:pass@host:1521/serviceName?schema=SCHEMA
-
-            if (uriString.startsWith("jdbc:oracle:")) {
-                // Fallback or handle standard JDBC if it contains credentials
-                // Standard JDBC usually doesn't have user/pass in URL for Oracle unless using
-                // OCI
-                log.warn("尚未完全实现原始 Oracle JDBC URL 解析，请使用包含用户信息的 oracle:// 协议");
-                return Optional.empty();
+            // Handle jdbc:oracle:thin:@host:port/service or
+            // oracle://user:pass@host:port/service
+            String uriString;
+            if (realUrl.startsWith("oracle://")) {
+                uriString = realUrl;
+            } else {
+                int atIndex = realUrl.indexOf('@');
+                if (atIndex < 0) {
+                    log.warn("无效的 Oracle JDBC URL (未找到 @ 符号): {}", realUrl);
+                    return Optional.empty();
+                }
+                String hostPart = realUrl.substring(atIndex + 1);
+                // Convert SID format :sid to /sid if necessary for URI parsing
+                if (hostPart.contains(":") && !hostPart.contains("/")) {
+                    int firstColon = hostPart.indexOf(':');
+                    int secondColon = hostPart.indexOf(':', firstColon + 1);
+                    if (secondColon >= 0) {
+                        hostPart = hostPart.substring(0, secondColon) + "/" + hostPart.substring(secondColon + 1);
+                    }
+                }
+                // Prepend oracle:// scheme and append credentials if they are in the URL after
+                // ?
+                uriString = "oracle://" + hostPart;
             }
 
             URI uri = new URI(uriString);
@@ -658,31 +705,48 @@ public class SeatunnelJobService {
             String password = credentials.password();
 
             if (StringUtils.isBlank(host) || StringUtils.isBlank(username) || StringUtils.isBlank(password)) {
-                log.warn("无效的 Oracle 连接字符串，缺失主机或凭据: {}", connHash);
+                log.warn("Oracle 端点缺失主机或凭据: {}", realUrl);
                 return Optional.empty();
             }
 
-            String path = uri.getPath(); // /serviceName
+            String path = uri.getPath();
             String serviceName = (path != null && path.length() > 1) ? path.substring(1) : "ORCL";
 
-            // Query params for schema
+            // Extract schema from query if present, otherwise default to username
+            String schema = username.toUpperCase();
             String query = uri.getQuery();
-            String schema = username.toUpperCase(); // Default to username
             if (query != null) {
                 for (String param : query.split("&")) {
                     String[] pair = param.split("=");
                     if (pair.length == 2 && "schema".equalsIgnoreCase(pair[0])) {
-                        schema = pair[1];
+                        schema = pair[1].toUpperCase();
                     }
                 }
             }
 
-            String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d/%s", host, port, serviceName);
+            // Using SID format (host:port:sid) instead of service name format for better
+            // compatibility with XE
+            String jdbcUrl = String.format("jdbc:oracle:thin:@%s:%d:%s", host, port, serviceName);
+            if (StringUtils.isNotBlank(query)) {
+                jdbcUrl += "?" + query;
+            }
+
+            // Check for CDC credentials override
+            var configOpt = connectionConfigRepository.findById(connHash);
+            if (configOpt.isPresent()) {
+                var config = configOpt.get();
+                if (org.apache.commons.lang3.StringUtils.isNotBlank(config.getCdcUsername())) {
+                    username = config.getCdcUsername();
+                    password = config.getCdcPassword();
+                    log.info("Using CDC credentials for Oracle connection: {}", connHash);
+                }
+            }
+
             return Optional
                     .of(new OracleEndpoint(host, port, serviceName, schema, username, password, jdbcUrl, connHash));
 
         } catch (Exception e) {
-            log.warn("无法解析 Oracle 端点 {}: {}", connHash, e.getMessage());
+            log.warn("解析 Oracle 端点失败 ({}): {}", realUrl, e.getMessage());
             return Optional.empty();
         }
     }

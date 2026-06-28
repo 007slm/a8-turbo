@@ -24,7 +24,6 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     // 方法名称
     private final String methodName;
 
-
     // gRPC原生对象
     private final ServerCall<ReqT, RespT> serverCall;
     private final Metadata headers;
@@ -63,7 +62,7 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     @Setter
     private Connection currentInterceptedConnection;
 
-    public Connection getCurrentConnection(){
+    public Connection getCurrentConnection() {
         // 优先从上下文获取 支持拦截器修改connection
         return currentInterceptedConnection != null ? currentInterceptedConnection : currentConnection;
     }
@@ -71,7 +70,8 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
     // 自定义属性存储（用于拦截点间传递数据）
     private final Map<String, Object> attributes = new HashMap<>();
 
-    public StatementServiceInterceptContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers,SessionManager sessionManager) {
+    public StatementServiceInterceptContext(String methodName, ServerCall<ReqT, RespT> serverCall, Metadata headers,
+            SessionManager sessionManager) {
         this.methodName = methodName;
         this.serverCall = serverCall;
         this.headers = headers;
@@ -84,10 +84,10 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
      *
      * 该方法整合了原先 StatementServiceImpl#acquireSessionContext 的逻辑。
      *
-     * @param sessionManager       会话管理器
-     * @param datasourceMap        数据源映射（connHash -> HikariDataSource）
-     * @param sessionInfo          客户端传入的会话信息
-     * @param startSessionIfNone   若无会话则创建新会话
+     * @param sessionManager     会话管理器
+     * @param datasourceMap      数据源映射（connHash -> HikariDataSource）
+     * @param sessionInfo        客户端传入的会话信息
+     * @param startSessionIfNone 若无会话则创建新会话
      * @return 当前上下文（便于链式调用）
      * @throws java.sql.SQLException 获取连接失败或连接关闭时抛出
      */
@@ -100,11 +100,16 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
         Connection conn;
         if (StringUtils.isNotEmpty(sessionInfo.getSessionUUID())) {
             conn = sessionManager.getConnection(sessionInfo);
+            if (conn == null) {
+                throw new java.sql.SQLException(
+                        "Session has expired or does not exist: " + sessionInfo.getSessionUUID());
+            }
         } else {
             HikariDataSource dataSource = datasourceMap.get(sessionInfo.getConnHash());
             conn = dataSource.getConnection();
             if (startSessionIfNone) {
-                sessionInfo = sessionManager.createSession(sessionInfo.getClientUUID(), conn,sessionInfo.getReadOnly());
+                sessionInfo = sessionManager.createSession(sessionInfo.getClientUUID(), conn,
+                        sessionInfo.getReadOnly());
             }
         }
 
@@ -183,10 +188,5 @@ public class StatementServiceInterceptContext<ReqT, RespT> {
                 || "commitTransaction".equals(methodName)
                 || "rollbackTransaction".equals(methodName);
     }
-
-
-
-
-
 
 }

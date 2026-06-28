@@ -125,7 +125,6 @@ const SqlEventCard = ({ query, isSelected, onToggleSelect, onViewDetail }) => {
   return (
     <div
       style={{
-        borderBottom: '1px solid #f0f0f0',
         padding: '12px 16px',
         height: '100%',
         boxSizing: 'border-box',

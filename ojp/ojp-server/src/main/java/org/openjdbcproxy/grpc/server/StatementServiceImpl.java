@@ -49,14 +49,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collections;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.openjdbcproxy.constants.CommonConstants.MAX_LOB_DATA_BLOCK_SIZE;
 import static org.openjdbcproxy.grpc.SerializationHandler.deserialize;
 import static org.openjdbcproxy.grpc.SerializationHandler.serialize;
-import static org.openjdbcproxy.grpc.server.Constants.EMPTY_LIST;
-import static org.openjdbcproxy.grpc.server.Constants.EMPTY_MAP;
+import static org.openjdbcproxy.grpc.server.Constants.TRX_IS_DIRTY;
 import static org.openjdbcproxy.grpc.server.GrpcExceptionHandler.sendSQLExceptionMetadata;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -265,6 +268,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 return executeUpdateInternal(request);
             });
 
+            // 执行成功后标记涉及的表为同步中
+            markTablesAsSyncing(connHash, request.getSql());
+
             responseObserver.onNext(result);
             responseObserver.onCompleted();
 
@@ -349,6 +355,16 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             } else {
                 stmt = StatementFactory.createStatement(sessionManager, request);
                 updated = stmt.executeUpdate(request.getSql());
+            }
+
+            // 标记事务为dirty（如果在事务中）
+            if (sessionInfo != null && sessionInfo.hasTransactionInfo()
+                    && sessionInfo.getTransactionInfo().getTransactionStatus() == TransactionStatus.TRX_ACTIVE) {
+                Session session = sessionManager.getSession(sessionInfo);
+                if (session != null) {
+                    session.addAttr(TRX_IS_DIRTY, true);
+                    log.debug("标记事务为dirty: sessionUUID={}", sessionInfo.getSessionUUID());
+                }
             }
 
             if (StatementRequestValidator.isAddBatchOperation(request)) {
@@ -907,6 +923,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
         try {
             StatementServiceInterceptContext currentContext = this.acquireSessionContext(sessionInfo, true);
             Connection sessionConnection = currentContext.getCurrentConnection();
+            if (sessionConnection == null) {
+                throw new SQLException("Session has expired or does not exist: " + sessionInfo.getSessionUUID());
+            }
             sessionInfo = currentContext.getCurrentSessionInfo();
 
             // Manual SkyWalking Tracing Tags
@@ -920,6 +939,9 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 ContextSnapshotRef snapshot = Tracer.capture();
                 session.addAttr(SKYWALKING_TRACE_SNAPSHOT_KEY, snapshot);
                 log.debug("Captured SkyWalking trace snapshot for session: {}", sessionInfo.getSessionUUID());
+
+                // 清理上一个事务的 dirty 标记
+                session.addAttr(TRX_IS_DIRTY, null);
             }
 
             // Start a transaction
@@ -936,8 +958,10 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
             responseObserver.onNext(sessionInfoBuilder.build());
             responseObserver.onCompleted();
         } catch (SQLException se) {
+            log.error("SQLException starting transaction: " + se.getMessage(), se);
             sendSQLExceptionMetadata(se, responseObserver);
         } catch (Exception e) {
+            log.error("Unable to start transaction", e);
             sendSQLExceptionMetadata(new SQLException("Unable to start transaction: " + e.getMessage()),
                     responseObserver);
         }
@@ -962,6 +986,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             Connection conn = statementServiceInterceptContext.getCurrentConnection();
             conn.commit();
+
+            // 清理事务的 dirty 标记
+            Session session = statementServiceInterceptContext.getCurrentSession();
+            if (session != null) {
+                session.addAttr(TRX_IS_DIRTY, null);
+            }
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
                     .setTransactionStatus(TransactionStatus.TRX_COMMITED)
@@ -999,6 +1029,12 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             Connection conn = statementServiceInterceptContext.getCurrentConnection();
             conn.rollback();
+
+            // 清理事务的 dirty 标记
+            Session session = statementServiceInterceptContext.getCurrentSession();
+            if (session != null) {
+                session.addAttr(TRX_IS_DIRTY, null);
+            }
 
             TransactionInfo transactionInfo = TransactionInfo.newBuilder()
                     .setTransactionStatus(TransactionStatus.TRX_ROLLBACK)
@@ -1087,7 +1123,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                     if (!request.getResourceUUID().isBlank()) {
                         ps = sessionManager.getPreparedStatement(request.getSession(), request.getResourceUUID());
                     } else {
-                        Map<String, Object> mapProperties = EMPTY_MAP;
+                        Map<String, Object> mapProperties = Collections.emptyMap();
                         if (!request.getProperties().isEmpty()) {
                             mapProperties = deserialize(request.getProperties().toByteArray(), Map.class);
                         }
@@ -1124,7 +1160,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
 
             List<Object> paramsReceived = (request.getTarget().getParams().size() > 0)
                     ? deserialize(request.getTarget().getParams().toByteArray(), List.class)
-                    : EMPTY_LIST;
+                    : Collections.emptyList();
             Class<?> clazz = resource.getClass();
             if ((paramsReceived != null && paramsReceived.size() > 0) &&
                     ((CallType.CALL_RELEASE.equals(request.getTarget().getCallType()) &&
@@ -1167,7 +1203,7 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
                 Class<?> clazzNext = resultFirstLevel.getClass();
                 List<Object> paramsReceived2 = (request.getTarget().getNextCall().getParams().size() > 0)
                         ? deserialize(request.getTarget().getNextCall().getParams().toByteArray(), List.class)
-                        : EMPTY_LIST;
+                        : Collections.emptyList();
                 Method methodNext = MethodReflectionUtils.findMethodByName(
                         JavaSqlInterfacesConverter.interfaceClass(clazzNext),
                         MethodNameGenerator.methodName(request.getTarget().getNextCall()),
@@ -1395,6 +1431,76 @@ public class StatementServiceImpl extends StatementServiceGrpc.StatementServiceI
      */
     private void configureHikariPool(HikariConfig config, ConnectionDetails connectionDetails) {
         ConnectionPoolConfigurer.configureHikariPoolStatic(config, connectionDetails);
+    }
+
+    // ==================== 表状态标记逻辑（强一致性增强） ====================
+
+    private static final String CDC_TABLE_KEY_PREFIX = "ojp:cdc:table:";
+
+    // 匹配 UPDATE/INSERT/DELETE 语句中的表名
+    private static final Pattern UPDATE_TABLE_PATTERN = Pattern.compile(
+            "(?:UPDATE|INSERT\\s+INTO|DELETE\\s+FROM)\\s+[`\"']?([\\w.]+)[`\"']?",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * 标记 SQL 涉及的表为同步中状态
+     * 在 UPDATE/INSERT/DELETE 成功后调用，记录 syncStartTime 用于 CDC 判断同步完成
+     */
+    private void markTablesAsSyncing(String connHash, String sql) {
+        if (sql == null || sql.isBlank()) {
+            return;
+        }
+
+        try {
+            String database = JdbcUrlUtil.extractDatabaseName(connHash);
+            if (database == null || database.isBlank()) {
+                log.debug("无法从 connHash 提取数据库名: {}", connHash);
+                return;
+            }
+
+            Set<String> tables = extractModifiedTableNames(sql);
+            if (tables.isEmpty()) {
+                return;
+            }
+
+            long now = System.currentTimeMillis();
+
+            for (String table : tables) {
+                String key = CDC_TABLE_KEY_PREFIX + database + "." + table;
+                try {
+                    // 使用 Hash 结构存储表状态
+                    Map<String, String> hash = new HashMap<>();
+                    hash.put("state", "INCREMENTAL_SYNCING");
+                    hash.put("available", "false");
+                    hash.put("syncStartTime", String.valueOf(now));
+                    hash.put("updateTime", String.valueOf(now));
+
+                    redisTemplate.opsForHash().putAll(key, hash);
+                    log.info("标记表状态为同步中: {} (syncStartTime={})", key, now);
+                } catch (Exception e) {
+                    log.error("标记表状态失败: {}", key, e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("markTablesAsSyncing 失败", e);
+        }
+    }
+
+    /**
+     * 从 SQL 中提取被修改的表名
+     */
+    private Set<String> extractModifiedTableNames(String sql) {
+        Set<String> tables = new HashSet<>();
+        Matcher matcher = UPDATE_TABLE_PATTERN.matcher(sql);
+        while (matcher.find()) {
+            String tableName = matcher.group(1);
+            // 处理 schema.table 格式，只取表名
+            if (tableName.contains(".")) {
+                tableName = tableName.substring(tableName.lastIndexOf('.') + 1);
+            }
+            tables.add(tableName.toLowerCase());
+        }
+        return tables;
     }
 
 }

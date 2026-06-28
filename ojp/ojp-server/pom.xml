@@ -335,12 +335,6 @@
                 </executions>
                 <configuration>
                     <mainClass>org.openjdbcproxy.grpc.server.GrpcServer</mainClass>
-                    <jvmArguments>
-                        -javaagent:${project.basedir}/../../docker/skywalking/skywalking-agent/skywalking-agent.jar
-                        -Dskywalking.agent.service_name=ojp-server
-                        -Dskywalking.collector.backend_service=skywalking-oap:11800
-                        -Dskywalking.plugin.exclude_plugins=apm-grpc-1.x-plugin
-                    </jvmArguments>
                 </configuration>
             </plugin>
 

@@ -1,0 +1,31 @@
+networks:
+  a8:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+
+include:
+  - ./docker-compose-infra.yml
+  - ./docker-compose-db.yml
+  - ./docker-compose-cdc-sync-zeta.yml
+  - ./docker-compose-skywalking.yml
+  - ./docker-compose-sentinel.yml
+  - ./docker-compose-kong.yml
+
+services:
+  # --------------------------------------------------------------------------
+  #  公共基础服务 (无环境差异)
+  # --------------------------------------------------------------------------
+
+  ojp-sql-translator:
+    build:
+      context: ./ojp/ojp-sql-translator
+      dockerfile: Dockerfile
+    image: ojp-sql-translator:latest
+    container_name: ojp-sql-translator
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      a8:
+        ipv4_address: 172.24.0.100

@@ -20,4 +20,6 @@ public class SlowQuerySummary {
     String tableNames;
     Long timestamp;
     String parameters;
+    String queryAgeCategory; // 查询时效分类: "实时", "近期", "历史"
+    Boolean isRecentQuery; // 是否为最近1小时内的查询
 }

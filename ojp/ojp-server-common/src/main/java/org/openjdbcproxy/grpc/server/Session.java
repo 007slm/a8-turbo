@@ -72,7 +72,16 @@ public class Session {
 
     public void addAttr(String key, Object value) {
         this.notClosed();
-        this.attrMap.put(key, value);
+        if (value == null) {
+            this.attrMap.remove(key);
+        } else {
+            this.attrMap.put(key, value);
+        }
+    }
+
+    public void removeAttr(String key) {
+        this.notClosed();
+        this.attrMap.remove(key);
     }
 
     public Object getAttr(String key) {
@@ -145,14 +154,15 @@ public class Session {
             return;
         }
 
-        //Closing the connection here means that the connection pool will close all resources associated with it and
+        // Closing the connection here means that the connection pool will close all
+        // resources associated with it and
         // reset the connection state before returning it to the pool.
         Connection conn = (Connection) this.getAttr("cache.intercepted.conn");
-        if (conn != null){
+        if (conn != null) {
             conn.close();
         }
         this.connection.close();
-        //Clear session internal objects to free memory
+        // Clear session internal objects to free memory
         this.closed = true;
         this.lobMap = null;
         this.resultSetMap = null;
@@ -166,4 +176,3 @@ public class Session {
         return this.lobMap.values();
     }
 }
-

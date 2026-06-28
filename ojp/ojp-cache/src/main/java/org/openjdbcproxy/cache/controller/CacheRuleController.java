@@ -56,8 +56,6 @@ public class CacheRuleController {
         return enriched;
     }
 
-
-
     @PostMapping
     @Operation(summary = "创建更新缓存规则", description = "创建更新缓存规则")
     public CacheRule createRule(
@@ -70,8 +68,8 @@ public class CacheRuleController {
         CacheRule persistedRule = cacheRuleRepository.save(request);
         updateRedisIndexes(persistedRule, previousRule);
 
-        // Trigger SQL translation if needed
-        sqlTranslationService.processRule(persistedRule);
+        log.info("规则已保存/更新: id={}, name={}, enabled={}, connHash={}",
+                persistedRule.getId(), persistedRule.getName(), persistedRule.isEnabled(), persistedRule.getConnHash());
 
         // Trigger SQL translation if needed
         sqlTranslationService.processRule(persistedRule);
@@ -92,8 +90,8 @@ public class CacheRuleController {
         CacheRule persistedRule = cacheRuleRepository.save(request);
         updateRedisIndexes(persistedRule, previousRule);
 
-        // Trigger SQL translation if needed
-        sqlTranslationService.processRule(persistedRule);
+        log.info("规则已更新: id={}, name={}, enabled={}, connHash={}",
+                persistedRule.getId(), persistedRule.getName(), persistedRule.isEnabled(), persistedRule.getConnHash());
 
         // Trigger SQL translation if needed
         sqlTranslationService.processRule(persistedRule);
@@ -103,8 +101,6 @@ public class CacheRuleController {
 
         return enrichRuleWithJobs(cacheRuleRepository.findById(ruleId).orElse(persistedRule));
     }
-
-
 
     @PostMapping("/sync")
     @Operation(summary = "同步所有缓存规则作业", description = "手动触发所有缓存规则的Seatunnel作业同步")
@@ -123,18 +119,18 @@ public class CacheRuleController {
     private void reconcileAll() {
         List<CacheRule> allRules = cacheRuleRepository.findAll();
         Map<String, String> globalActiveJobs = seatunnelJobService.reconcile(allRules);
-        
+
         for (CacheRule rule : allRules) {
             Map<String, String> jobIds = seatunnelJobService.resolveJobIds(rule, globalActiveJobs);
             if (!Objects.equals(jobIds, rule.getSeatunnelJobIds())) {
                 rule.setSeatunnelJobIds(jobIds);
-                // Update timestamp only if jobs changed - or maybe valid to keep existing update time
+                // Update timestamp only if jobs changed - or maybe valid to keep existing
+                // update time
                 // For now just save the mapping update
                 cacheRuleRepository.save(rule);
             }
         }
     }
-
 
     @DeleteMapping("/{ruleId}")
     @Operation(summary = "删除缓存规则", description = "根据ID删除缓存规则")
@@ -177,7 +173,7 @@ public class CacheRuleController {
                 redisTemplate.opsForSet().add(key, latest.getId());
             }
         }
-        
+
         // 更新本地倒排索引
         tableSyncStateManager.rebuildForRule(latest);
     }

@@ -188,7 +188,14 @@ const SqlEventCard = ({ query, onViewDetail }) => {
       <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: '#595959' }}>
         <div style={{ flex: 1, marginRight: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           <Tooltip title={query.connHash}>
-            <span><AppstoreOutlined /> 🔌 连接: {query.connHash || 'Unknown'}</span>
+            <span>
+              <AppstoreOutlined /> 🔌 连接: {query.connHash || 'Unknown'}
+              {query.isActive && (
+                <Tag color="success" style={{ marginLeft: 8, transform: 'scale(0.8)' }}>
+                  活跃
+                </Tag>
+              )}
+            </span>
           </Tooltip>
         </div>
         <div style={{ flexShrink: 0 }}>

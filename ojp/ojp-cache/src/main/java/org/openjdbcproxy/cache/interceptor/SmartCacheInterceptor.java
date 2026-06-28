@@ -28,6 +28,9 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
     private CacheInterceptorService cacheInterceptorService;
 
     @Autowired
+    private org.openjdbcproxy.cache.service.SqlTranslationService sqlTranslationService;
+
+    @Autowired
     private org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
 
     /**
@@ -50,7 +53,8 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
             existingCacheConn = (Connection) sessionContext.getAttr("cache.intercepted.conn");
         }
 
-        Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session, existingCacheConn);
+        Connection cacheConn = cacheInterceptorService.preProcessQuery(request, session, existingCacheConn,
+                sessionContext);
         if (cacheConn != null) {
             String connHash = session.getConnHash();
             boolean isOracle = connHash != null && (connHash.contains("oracle:") || connHash.contains("jdbc:oracle:"));
@@ -63,19 +67,15 @@ public class SmartCacheInterceptor implements StatementServiceInterceptor {
 
                 // [FIX] Try to fetch translated SQL if available
                 try {
-                    // Generate ID consistent with SlowQueryLoggingInterceptor
-                    String queryId = org.openjdbcproxy.cache.util.JSqlParserUtil.generateSlowQueryId(connHash,
-                            request.getSql());
-                    String translationKey = "ojp:cache:sql:translated:" + queryId;
-                    String translatedSql = stringRedisTemplate.opsForValue().get(translationKey);
+                    String translatedSql = sqlTranslationService.getOrTranslateSql(request.getSql(), connHash);
 
                     if (translatedSql != null && !translatedSql.isEmpty()) {
-                        log.info("从Redis中获取到翻译后的SQL: ID={}, Original={}, Translated={}", queryId, request.getSql(),
+                        log.info("从Redis中获取到/实时翻译后得到翻译后的SQL: Original={}, Translated={}", request.getSql(),
                                 translatedSql);
                         // Store in context for StatementFactory to pick up
                         context.setAttribute("translated.sql", translatedSql);
                     } else {
-                        log.debug("未找到翻译后的SQL: ID={}", queryId);
+                        log.debug("未找到翻译后的SQL: SQL={}", request.getSql());
                     }
                 } catch (Exception e) {
                     log.warn("尝试获取翻译SQL时失败", e);

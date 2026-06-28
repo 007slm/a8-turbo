@@ -18,18 +18,19 @@ import java.sql.SQLException;
 @Service
 @RequiredArgsConstructor
 public class CacheInterceptorService {
-    
+
     private final CacheDecisionService cacheDecisionService;
     private final CacheDataSourceProvider dataSourceProvider;
     private final PerformanceMonitoringService performanceMonitoringService;
 
-    public Connection preProcessQuery(StatementRequest request, SessionInfo sessionInfo, Connection existingCacheConnection) throws SQLException {
+    public Connection preProcessQuery(StatementRequest request, SessionInfo sessionInfo,
+            Connection existingCacheConnection, org.openjdbcproxy.grpc.server.Session session) throws SQLException {
         long startTime = System.currentTimeMillis();
         String connHash = sessionInfo.getConnHash();
 
         // 检查事务状态
-        if (isInModifyTransaction(sessionInfo)) {
-            performanceMonitoringService.recordCacheSkip(connHash, "事务中执行sql不走缓存", request.getSql());
+        if (isInModifyTransaction(sessionInfo, session)) {
+            performanceMonitoringService.recordCacheSkip(connHash, "事务中执行有副作用的sql后不走缓存", request.getSql());
             return null;
         }
 
@@ -42,12 +43,12 @@ public class CacheInterceptorService {
                     ? existingCacheConnection
                     : getCacheDataSourceConnection(sessionInfo);
             return cacheConnection;
-        }else{
+        } else {
             performanceMonitoringService.recordCacheMiss(connHash, request.getSql(), startTime);
             return null;
         }
     }
-    
+
     public void postProcessQuery(StatementRequest request, long executionTimeMs, boolean success) {
         String sql = request.getSql();
         String connHash = request.getSession().getConnHash();
@@ -55,20 +56,35 @@ public class CacheInterceptorService {
 
         log.debug("查询后处理: {}, 执行时间: {}ms, 成功: {}", sql, executionTimeMs, success);
     }
-    
+
     public Connection getCacheDataSourceConnection(SessionInfo sessionInfo) throws SQLException {
         return dataSourceProvider.acquireConnectionByDbName(sessionInfo.getConnHash());
     }
 
-
-    private boolean isInModifyTransaction(SessionInfo sessionInfo) {
-        if(sessionInfo.getReadOnly()){
+    private boolean isInModifyTransaction(SessionInfo sessionInfo, org.openjdbcproxy.grpc.server.Session session) {
+        // 只读连接始终允许缓存
+        if (sessionInfo.getReadOnly()) {
             return false;
         }
-        if (sessionInfo.hasTransactionInfo()) {
-            return sessionInfo.getTransactionInfo().getTransactionStatus() == TransactionStatus.TRX_ACTIVE;
+
+        // 如果没有开启事务，允许走缓存
+        if (!sessionInfo.hasTransactionInfo()) {
+            return false;
         }
-        return false;
+
+        // 检查事务是否为活跃状态
+        if (sessionInfo.getTransactionInfo().getTransactionStatus() != TransactionStatus.TRX_ACTIVE) {
+            return false;
+        }
+
+        // 检查事务是否已经执行过有副作用的SQL（dirty）
+        if (session != null) {
+            Object isDirty = session.getAttr(org.openjdbcproxy.grpc.server.Constants.TRX_IS_DIRTY);
+            return isDirty != null && (Boolean) isDirty;
+        }
+
+        // session 为 null 时保守处理：如果在事务中则不走缓存
+        return true;
     }
 
 }

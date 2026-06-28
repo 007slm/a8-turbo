@@ -23,12 +23,12 @@ public class SlowQueryService {
     private final SlowQueryRepository slowQueryRepository;
 
     public SlowQueryPageResponse getSlowQueries(int page,
-                                                int size,
-                                                String connHash,
-                                                String keyword,
-                                                Long minExecutionTime,
-                                                String queryType,
-                                                String tableName) {
+            int size,
+            String connHash,
+            String keyword,
+            Long minExecutionTime,
+            String queryType,
+            String tableName) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.max(size, 1);
 
@@ -164,6 +164,23 @@ public class SlowQueryService {
     }
 
     private SlowQuerySummary toSummary(SlowQuery query) {
+        long currentTime = System.currentTimeMillis();
+        long queryTime = query.getTimestamp();
+        long ageInMinutes = (currentTime - queryTime) / (1000 * 60);
+
+        // 计算查询时效分类
+        String ageCategory;
+        if (ageInMinutes < 5) {
+            ageCategory = "实时";
+        } else if (ageInMinutes < 60) {
+            ageCategory = "近期";
+        } else {
+            ageCategory = "历史";
+        }
+
+        // 判断是否为最近1小时内的查询
+        boolean isRecent = ageInMinutes < 60;
+
         return SlowQuerySummary.builder()
                 .id(query.getId())
                 .sql(query.getSql())
@@ -176,6 +193,8 @@ public class SlowQueryService {
                 .tableNames(query.getTableNames())
                 .timestamp(query.getTimestamp())
                 .parameters(query.getParameters())
+                .queryAgeCategory(ageCategory)
+                .isRecentQuery(isRecent)
                 .build();
     }
 

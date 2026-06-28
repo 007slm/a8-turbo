@@ -42,7 +42,7 @@ if "%DEBUG%"=="true" (
 REM 显示帮助信息
 if "%HELP%"=="true" (
     echo OJP 生产环境启动脚本
-    echo 用法: start-prod.bat [选项]
+    echo 用法: prod.bat [选项]
     echo.
     echo 选项:
     echo   -skip-maven  跳过 Maven 构建步骤
@@ -67,7 +67,7 @@ if "%HELP%"=="true" (
 REM 停止服务
 if "%DOWN%"=="true" (
     echo 正在停止生产环境服务...
-    docker compose -f docker-compose-prod.yml down --remove-orphans
+    docker compose -f docker-compose.yml -f docker-compose-prod.yml down --remove-orphans
     echo 服务已停止
     goto end
 )
@@ -75,7 +75,7 @@ if "%DOWN%"=="true" (
 REM 显示服务日志
 if "%LOGS%"=="true" (
     echo 正在显示服务日志...
-    docker compose -f docker-compose-prod.yml logs -f ojp-server shopservice a8-ui
+    docker compose -f docker-compose.yml -f docker-compose-prod.yml logs -f ojp-server shopservice a8-ui
     goto end
 )
 
@@ -163,7 +163,7 @@ if "%SKIP_MAVEN%"=="false" (
 REM 清理现有容器
 if "%CLEAN%"=="true" (
     echo [2/3] 正在清理现有容器...
-    docker compose -f docker-compose-prod.yml down --remove-orphans
+    docker compose -f docker-compose.yml -f docker-compose-prod.yml down --remove-orphans
     docker system prune -f
     echo ✓ 清理完成
     echo.
@@ -178,7 +178,7 @@ echo.
 
 if "%BUILD_DOCKER%"=="true" (
     echo 重新构建 Docker 镜像...
-    docker compose -f docker-compose-prod.yml build --no-cache
+    docker compose -f docker-compose.yml -f docker-compose-prod.yml build --no-cache
     if errorlevel 1 (
         echo 错误: Docker 镜像构建失败
         exit /b 1
@@ -188,8 +188,8 @@ if "%BUILD_DOCKER%"=="true" (
 )
 
 echo 启动服务...
-docker compose -f docker-compose-prod.yml down --remove-orphans
-docker compose -f docker-compose-prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose-prod.yml down --remove-orphans
+docker compose -f docker-compose.yml -f docker-compose-prod.yml up -d
 
 if errorlevel 1 (
     echo 错误: 服务启动失败
@@ -212,7 +212,8 @@ echo 常用命令:
 echo   查看日志:   start-prod.bat -logs
 echo   停止服务:   start-prod.bat -down
 echo   重新构建:   start-prod.bat -build
-echo   查看状态:   docker compose -f docker-compose-prod.yml ps
+echo   查看状态:   prod.bat -down (or docker compose ... ps)
+    echo   查看状态:   docker compose -f docker-compose.yml -f docker-compose-prod.yml ps
 echo.
 
 REM 等待服务启动
@@ -221,7 +222,7 @@ timeout /t 5 /nobreak >nul
 
 REM 检查服务状态
 echo 服务状态:
-docker compose -f docker-compose-prod.yml ps
+docker compose -f docker-compose.yml -f docker-compose-prod.yml ps
 
 :end
 endlocal

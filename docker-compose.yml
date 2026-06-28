@@ -8,7 +8,7 @@ networks:
 include:
   - ./docker-compose-infra.yml
   - ./docker-compose-db.yml
-  - ./docker-compose-cdc-sync-zeta.yml
+  - ./docker-compose-seatunnel.yml
   - ./docker-compose-skywalking.yml
   - ./docker-compose-sentinel.yml
   - ./docker-compose-kong.yml

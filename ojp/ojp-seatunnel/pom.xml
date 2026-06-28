@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.ojp.patch</groupId>
+    <artifactId>ojp-seatunnel</artifactId>
+    <version>1.0.0</version>
+
+    <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <seatunnel.version>3.0.0-SNAPSHOT</seatunnel.version>
+    </properties>
+
+    <dependencies>
+        <!-- 核心底座依赖：SeaTunnel API -->
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>seatunnel-api</artifactId>
+            <version>${seatunnel.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 核心底座依赖：SeaTunnel Common -->
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>seatunnel-common</artifactId>
+            <version>${seatunnel.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 依赖 SeaTunnel CDC Base 包 -->
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>connector-cdc-base</artifactId>
+            <version>${seatunnel.version}</version>
+        </dependency>
+
+        <!-- 依赖 SeaTunnel JDBC Sink 包 -->
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>connector-jdbc</artifactId>
+            <version>${seatunnel.version}</version>
+        </dependency>
+
+        <!-- 依赖 SLF4J 日志 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 1. 编译本地修改类 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <!-- 2. 使用 maven-shade-plugin 重打包融合 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <!-- 合并依赖：我们把 ojp-seatunnel.jar 直接与 connector-cdc-base 进行物理融合成一个 jar -->
+                            <artifactSet>
+                                <includes>
+                                    <include>org.apache.seatunnel:connector-cdc-base</include>
+                                    <include>org.apache.seatunnel:connector-jdbc</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

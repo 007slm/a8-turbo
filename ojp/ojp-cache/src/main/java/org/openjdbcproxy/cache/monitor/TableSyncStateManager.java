@@ -147,6 +147,7 @@ public class TableSyncStateManager {
         }
 
         log.debug("已根据流事件更新同步状态: {} -> ready={}", key, state.isReady());
+        persistStateToRedis(key, state);
     }
 
     private void persistStateToRedis(String key, TableSyncState state) {
@@ -262,3 +263,4 @@ public class TableSyncStateManager {
         return tableSyncIndex.size();
     }
 }
+

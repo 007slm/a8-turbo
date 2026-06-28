@@ -18,3 +18,8 @@ Upon successfully resolving a task (compiles successfully, tests pass, dev serve
   python C:/Users/007sl/.gemini/skills/ncode-memory-everos/scripts/everos_helper.py record --user-id "user_007" --session-id "[your_conversation_id]" --file "E:/a8-turbo/trajectory.json"
   ```
 - **CRITICAL**: Delete the temporary file `E:/a8-turbo/trajectory.json` immediately after a successful upload to keep the workspace clean.
+
+## 3. Architectural Design & Alternative Selection Rules (架构选型避坑透明性红线)
+- **CRITICAL**: When proposing any technical alternatives, framework selections, or architectural decisions, you **MUST proactively and explicitly detail the potential constraints, edge cases, underlying limitations, and failure traps of each proposed option in the first response**.
+- You must never present a simplified ideal version of an option without analyzing its real-world implementation cost (e.g., networking requirements, performance degradation, data drift, or lock-in risks). Preventing silent selection failures is of paramount importance.
+

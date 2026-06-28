@@ -11,8 +11,7 @@ services:
       - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
       - ./docker/seatunnel/config/hazelcast-master.yaml:/opt/seatunnel/config/hazelcast-master.yaml:ro
       - ./docker/seatunnel/data/imap:/opt/seatunnel/data/imap
-    entrypoint: >
-      /bin/sh -c "cp /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
+    entrypoint: /bin/sh -c "rm -f /opt/seatunnel/lib/connector-cdc-base-*.jar && cp -f /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r master"
     ports:
       - "5801:5801"
       - "8080:8080"
@@ -31,8 +30,7 @@ services:
       - ./docker/seatunnel/config/seatunnel.yaml:/opt/seatunnel/config/seatunnel.yaml:ro
       - ./docker/seatunnel/config/hazelcast-worker.yaml:/opt/seatunnel/config/hazelcast-worker.yaml:ro
       - ./docker/seatunnel/data/imap:/opt/seatunnel/data/imap
-    entrypoint: >
-      /bin/sh -c "cp /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
+    entrypoint: /bin/sh -c "rm -f /opt/seatunnel/lib/connector-cdc-base-*.jar && cp -f /ojp-cdc-monitor/* /opt/seatunnel/lib/ && /opt/seatunnel/bin/seatunnel-cluster.sh -r worker"
     depends_on:
       - seatunnel-master
     networks:
